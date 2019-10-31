@@ -135,10 +135,14 @@ class FileFinder:
 
         logger.info(f" - Found: '{len(paths)}' {what}")
 
+        suffix = ""
+        if what == "paths":
+            suffix = "*"
+
         out = list()
         for pth in paths:
             parsed = parser.parse(pth)
-            out.append([pth] + list(parsed.named.values()))
+            out.append([pth + suffix] + list(parsed.named.values()))
 
         keys = ["filename"] + list(parsed.named.keys())
 
