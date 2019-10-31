@@ -60,7 +60,6 @@ class FileFinder:
 
         self.keys = self.keys_path | self.keys_file
 
-
         self._parse_path = parse.compile(self.path_pattern)
         self._parse_file = parse.compile(self.file_pattern)
         self._parse_full = parse.compile(self._full_pattern)
@@ -163,52 +162,69 @@ class FileFinder:
         return msg
 
 
-cmip6_ng = FileFinder(
-    path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
-    file_pattern="{varn}_{timeres}_{model}_{scenario}_{ens}_{grid}.nc",
-)
+class FileFinder_orig_post:
+    """docstring for FileFinder_raw_post"""
 
-root = "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/"
+    def __init__(
+        self, path_pattern_orig, file_pattern_orig, path_pattern_post, file_pattern_post
+    ):
 
-cmip6 = FileFinder(
-    path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
-    file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
-)
+        self._path_pattern_orig = path_pattern_orig
+        self._file_pattern_orig = file_pattern_orig
+        self._path_pattern_post = path_pattern_post
+        self._file_pattern_post = file_pattern_post
 
-cmip6_post = FileFinder(
-    path_pattern="/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/cmip6/{exp}/{table}/{varn}/{postprocess}",
-    file_pattern="{postprocess}.{varn}.{table}.{model}.{exp}.{ens}..nc",
-)
+        self.orig = FileFinder(
+            path_pattern=path_pattern_orig, file_pattern=file_pattern_orig
+        )
 
-
-
-
-cmip5 = FileFinder(
-    path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}",
-    file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{time}.nc",
-    # path_out_pattern=root + "cmip5/{var}",
-    # file_out_pattern="{varn}_{table}_{model}_{exp}_{ens}.nc",
-)
+        self.post = FileFinder(
+            path_pattern=path_pattern_post, file_pattern=file_pattern_post
+        )
 
 
-cmip6_r = FileFinder(
-    path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/r{r}i{i}p{p}f{f}/{grid}/",
-    file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
-)
+# cmip6_ng = FileFinder(
+#     path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
+#     file_pattern="{varn}_{timeres}_{model}_{scenario}_{ens}_{grid}.nc",
+# )
+
+# root = "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/"
+
+# cmip6 = FileFinder(
+#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
+#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
+# )
+
+# cmip6_post = FileFinder(
+#     path_pattern="/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/cmip6/{exp}/{table}/{varn}/{postprocess}",
+#     file_pattern="{postprocess}.{varn}.{table}.{model}.{exp}.{ens}..nc",
+# )
 
 
-cmip6_fx = FileFinder(
-    path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
-    file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
-)
+# cmip5 = FileFinder(
+#     path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}",
+#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{time}.nc",
+#     # path_out_pattern=root + "cmip5/{var}",
+#     # file_out_pattern="{varn}_{table}_{model}_{exp}_{ens}.nc",
+# )
 
 
-merra = FileFinder(
-    path_pattern="/net/exo/landclim/data/dataset/MERRA/20150504/0.5x0.666deg_lat-lon_{res}/original/",
-    file_pattern="merra.{var}.{year}.nc",
-)
+# cmip6_r = FileFinder(
+#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/r{r}i{i}p{p}f{f}/{grid}/",
+#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
+# )
 
 
+# cmip6_fx = FileFinder(
+#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
+#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
+# )
+
+
+# merra = FileFinder(
+#     path_pattern="/net/exo/landclim/data/dataset/MERRA/20150504/0.5x0.666deg_lat-lon_{res}/original/",
+#     file_pattern="merra.{var}.{year}.nc",
+# )
 
 
 # ==================
