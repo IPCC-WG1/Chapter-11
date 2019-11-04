@@ -8,7 +8,7 @@ import logging
 import numpy as np
 import glob
 
-from .utils import _find_keys, atoi, natural_keys
+from .utils import _find_keys, atoi, natural_keys, product_dict
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,31 @@ class FileFinder:
             **kwargs,
         )
 
+
     def _find(self, what, name_creator, parser, keys, **kwargs):
+
+        # wrap strings in list
+        for key, value in kwargs.items():
+            if isinstance(value, str):
+                kwargs[key] = [value]
+
+        list_of_df = list()
+        for one_search_dict in product_dict(**kwargs):
+            df = self._find_one(what, name_creator, parser, keys, **one_search_dict)
+            list_of_df.append(df)
+
+        df = pd.concat(list_of_df)
+        fc = FileContainer(df)
+
+        len_all = len(fc.df)
+        len_unique = len(fc.combine_by_key().unique())
+
+        msg = "This query leads to non-unique metadata. Please adjust your query."
+        assert (len_all == len_unique), msg
+
+        return fc
+
+    def _find_one(self, what, name_creator, parser, keys, **kwargs):
 
         cond_dict = self._create_condition_dict(keys, **kwargs)
 
@@ -122,7 +146,7 @@ class FileFinder:
         keys = ["filename"] + list(parsed.named.keys())
 
         df = pd.DataFrame(out, columns=keys)
-        return FileContainer(df)
+        return df
 
     def _get_all_files(self):
         pass
@@ -156,7 +180,8 @@ class FileContainer:
 
     def __getitem__(self, key):
 
-        element = self.df.loc[key]
+        # use iloc -> there can be more than one element with index 0
+        element = self.df.iloc[key]
 
         return element["filename"], element.drop("filename").to_dict()
 
