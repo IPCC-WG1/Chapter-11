@@ -180,7 +180,7 @@ class FileContainer:
             yield element["filename"], element.drop("filename").to_dict()
 
     def __getitem__(self, key):
-        
+
         element = self.df.loc[key]
 
         return element["filename"], element.drop("filename").to_dict()
