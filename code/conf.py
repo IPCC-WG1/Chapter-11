@@ -41,6 +41,13 @@ class _cmip_conf:
     def scenarios_all(self):
         return self._scenarios_all
 
+    @property
+    def scenarios_incl_hist(self):
+        return self._scenarios + ["historical"]
+
+    @property
+    def scenarios_all_incl_hist(self):
+        return self._scenarios_all + ["historical"]
 
 # =============================================================================
 # CMIP5 Configuration
