@@ -4,15 +4,16 @@ import glob
 import os
 from .file import _any_file_does_not_exist
 
+
 def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwargs):
     """ postprocessing-on-the-fly and loading function
 
     """
 
-    var = metadata.get('varn', None)
+    var = metadata.get("varn", None)
 
-    var_out = kwargs.pop('var_out', None)
-    dim = kwargs.pop('dim', "time")
+    var_out = kwargs.pop("var_out", None)
+    dim = kwargs.pop("dim", "time")
 
     if var_out is None:
         var_out = var
@@ -46,8 +47,6 @@ def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwa
 
     else:
         return xr.open_dataset(fN_out, use_cftime=True)
-
-
 
 
 def read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs):
