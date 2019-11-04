@@ -3,9 +3,9 @@ import re
 import pandas as pd
 import os
 import parse
-
+import copy
 import logging
-
+import numpy as np
 import glob
 
 
@@ -146,7 +146,8 @@ class FileFinder:
 
         keys = ["filename"] + list(parsed.named.keys())
 
-        return pd.DataFrame(out, columns=keys)
+        df = pd.DataFrame(out, columns=keys)
+        return FileContainer(df)
 
     def _get_all_files(self):
         pass
@@ -164,6 +165,59 @@ class FileFinder:
         )
 
         return msg
+
+
+class FileContainer:
+    """docstring for FileContainer"""
+
+    def __init__(self, df):
+
+        self.df = df
+
+    def __iter__(self):
+
+        for index, element in self.df.iterrows():
+            yield element["filename"], element.drop("filename").to_dict()
+
+    def __getitem__(self, key):
+        
+        element = self.df.loc[key]
+
+        return element["filename"], element.drop("filename").to_dict()
+
+    def combine_by_key(self, keys=None, sep="."):
+        """combine colums"""
+
+        if keys is None:
+            keys = list(self.df.columns.drop("filename"))
+
+        return self.df[keys].apply(lambda x: ".".join(x.map(str)), axis=1)
+
+    def search(self, **query):
+
+        ret = copy.copy(self)
+        ret.df = self._get_subset(**query)
+        return ret
+
+    def _get_subset(self, **query):
+        if not query:
+            return pd.DataFrame(columns=self.df.columns)
+        condition = np.ones(len(self.df), dtype=bool)
+        for key, val in query.items():
+            if isinstance(val, list):
+                condition_i = np.zeros(len(self.df), dtype=bool)
+                for val_i in val:
+                    condition_i = condition_i | (self.df[key] == val_i)
+                condition = condition & condition_i
+            elif val is not None:
+                condition = condition & (self.df[key] == val)
+        query_results = self.df.loc[condition]
+        return query_results
+
+    def __repr__(self):
+
+        msg = "<FileContainer>\n"
+        return msg + self.df.__repr__()
 
 
 class FileFinder_orig_post:
