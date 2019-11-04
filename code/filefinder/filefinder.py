@@ -8,6 +8,7 @@ import logging
 import numpy as np
 import glob
 
+from .utils import _find_keys, atoi, natural_keys
 
 logger = logging.getLogger(__name__)
 
@@ -17,32 +18,6 @@ file_pattern: '{file_pattern}'
 
 keys: {repr_keys}
 """
-
-
-def _find_keys(pattern):
-    keys = set(re.findall(r"\{([A-Za-z0-9_]+)\}", pattern))
-
-    return keys
-
-
-def atoi(text):
-    return int(text) if text.isdigit() else text
-
-
-def natural_keys(text):
-    """
-    a_list.sort(key=natural_keys) sorts in human order
-    http://nedbatchelder.com/blog/200712/human_sorting.html
-
-    Example
-    -------
-    > l = ['a10', 'a1']
-    > l.sort(key=natural_keys)
-    > l
-    ['a1', 'a10']
-
-    """
-    return [atoi(c) for c in re.split(r"(\d+)", text)]
 
 
 class FileFinder:
