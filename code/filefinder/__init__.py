@@ -3,4 +3,3 @@
 from . import _filefinder, utils, cmip
 
 from ._filefinder import FileFinder
-
