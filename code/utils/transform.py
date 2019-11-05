@@ -76,3 +76,34 @@ class ResampleAnnual(_ProcessWithXarray):
             ds.attrs = attrs
 
         return ds
+
+
+class GroupbyAnnual(_ProcessWithXarray):
+    """transformation function to get a global average"""
+
+    def __init__(self, var, how):
+
+        self.var = var
+        self._name = "groupby_annual_" + how
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+
+            da = ds[self.var]
+            grouper = ds.groupby("time.year")
+
+            func = getattr(grouper, self.how, None)
+
+            if func is None:
+                raise KeyError(f"how cannot be '{self.how}'")
+
+            da = func("time")
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
