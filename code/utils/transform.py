@@ -2,23 +2,6 @@ import xarray as xr
 import os
 from . import xarray_utils as xru
 
-# prc.globmean(fNs_in, fN_out, metadata)(var, dim=('lon', 'lat'))  # noqa
-
-
-# prc.process(fNs_in, fN_out, metadata).globmean(var, dim=('lon', 'lat'))  # noqa
-
-
-# prc.globmean(fNs_in, fN_out, metadata).process(var, dim=('lon', 'lat'))  # noqa
-
-
-# prc.globmean(var, dim=('lon', 'lat')).process(fNs_in, fN_out, metadata)  # noqa
-
-
-# prc.regional_average(var, landmask=None, land_only=True).process(fNs_in, fN_out, metadata)  # noqa
-
-
-# =============================================================================
-
 
 class _ProcessWithXarray:
 
@@ -38,7 +21,7 @@ class _ProcessWithXarray:
 
 
 class Globmean(_ProcessWithXarray):
-    """docstring for globmean"""
+    """transformation function to get a global average"""
 
     def __init__(self, var, dim=("lat", "lon")):
 
@@ -47,19 +30,49 @@ class Globmean(_ProcessWithXarray):
         self._name = "globmean"
 
     def _trans(self, ds):
-        """transformation function to get a global average
-        """
-
-        wgt = xru.cos_wgt(ds)
 
         if len(ds) == 0:
             return []
         else:
-            attrs = ds.attrs
-            da = xru.average(ds[self.var], dim=self.dim, weights=wgt, keep_attrs=True)
+            wgt = xru.cos_wgt(ds)
 
+            attrs = ds.attrs
+
+            da = ds[self.var]
+            da = xru.average(da, dim=self.dim, weights=wgt, keep_attrs=True)
             ds = da.to_dataset(name=self.var)
 
             ds.attrs = attrs
 
             return ds
+
+
+class ResampleAnnual(_ProcessWithXarray):
+    """transformation function to get a global average"""
+
+    def __init__(self, var, how):
+
+        self.var = var
+        self._name = "resample_annual_" + how
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+
+            da = ds[self.var]
+            resampler = da.resample(time="A")
+
+            func = getattr(resampler, self.how, None)
+
+            if func is None:
+                raise KeyError(f"how cannot be '{self.how}'")
+
+            da = func("time")
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
