@@ -18,7 +18,7 @@ def fixes_common(ds, metadata):
     """
 
     # delete height
-    if "height" in ds.dims:
+    if "height" in ds.variables:
         del ds["height"]
 
     # delete latitude bounds (#g1)
