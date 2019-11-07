@@ -138,6 +138,9 @@ class FileFinder:
         if what == "paths":
             suffix = "*"
 
+        if not paths:
+            return []
+
         out = list()
         for pth in paths:
             parsed = parser.parse(pth)
