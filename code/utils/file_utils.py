@@ -13,6 +13,11 @@ def _check_all_files_exist(fnames):
         raise RuntimeError(msg)
 
 
+def _file_exists(fname):
+
+    return os.path.isfile(fname)
+
+
 def _any_file_does_not_exist(fnames):
     """
     check if any file in the list does not exist
