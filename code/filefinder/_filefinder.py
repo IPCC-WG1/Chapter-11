@@ -98,7 +98,6 @@ class FileFinder:
             **kwargs,
         )
 
-
     def _find(self, what, name_creator, parser, keys, **kwargs):
 
         # wrap strings in list

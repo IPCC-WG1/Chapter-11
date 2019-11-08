@@ -93,6 +93,7 @@ def read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs
             # aggregation
             if transform_func is not None:
                 ds = transform_func(ds)
+
             # load all data from the transformed dataset, to ensure we can
             # use it after closing each original file
             ds.load()
