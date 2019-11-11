@@ -1,53 +1,12 @@
 import numpy as np
+
 from filefinder import FileFinder
+from utils.cmip import _cmip_conf
 
 # CONFIGURATION FILE
 
 # folder where the postprocessed data is stored
 root_folder_postprocessed_data = "../data/"
-
-# =============================================================================
-# CMIP Configuration Class
-# =============================================================================
-
-
-class _cmip_conf:
-    """docstring for cmip5_Conf"""
-
-    def __init__(self):
-        raise ValueError("Use 'conf.cmip5' of 'conf.cmip6' instead")
-
-    @property
-    def files_orig(self):
-        return self._files_orig
-
-    @property
-    def files_post(self):
-        return self._files_post
-
-    @property
-    def hist_period(self):
-        return self._hist_period
-
-    @property
-    def proj_period(self):
-        return self._proj_period
-
-    @property
-    def scenarios(self):
-        return self._scenarios
-
-    @property
-    def scenarios_all(self):
-        return self._scenarios_all
-
-    @property
-    def scenarios_incl_hist(self):
-        return self._scenarios + ["historical"]
-
-    @property
-    def scenarios_all_incl_hist(self):
-        return self._scenarios_all + ["historical"]
 
 # =============================================================================
 # CMIP5 Configuration
@@ -114,44 +73,6 @@ class _cmip6_conf(_cmip_conf):
 
 
 cmip6 = _cmip6_conf()
-
-
-# =============================================================================
-# ETCCDI - DATA - already prostprocessed
-# =============================================================================
-
-"""
-postprocessing
-
-1) regridding to 2.5°
-
-    cdo -s -f nc4 -z zip_8 -remapbil,mygrid ${ifile} ${ofile}
-
-    gridtype  = lonlat
-    xsize     = 144
-    ysize     = 72
-    xfirst    = -178.75
-    xinc      = 2.5
-    yfirst    = -88.75
-    yinc      = 2.5
-
-2) create common time axes
-
-    restrict time axes to
-        1861 - 2005 for historical
-        2006 - 2099 for rcp
-        2006 - 2299 for rcp
-
-    cdo -s -f nc4 -z zip_8 -selyear,1861/2005 $fi ${do}/$fo
-    cdo -s -f nc4 -z zip_8 -selyear,2006/2099 $fi ${do}/$fo
-    cdo -s -f nc4 -z zip_8 -selyear,2006/2299 $fi ${do}/$fo
-
-"""
-
-etccdi_root_folder = (
-    "/net/exo/landclim/data/dataset/ETCCDI/20160315/"
-    "2.5deg_lat-lon_1y/processed/regrid2.5deg/"
-)
 
 # =============================================================================
 # Reference Period
