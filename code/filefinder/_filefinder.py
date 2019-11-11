@@ -222,27 +222,6 @@ class FileContainer:
         return msg + self.df.__repr__()
 
 
-class FileFinder_orig_post:
-    """docstring for FileFinder_raw_post"""
-
-    def __init__(
-        self, path_pattern_orig, file_pattern_orig, path_pattern_post, file_pattern_post
-    ):
-
-        self._path_pattern_orig = path_pattern_orig
-        self._file_pattern_orig = file_pattern_orig
-        self._path_pattern_post = path_pattern_post
-        self._file_pattern_post = file_pattern_post
-
-        self.orig = FileFinder(
-            path_pattern=path_pattern_orig, file_pattern=file_pattern_orig
-        )
-
-        self.post = FileFinder(
-            path_pattern=path_pattern_post, file_pattern=file_pattern_post
-        )
-
-
 # cmip6_ng = FileFinder(
 #     path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
 #     file_pattern="{varn}_{timeres}_{model}_{scenario}_{ens}_{grid}.nc",
