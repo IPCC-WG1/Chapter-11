@@ -6,8 +6,10 @@ def parse_ens(filelist):
 
     ens = filelist.df["ens"]
 
+    # for cmip6
     if "f" in ens.iloc[0]:
         parser = parse.compile("r{r}i{i}p{p}f{f}")
+    # for cmip5
     else:
         parser = parse.compile("r{r}i{i}p{p}")
 
