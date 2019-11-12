@@ -1,5 +1,3 @@
-import numpy as np
-import os as os
 import re
 import itertools
 

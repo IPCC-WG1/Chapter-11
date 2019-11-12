@@ -108,16 +108,21 @@ class FileFinder:
         list_of_df = list()
         for one_search_dict in product_dict(**kwargs):
             df = self._find_one(what, name_creator, parser, keys, **one_search_dict)
-            list_of_df.append(df)
+
+            # only append if files were found
+            if df is not None:
+                list_of_df.append(df)
 
         df = pd.concat(list_of_df)
+
+        # raises if no files are found - ok?
         fc = FileContainer(df)
 
         len_all = len(fc.df)
         len_unique = len(fc.combine_by_key().unique())
 
         msg = "This query leads to non-unique metadata. Please adjust your query."
-        assert (len_all == len_unique), msg
+        assert len_all == len_unique, msg
 
         return fc
 
@@ -138,8 +143,7 @@ class FileFinder:
             suffix = "*"
 
         if not paths:
-            return []
-
+            return None
         out = list()
         for pth in paths:
             parsed = parser.parse(pth)
@@ -182,10 +186,16 @@ class FileContainer:
 
     def __getitem__(self, key):
 
-        # use iloc -> there can be more than one element with index 0
-        element = self.df.iloc[key]
+        if isinstance(key, (int, np.integer)):
+            # use iloc -> there can be more than one element with index 0
+            element = self.df.iloc[key]
 
-        return element["filename"], element.drop("filename").to_dict()
+            return element["filename"], element.drop("filename").to_dict()
+        # assume slice or [1]
+        else:
+            ret = copy.copy(self)
+            ret.df = self.df.iloc[key]
+            return ret
 
     def combine_by_key(self, keys=None, sep="."):
         """combine colums"""
@@ -215,6 +225,9 @@ class FileContainer:
                 condition = condition & (self.df[key] == val)
         query_results = self.df.loc[condition]
         return query_results
+
+    def __len__(self):
+        return self.df.__len__()
 
     def __repr__(self):
 
