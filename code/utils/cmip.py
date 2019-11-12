@@ -1,4 +1,5 @@
 import xarray as xr
+from .file_utils import _file_exists
 
 
 class _cmip_conf:
@@ -9,10 +10,12 @@ class _cmip_conf:
 
     @property
     def files_orig(self):
+        """FileFinder of the original, raw cmip data"""
         return self._files_orig
 
     @property
     def files_post(self):
+        """FileFinder for the postprocessed cmip data"""
         return self._files_post
 
     @property
@@ -39,60 +42,53 @@ class _cmip_conf:
     def scenarios_all_incl_hist(self):
         return self._scenarios_all + ["historical"]
 
+    def load_postprocessed(self, **metadata):
 
+        fN = self.files_post.create_full_name(**metadata)
 
+        # no error on missing file?
+        if not _file_exists(fN):
+            return []
 
+        return xr.open_dataset(fN, use_cftime=True)
 
+    def load_postprocessed_concat(self, **metadata):
+        """combine historical simulation and projection
 
+        Parameters
+        ----------
+        metadata : metadata
+            Metadata idenrtifiying the simulation to load.
 
+        ..note:: "exp" can not be historical
 
+        """
 
+        exp = metadata.pop("exp")
 
+        msg = f"Use 'load_postprocessed' to load historical scen"
+        assert exp != "historical", msg
 
+        # load historical
+        hist = self.load_postprocessed(exp="historical", **metadata)
+        if not len(hist):
+            self._not_found(exp="historical", **metadata)
+            return []
 
-def _combiner(self, raw_func, scen, **metadata):
-    """combine historical simulation and projection
+        hist = hist.sel(time=self.hist_period)
 
-    Parameters
-    ----------
-    raw_func : function
-        Function that reads data for a given scenario
-    scen : string
-        rcp scenario, cannot be 'historical'
+        # load projection
+        proj = self.load_postprocessed(exp=exp, **metadata)
+        if not len(proj):
+            self._not_found(exp=exp, **metadata)
+            return []
 
-    Other Arguments
-    ---------------
-    Other arguments that raw_func needs, e.g. 'var', 'model', ...
+        proj = proj.sel(time=self.proj_period)
 
+        # combine
+        return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
 
-    """
+    def _not_found(self, **metadata):
 
-    raw_func_name = raw_func.__name__
-
-    msg = f"Use '{raw_func_name}' to load historical scen"
-    assert scen != "historical", msg
-
-    varn = metadata.get("varn", "var: unkown")
-    model = metadata.get("model", "model: unkown")
-    ens = metadata.get("ens", "ens: unkown")
-
-    # ====
-    # load historical
-    hist = raw_func("historical", **metadata)
-    if not len(hist):
-        msg = f"-- no 'historical' for '{varn}' '{model}' '{ens}'"
-        return []
-
-    hist = hist.sel(time=self.hist_period)
-
-    # ====
-    # load projection
-    proj = raw_func(scen, **metadata)
-    if not len(proj):
-        msg = f"-- no 'historical' for '{varn}' '{model}' '{ens}'"
-        return []
-
-    proj = proj.sel(time=self.proj_period)
-
-    # combine
-    return xr.concat([hist, proj], dim="time")
+        msg = "-- no data found for: {}".format(metadata)
+        print(msg)
