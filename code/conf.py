@@ -7,6 +7,7 @@ from utils.cmip import _cmip_conf
 
 # folder where the postprocessed data is stored
 root_folder_postprocessed_data = "../data/"
+root_folder_figures = "../figures/"
 
 # =============================================================================
 # CMIP5 Configuration
@@ -18,6 +19,8 @@ class _cmip5_conf(_cmip_conf):
 
     def __init__(self):
 
+        self._cmip = "cmip5"
+
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}/",
             file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{time}.nc",
@@ -27,6 +30,8 @@ class _cmip5_conf(_cmip_conf):
             path_pattern=root_folder_postprocessed_data + "cmip5/{varn}/{postprocess}/",
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}.nc",
         )
+
+        self._figure_folder = root_folder_figures + "cmip5"
 
         self._hist_period = slice("1850", "2005")
         self._proj_period = slice("2006", "2099")
@@ -47,6 +52,8 @@ class _cmip6_conf(_cmip_conf):
 
     def __init__(self):
 
+        self._cmip = "cmip6"
+
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
             file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
@@ -56,6 +63,8 @@ class _cmip6_conf(_cmip_conf):
             path_pattern=root_folder_postprocessed_data + "cmip6/{varn}/{postprocess}/",
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
         )
+
+        self._figure_folder = root_folder_figures + "cmip6"
 
         self._hist_period = slice("1850", "2014")
         self._proj_period = slice("2015", "2099")

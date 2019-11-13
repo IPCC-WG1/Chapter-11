@@ -9,6 +9,10 @@ class _cmip_conf:
         raise ValueError("Use 'conf.cmip5' of 'conf.cmip6' instead")
 
     @property
+    def cmip(self):
+        return self._cmip
+
+    @property
     def files_orig(self):
         """FileFinder of the original, raw cmip data"""
         return self._files_orig
@@ -17,6 +21,10 @@ class _cmip_conf:
     def files_post(self):
         """FileFinder for the postprocessed cmip data"""
         return self._files_post
+
+    @property
+    def figure_folder(self):
+        return self._figure_folder
 
     @property
     def hist_period(self):
