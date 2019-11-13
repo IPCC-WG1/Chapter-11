@@ -59,8 +59,8 @@ def cmip5_data(ds, metadata, next_path):
     model = metadata["model"]
 
     # append December of next year, get rid of December of first year
-    if "HadGEM2" in model:
-        ds = fixes_hadgem(ds, metadata, next_path)
+    # if "HadGEM2" in model:
+    #     ds = fixes_hadgem(ds, metadata, next_path)
 
     ds = fixes_common(ds, metadata)
 

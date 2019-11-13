@@ -23,7 +23,7 @@ def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwa
     if _any_file_does_not_exist(fN_out):
 
         # postprocess
-        ds = read_netcdfs(
+        ds = mf_read_netcdfs(
             fNs_in,
             dim=dim,
             metadata=metadata,
@@ -48,6 +48,28 @@ def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwa
 
     else:
         return xr.open_dataset(fN_out, use_cftime=True)
+
+
+def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs):
+
+    ds = xr.open_mfdataset(
+        files,
+        use_cftime=True,
+        concat_dim="time",
+        combine="by_coords",
+        coords="minimal",
+        data_vars="minimal",
+        compat="override",
+        # preprocess=preprocess
+    )
+
+    if fixes is not None:
+        ds = fixes(ds, metadata, None)
+
+    if transform_func is not None:
+        ds = transform_func(ds)
+
+    return ds
 
 
 def read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs):

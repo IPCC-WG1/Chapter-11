@@ -60,18 +60,16 @@ def fixes_common(ds, metadata):
 
 def fixes_hadgem(ds, metadata, next_path):
 
-    if next_path is None:
-        return None
-
     unique_years = np.unique(ds.time.dt.year)
     assert len(unique_years) > 1, next_path
 
-    # use the second year, as the first is only Dec
     year_beg = str(unique_years[1])
     year_end = str(unique_years[-1])
 
-    # append Dec from the next file
-    ds_next = xr.open_dataset(next_path, use_cftime=True)
-    ds = xr.concat([ds, ds_next], dim="time", compat="override", coords="minimal")
+    if next_path is not None:
+        # use the second year, as the first is only Dec
+        # append Dec from the next file
+        ds_next = xr.open_dataset(next_path, use_cftime=True)
+        ds = xr.concat([ds, ds_next], dim="time", compat="override", coords="minimal")
 
     return ds.sel(time=slice(year_beg, year_end))
