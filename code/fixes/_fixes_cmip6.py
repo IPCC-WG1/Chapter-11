@@ -2,7 +2,7 @@ import glob
 from ._fixes_common import fixes_common
 
 
-def cmip6_files(folder_in, metadata):
+def cmip6_files(folder_in, metadata, next_path):
 
     exp = metadata["exp"]
     model = metadata["model"]
@@ -10,14 +10,14 @@ def cmip6_files(folder_in, metadata):
 
     # fix before glob
 
-    fNs_in = glob.glob(folder_in)
+    fNs_in = sorted(glob.glob(folder_in))
 
     # fixes after glob
 
     return fNs_in
 
 
-def cmip6_data(ds, metadata):
+def cmip6_data(ds, metadata, next_path):
 
     model = metadata["model"]
 
