@@ -81,13 +81,16 @@ def read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs
     http://xarray.pydata.org/en/stable/io.html#combining-multiple-files
     """
 
-    def process_one_path(path):
+    def process_one_path(path, next_path):
 
         # use a context manager, to ensure the file gets closed after use
         with xr.open_dataset(path, **kwargs) as ds:
 
             if fixes is not None:
-                ds = fixes(ds, metadata)
+                ds = fixes(ds, metadata, next_path)
+
+            if ds is None:
+                return None
 
             # transform_func should do some sort of selection or
             # aggregation
@@ -106,7 +109,16 @@ def read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs
     else:
         paths = sorted(files)
 
-    datasets = [process_one_path(p) for p in paths]
+    datasets = list()
+
+    for i, path in enumerate(paths):
+        # get the next path in line (if there is one)
+        next_path = None if i + 1 == len(paths) else paths[i + 1]
+
+        ds = process_one_path(paths[i], next_path)
+
+        if ds is not None:
+            datasets.append(ds)
 
     combined = xr.concat(datasets, dim, compat="override", coords="minimal")
 
