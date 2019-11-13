@@ -10,6 +10,10 @@ def cmip6_files(folder_in, metadata, next_path):
 
     # fix before glob
 
+    # tasmax and tasmin are wrong for cesm
+    if model == "CESM2" and varn in ["tasmax", "tasmin"]:
+        return None
+
     fNs_in = sorted(glob.glob(folder_in))
 
     # fixes after glob
