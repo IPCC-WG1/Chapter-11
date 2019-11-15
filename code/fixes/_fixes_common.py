@@ -2,6 +2,20 @@ import numpy as np
 import xarray as xr
 
 
+def _maybe_remove_fN(fNs, to_remove):
+
+    return [i for i in fNs if to_remove not in i]
+
+
+def _corresponds_to(metadata, **conditions):
+
+    for key, value in conditions.items():
+        if isinstance(value, str):
+            conditions[key] = [value]
+
+    return all(metadata[key] in cond for key, cond in conditions.items())
+
+
 def fixes_common(ds, metadata):
     """
     Apply fixes that may apply to all datasets.
