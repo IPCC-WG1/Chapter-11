@@ -31,7 +31,7 @@ class _cmip5_conf(_cmip_conf):
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}.nc",
         )
 
-        self._figure_folder = root_folder_figures + "cmip5"
+        self._figure_folder = root_folder_figures + "cmip5/cmip5_"
 
         self._hist_period = slice("1850", "2005")
         self._proj_period = slice("2006", "2099")
@@ -64,7 +64,7 @@ class _cmip6_conf(_cmip_conf):
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
         )
 
-        self._figure_folder = root_folder_figures + "cmip6"
+        self._figure_folder = root_folder_figures + "cmip6/cmip6_"
 
         self._hist_period = slice("1850", "2014")
         self._proj_period = slice("2015", "2099")
