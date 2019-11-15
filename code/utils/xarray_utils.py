@@ -6,13 +6,12 @@ import xarray as xr
 from .file_utils import _any_file_does_not_exist
 
 
-def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwargs):
+def postprocess(fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, **kwargs):
     """ postprocessing-on-the-fly and loading function
 
     """
 
     var = metadata.get("varn", None)
-
     var_out = kwargs.pop("var_out", None)
     dim = kwargs.pop("dim", "time")
 
@@ -21,6 +20,16 @@ def postprocess(fN_out, fNs_in, metadata, transform_func=None, fixes=None, **kwa
 
     # if fN_out does not exits, create it on the fly
     if _any_file_does_not_exist(fN_out):
+
+        # get fNs_in
+        if isinstance(fNs_in_or_creator, (list, str)):
+            fNs_in = fNs_in_or_creator
+        else:
+            fNs_in = fNs_in_or_creator(metadata)
+
+        # exit if the model is removed by the fixes
+        if fNs_in is None:
+            return []
 
         # postprocess
         ds = mf_read_netcdfs(
