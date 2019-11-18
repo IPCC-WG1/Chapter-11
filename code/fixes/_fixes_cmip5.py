@@ -42,6 +42,22 @@ def cmip5_files(folder_in):
                 fNs_in, "tasmax_day_CMCC-CMS_rcp45_r1i1p1_20060101-20090930.nc"
             )
 
+        # some time periods after 2000 exists more than once
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="day",
+            varn="pr",
+            model="GISS-E2-H",
+            ens="r6i1p1",
+        ):
+            fNs_in = _maybe_remove_fN(
+                fNs_in, "pr_day_GISS-E2-H_historical_r6i1p1_20010101-20051231.nc"
+            )
+            fNs_in = _maybe_remove_fN(
+                fNs_in, "pr_day_GISS-E2-H_historical_r6i1p1_20000101-20121231.nc"
+            )
+
         # all after 2100 have a wrong time
         if _corresponds_to(
             metadata,
