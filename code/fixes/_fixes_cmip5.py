@@ -13,7 +13,7 @@ def cmip5_files(folder_in):
             metadata,
             exp="rcp85",
             table="day",
-            varn="tasmax",
+            varn=["tasmax", "pr"],
             model="HadGEM2-ES",
             ens="r1i1p1",
         ):
