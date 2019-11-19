@@ -321,3 +321,34 @@ class FileContainer:
 #     fN_out = cmip6_out.create_full_name(**tas_file, qualifier=['annual', 'max', "regid"])
 
 #     prc.regrid_cdo(resolution="2.5", how='conservative').process(fN_in, fN_out)
+
+
+# class Data:
+#     """docstring for Data"""
+
+#     def __init__(self, data, metadata):
+
+#         self._data = data
+#         self._metadata
+
+#     @property
+#     def data(self):
+#         return self._data
+
+#     @property
+#     def metadata(self):
+#         return self._metadata
+
+
+# class DataContainer:
+#     """docstring for DataContainer"""
+
+#     def __init__(self):
+
+#         self._data = list()
+#         self._metadata = list()
+
+#     def append(self, data, metadata):
+
+#         self._data.append(data)
+#         self._metadata.append(metadata)
