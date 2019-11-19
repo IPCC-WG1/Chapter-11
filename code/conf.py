@@ -91,7 +91,7 @@ class _cmip6_conf(_cmip_conf):
             "ssp460",
             "ssp585",
         ]
-        self._scenarios = ["ssp126", "ssp245", "ssp460", "ssp585"]
+        self._scenarios = ["ssp126", "ssp245", "ssp370", "ssp585"]
 
         self._ANOMALY_YR_START = ANOMALY_YR_START
         self._ANOMALY_YR_END = ANOMALY_YR_END
