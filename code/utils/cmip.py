@@ -1,5 +1,6 @@
 import xarray as xr
 from .file_utils import _file_exists
+from . import computation
 
 
 class _cmip_conf:
@@ -7,6 +8,8 @@ class _cmip_conf:
 
     def __init__(self):
         raise ValueError("Use 'conf.cmip5' of 'conf.cmip6' instead")
+
+    # note: properties are defined in conf.py
 
     @property
     def cmip(self):
@@ -50,7 +53,17 @@ class _cmip_conf:
     def scenarios_all_incl_hist(self):
         return self._scenarios_all + ["historical"]
 
+    @property
+    def ANOMALY_YR_START(self):
+        return self._ANOMALY_YR_START
+
+    @property
+    def ANOMALY_YR_END(self):
+        return self._ANOMALY_YR_END
+
     def load_postprocessed(self, **metadata):
+        """ load postprocessed data for a single scenario
+        """
 
         fN = self.files_post.create_full_name(**metadata)
 
@@ -68,14 +81,15 @@ class _cmip_conf:
         metadata : metadata
             Metadata idenrtifiying the simulation to load.
 
-        ..note:: "exp" can not be historical
+        ..note:: ``exp="historical"`` raises a ValueError
+        use load_postprocessed instead
 
         """
 
         exp = metadata.pop("exp")
 
-        msg = f"Use 'load_postprocessed' to load historical scen"
-        assert exp != "historical", msg
+        if exp == "historical":
+            raise ValueError("Use 'load_postprocessed' to load historical exp")
 
         # load historical
         hist = self.load_postprocessed(exp="historical", **metadata)
@@ -83,6 +97,7 @@ class _cmip_conf:
             self._not_found(exp="historical", **metadata)
             return []
 
+        # cut to the historical period
         hist = hist.sel(time=self.hist_period)
 
         # load projection
@@ -91,10 +106,43 @@ class _cmip_conf:
             self._not_found(exp=exp, **metadata)
             return []
 
+        # cut to the projection period
         proj = proj.sel(time=self.proj_period)
 
         # combine
         return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
+
+    def load_postprocessed_concat_all(
+        self, varn, postprocess, exp=None, anomaly="absolute", groupby=True
+    ):
+
+        if exp is None:
+            exp = self.scenarios
+
+        files = self.files_post.find_files(varn=varn, postprocess=postprocess, exp=exp)
+
+        output = list()
+
+        for fN, metadata in files:
+            # print(fN, metadata)
+            ds = self.load_postprocessed_concat(**metadata)
+
+            if ds and anomaly:
+                ds = computation.calc_anomaly(
+                    ds,
+                    start=self.ANOMALY_YR_START,
+                    end=self.ANOMALY_YR_END,
+                    metadata=metadata,
+                    how=anomaly,
+                )
+
+            if ds and groupby:
+                ds = ds.groupby("time.year").mean("time")
+
+            if ds:
+                output.append((ds, metadata))
+
+        return output
 
     def _not_found(self, **metadata):
 
