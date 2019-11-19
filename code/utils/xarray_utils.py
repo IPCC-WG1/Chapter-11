@@ -6,7 +6,9 @@ import xarray as xr
 from .file_utils import _any_file_does_not_exist
 
 
-def postprocess(fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, **kwargs):
+def postprocess(
+    fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, **kwargs
+):
     """ postprocessing-on-the-fly and loading function
 
     """
@@ -69,7 +71,8 @@ def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwa
         coords="minimal",
         data_vars="minimal",
         compat="override",
-        # preprocess=preprocess
+        parallel=True,
+        # preprocess=preprocess,
     )
 
     if fixes is not None:
