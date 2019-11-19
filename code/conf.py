@@ -5,9 +5,19 @@ from utils.cmip import _cmip_conf
 
 # CONFIGURATION FILE
 
-# folder where the postprocessed data is stored
+# =============================================================================
+# Folders for the postprocessed data and figures
+# =============================================================================
+
 root_folder_postprocessed_data = "../data/"
 root_folder_figures = "../figures/"
+
+# =============================================================================
+# Reference Period
+# =============================================================================
+
+ANOMALY_YR_START = 1851
+ANOMALY_YR_END = 1900
 
 # =============================================================================
 # CMIP5 Configuration
@@ -38,6 +48,9 @@ class _cmip5_conf(_cmip_conf):
 
         self._scenarios_all = ["rcp26", "rcp45", "rcp60", "rcp85"]
         self._scenarios = ["rcp26", "rcp45", "rcp60", "rcp85"]
+
+        self._ANOMALY_YR_START = ANOMALY_YR_START
+        self._ANOMALY_YR_END = ANOMALY_YR_END
 
 
 cmip5 = _cmip5_conf()
@@ -80,15 +93,11 @@ class _cmip6_conf(_cmip_conf):
         ]
         self._scenarios = ["ssp126", "ssp245", "ssp460", "ssp585"]
 
+        self._ANOMALY_YR_START = ANOMALY_YR_START
+        self._ANOMALY_YR_END = ANOMALY_YR_END
+
 
 cmip6 = _cmip6_conf()
-
-# =============================================================================
-# Reference Period
-# =============================================================================
-
-ANOMALY_YR_START = 1851
-ANOMALY_YR_END = 1900
 
 # =============================================================================
 # Scenarios - CMIP5
