@@ -2,9 +2,12 @@ import numpy as np
 import xarray as xr
 
 
-def _maybe_remove_fN(fNs, to_remove):
+def _maybe_remove_fN(fNs, *files_to_remove):
 
-    return [i for i in fNs if to_remove not in i]
+    for file_to_remove in files_to_remove:
+        fNs = [i for i in fNs if file_to_remove not in i]
+
+    return fNs
 
 
 def _corresponds_to(metadata, **conditions):

@@ -13,15 +13,20 @@ def list_files_monotonic(folder):
     files = _glob(folder)
 
     for fN in files:
-        ds = xr.open_dataset(fN, use_cftime=True)
+        ds = xr.open_dataset(fN, decode_cf=False)
 
+        cal = ds["time"].calendar
+        len_time = len(ds["time"])
+
+        ds = xr.conventions.decode_cf(ds, use_cftime=True)
         index = ds.indexes["time"]
-
         print(
             fN,
             index.is_monotonic,
             index.is_monotonic_decreasing,
             index.is_monotonic_increasing,
+            cal,
+            len_time,
         )
 
 
