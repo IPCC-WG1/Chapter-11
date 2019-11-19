@@ -1,6 +1,5 @@
 import numpy as np
-
-from conf import ANOMALY_YR_START, ANOMALY_YR_END
+import xarray as xr
 
 
 def time_in_range(start, end, yr_min, yr_max, metadata):
@@ -22,8 +21,8 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
 
 def calc_anomaly(
     ds,
-    start=ANOMALY_YR_START,
-    end=ANOMALY_YR_END,
+    start,
+    end,
     how="absolute",
     skipna=None,
     metadata=None,
@@ -100,3 +99,82 @@ def calc_year_of_warming_level(anomalies, warming_level):
     end = int(central_year + (20 / 2 - 1))
 
     return beg, end, central_year
+
+
+def select_by_metadata(datalist, **attributes):
+    """Select specific metadata describing preprocessed data.
+    Parameters
+    ----------
+    metadata : list of (ds, metadata) pairs
+        A list of metadata describing preprocessed data.
+    **attributes :
+        Keyword arguments specifying the required variable attributes and
+        their values.
+        Use the value '*' to select any variable that has the attribute.
+
+    Returns
+    -------
+    list of (ds, metadata) pairs
+        A list of matching metadata.
+    """
+
+    selection = []
+    for data, attribs in datalist:
+
+        if all(
+                a in attribs and (
+                    attribs[a] == attributes[a] or attributes[a] == '*')
+                for a in attributes):
+            selection.append((data, attribs))
+    return selection
+
+
+def at_warming_level(tas_list, index_list, warming_level):
+    """ compute value of index at a certain warming level
+
+        Parameters
+        ==========
+        tas_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual mean global mean
+            temperature data.
+        index_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual data of the index.
+        warming_level : float
+            warming level at which to assess the index
+    """
+
+    out = list()
+
+    # loop through all global mean temperatures
+    for tas, metadata in tas_list:
+
+        # try to find the index
+        index = select_by_metadata(index_list,
+                                   model=metadata["model"],
+                                   exp=metadata["exp"],
+                                   ens=metadata["ens"],
+                                   )
+
+        # make sure only one dataset is found in index_list
+        assert len(index) <= 1, metadata
+
+        # an index was found for this tas dataset
+        if index:
+
+            tas = tas.tas.rolling(year=20, center=True).mean()
+
+            # determine year when the warming was first reached
+            beg, end, center = calc_year_of_warming_level(tas, warming_level)
+
+            # print(f"{beg} -- {end} {metadata['exp']} {metadata['model']} {metadata['ens']}")
+
+            if beg:
+                ds_idx = index[0][0]
+                metadata_idx = index[0][1]
+
+                # get the Dataarray
+                da_idx = ds_idx[metadata_idx["varn"]]
+                idx = da_idx.sel(year=slice(beg, end)).mean("year")
+                out.append(idx)
+
+    return xr.concat(out, dim="ens")
