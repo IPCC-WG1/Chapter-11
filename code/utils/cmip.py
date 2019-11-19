@@ -29,13 +29,27 @@ class _cmip_conf:
     def figure_folder(self):
         return self._figure_folder
 
+    @staticmethod
+    def _period_int(period):
+        start = int(period.start)
+        stop = int(period.stop)
+        return slice(start, stop)
+
     @property
     def hist_period(self):
         return self._hist_period
 
     @property
+    def hist_period_int(self):
+        return self._period_int(self._hist_period)
+
+    @property
     def proj_period(self):
         return self._proj_period
+
+    @property
+    def proj_period_int(self):
+        return self._period_int(self._proj_period)
 
     @property
     def scenarios(self):
