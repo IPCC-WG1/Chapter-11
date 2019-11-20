@@ -10,7 +10,10 @@ def _glob(folder):
 
 def list_files_monotonic(folder):
 
-    files = _glob(folder)
+    if isinstance(folder, str):
+        files = _glob(folder)
+    else:
+        files = folder
 
     for fN in files:
         ds = xr.open_dataset(fN, decode_cf=False)
@@ -41,9 +44,18 @@ def plot_time_spans_folder(folder):
 
 def parse_filename_time(files):
 
-    fmt = "{}_{:4d}{:2d}{:2d}-{:4d}{:2d}{:2d}.nc"
+    fileend = [file.split("_")[-1] for file in files]
 
-    return [parse.parse(fmt, f).fixed[1:] for f in files]
+    if len(fileend[0]) == 16:
+        fmt = "{:4d}{:2d}-{:4d}{:2d}.nc"
+        out = list()
+        for fe in fileend:
+            r = parse.parse(fmt, fe).fixed
+            out.append(r[:2] + (1,) + r[-2:] + (30,))
+        return out
+    else:
+        fmt = "{:4d}{:2d}{:2d}-{:4d}{:2d}{:2d}.nc"
+        return [parse.parse(fmt, f).fixed for f in fileend]
 
 
 def plot_filename_time(result):
@@ -51,6 +63,9 @@ def plot_filename_time(result):
     ax = plt.gca()
 
     for i, r in enumerate(result):
+        print(r)
         beg = (r[0] * 365 + (r[1] - 1) * 30 + r[2]) / 365
         end = (r[3] * 365 + (r[4] - 1) * 30 + r[5]) / 365
+
+        print(beg, end)
         ax.plot([beg, end], [i, i], lw=10, solid_capstyle="butt")
