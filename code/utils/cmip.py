@@ -1,4 +1,7 @@
 import xarray as xr
+
+import filefinder as ff
+
 from .file_utils import _file_exists
 from . import computation
 
@@ -126,8 +129,49 @@ class _cmip_conf:
         # combine
         return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
 
-    def load_postprocessed_concat_all(
-        self, varn, postprocess, exp=None, anomaly="absolute", groupby=True
+    def load_postprocessed_all(
+        self, varn, postprocess, exp, anomaly="absolute", groupby=True, ensnumber=0
+    ):
+        """load postprocessed data for all models for a given scenario"""
+
+        func = self.load_postprocessed
+
+        self._load_postprocessed_all_maybe_concat(
+            varn=varn,
+            postprocess=postprocess,
+            exp=exp,
+            anomaly=anomaly,
+            groupby=groupby,
+            ensnumber=ensnumber,
+            func=func,
+        )
+
+    def load_postprocessed_all_concat(
+        self, varn, postprocess, exp=None, anomaly="absolute", groupby=True, ensnumber=0
+    ):
+        """load postprocessed data for all models concat for historical and scenario"""
+
+        func = self.load_postprocessed_concat
+
+        self._load_postprocessed_all_maybe_concat(
+            varn=varn,
+            postprocess=postprocess,
+            exp=exp,
+            anomaly=anomaly,
+            groupby=groupby,
+            ensnumber=ensnumber,
+            func=func,
+        )
+
+    def _load_postprocessed_all_maybe_concat(
+        self,
+        varn,
+        postprocess,
+        exp=None,
+        anomaly="absolute",
+        groupby=True,
+        ensnumber=0,
+        func=None,
     ):
 
         if exp is None:
@@ -135,11 +179,15 @@ class _cmip_conf:
 
         files = self.files_post.find_files(varn=varn, postprocess=postprocess, exp=exp)
 
+        files = ff.cmip.parse_ens(files)
+        files = ff.cmip.create_ensnumber(files)
+        files = files.search(ensnumber=ensnumber)
+
         output = list()
 
         for fN, metadata in files:
             # print(fN, metadata)
-            ds = self.load_postprocessed_concat(**metadata)
+            ds = func(**metadata)
 
             if ds and anomaly:
                 ds = computation.calc_anomaly(
