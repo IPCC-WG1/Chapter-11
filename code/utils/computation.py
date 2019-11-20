@@ -19,14 +19,7 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
         return True
 
 
-def calc_anomaly(
-    ds,
-    start,
-    end,
-    how="absolute",
-    skipna=None,
-    metadata=None,
-):
+def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
     """calc anomaly of dataset
 
         Parameters
@@ -122,9 +115,9 @@ def select_by_metadata(datalist, **attributes):
     for data, attribs in datalist:
 
         if all(
-                a in attribs and (
-                    attribs[a] == attributes[a] or attributes[a] == '*')
-                for a in attributes):
+            a in attribs and (attribs[a] == attributes[a] or attributes[a] == "*")
+            for a in attributes
+        ):
             selection.append((data, attribs))
     return selection
 
@@ -149,11 +142,12 @@ def at_warming_level(tas_list, index_list, warming_level):
     for tas, metadata in tas_list:
 
         # try to find the index
-        index = select_by_metadata(index_list,
-                                   model=metadata["model"],
-                                   exp=metadata["exp"],
-                                   ens=metadata["ens"],
-                                   )
+        index = select_by_metadata(
+            index_list,
+            model=metadata["model"],
+            exp=metadata["exp"],
+            ens=metadata["ens"],
+        )
 
         # make sure only one dataset is found in index_list
         assert len(index) <= 1, metadata
