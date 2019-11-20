@@ -182,11 +182,19 @@ process_cmip6_data = _ProcessCmipData(conf.cmip6, fixes.cmip6_data, fixes.cmip6_
 def tas_globmean():
 
     process_cmip5_data.global_mean_from_orig(
-        table="Amon", varn="tas", postprocess_name="global_mean", exp=None
+        table="Amon",
+        varn="tas",
+        postprocess_name="global_mean",
+        exp=conf.cmip5.scenarios_all_incl_hist,
+        ensnumber=None,
     )
 
     process_cmip6_data.global_mean_from_orig(
-        table="Amon", varn="tas", postprocess_name="global_mean", exp=None
+        table="Amon",
+        varn="tas",
+        postprocess_name="global_mean",
+        exp=conf.cmip6.scenarios_all_incl_hist,
+        ensnumber=None,
     )
 
 
