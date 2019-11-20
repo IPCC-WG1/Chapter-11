@@ -22,7 +22,10 @@ def parse_ens(filelist):
 
     df = pd.DataFrame(out, columns=keys)
 
-    filelist.df = filelist.df.assign(**df)
+    for key in df.columns:
+        filelist.df[key] = df[key].values
+
+    # filelist.df = filelist.df.assign(**df)
     return filelist
 
 
