@@ -34,14 +34,20 @@ def postprocess(
             return []
 
         # postprocess
-        ds = mf_read_netcdfs(
-            fNs_in,
-            dim=dim,
-            metadata=metadata,
-            transform_func=transform_func,
-            fixes=fixes,
-            **kwargs
-        )
+        try:
+            ds = mf_read_netcdfs(
+                fNs_in,
+                dim=dim,
+                metadata=metadata,
+                transform_func=transform_func,
+                fixes=fixes,
+                **kwargs
+            )
+        except Exception as e:
+            print("ERROR\n\n\n")
+            print(str(e))
+            print("ERROR\n\n\n")
+            return []
 
         if ds is None:
             return []
