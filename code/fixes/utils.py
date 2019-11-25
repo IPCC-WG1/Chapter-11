@@ -19,6 +19,8 @@ def list_files_monotonic(folder):
         ds = xr.open_dataset(fN, decode_cf=False)
 
         cal = ds["time"].calendar
+        units = ds["time"].units
+
         len_time = len(ds["time"])
 
         ds = xr.conventions.decode_cf(ds, use_cftime=True)
@@ -29,6 +31,7 @@ def list_files_monotonic(folder):
             index.is_monotonic_decreasing,
             index.is_monotonic_increasing,
             cal,
+            units,
             len_time,
         )
 
