@@ -136,7 +136,7 @@ class _cmip_conf:
 
         func = self.load_postprocessed
 
-        self._load_postprocessed_all_maybe_concat(
+        return self._load_postprocessed_all_maybe_concat(
             varn=varn,
             postprocess=postprocess,
             exp=exp,
@@ -153,7 +153,7 @@ class _cmip_conf:
 
         func = self.load_postprocessed_concat
 
-        self._load_postprocessed_all_maybe_concat(
+        return self._load_postprocessed_all_maybe_concat(
             varn=varn,
             postprocess=postprocess,
             exp=exp,
