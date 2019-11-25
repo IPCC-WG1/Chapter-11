@@ -16,6 +16,17 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # non-monotonic time - not sure where...
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="Amon",
+            varn="tas",
+            model="EC-Earth3",
+            ens="r3i1p1f1",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
