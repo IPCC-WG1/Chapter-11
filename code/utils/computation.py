@@ -76,6 +76,8 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
 def calc_year_of_warming_level(anomalies, warming_level):
     # calculate the start and end year of period of first exceedance
 
+    anomalies = anomalies.rolling(year=20, center=True).mean()
+
     # find years warmer than 'warming_level'
     sel = anomalies - warming_level > 0.0
 
@@ -154,8 +156,6 @@ def at_warming_level(tas_list, index_list, warming_level):
 
         # an index was found for this tas dataset
         if index:
-
-            tas = tas.tas.rolling(year=20, center=True).mean()
 
             # determine year when the warming was first reached
             beg, end, center = calc_year_of_warming_level(tas, warming_level)
