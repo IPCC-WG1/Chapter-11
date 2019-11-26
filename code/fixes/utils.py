@@ -38,7 +38,10 @@ def list_files_monotonic(folder):
 
 def plot_time_spans_folder(folder):
 
-    files = _glob(folder)
+    if isinstance(folder, str):
+        files = _glob(folder)
+    else:
+        files = folder
 
     parsed_time = parse_filename_time(files)
 
