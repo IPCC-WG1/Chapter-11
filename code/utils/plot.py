@@ -5,7 +5,14 @@ import matplotlib.pyplot as plt
 
 
 def at_warming_level(
-    at_warming_c5, at_warming_c6, unit, title, levels, average, mask_ocean=False, **kwargs
+    at_warming_c5,
+    at_warming_c6,
+    unit,
+    title,
+    levels,
+    average,
+    mask_ocean=False,
+    **kwargs
 ):
 
     # determine function for averaging
@@ -54,16 +61,12 @@ def at_warming_level(
             raise NotImplementedError()
 
     cbar = mpu.colorbar(
-        h, axes[-2], axes[-1], aspect=25, shrink=0.2, orientation="horizontal",
+        h, axes[-2], axes[-1], aspect=25, shrink=0.2, orientation="horizontal"
     )
     cbar.set_label(unit)
     cbar.ax.tick_params(labelsize=10)
 
-    titles = [
-        "Tglob anomaly +1.5 °C",
-        "Tglob anomaly +2.0 °C",
-        "Tglob anomaly +4.0 °C",
-    ]
+    titles = ["Tglob anomaly +1.5 °C", "Tglob anomaly +2.0 °C", "Tglob anomaly +4.0 °C"]
 
     # for i, ax in enumerate(axes[:4]):
     #     ax.set_title(titles[i], fontsize=8)
@@ -71,7 +74,6 @@ def at_warming_level(
     mpu.ylabel_map("Tglob anomaly +1.5 °C", ax=axes[0], fontsize=9, labelpad=6)
     mpu.ylabel_map("Tglob anomaly +2.0 °C", ax=axes[2], fontsize=9, labelpad=6)
     mpu.ylabel_map("Tglob anomaly +4.0 °C", ax=axes[4], fontsize=9, labelpad=6)
-
 
     axes[0].set_title("CMIP5", fontsize=11)
     axes[1].set_title("CMIP6", fontsize=11)

@@ -37,7 +37,7 @@ def warming_level_years(tas_list, warming_level, print_warming_level=True):
 def write_info(fid):
     fid.write(f"# author: Mathias Hauser\n")
     fid.write(f"# script: warming_levels.py\n")
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S\n')
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S\n")
     fid.write(f"# executed: {now}\n")
 
 
@@ -46,7 +46,7 @@ def write_warming_level_to_file(tas_list, conf_cmip):
     # all warming levels in the same file
 
     fN = conf_cmip.warming_levels_folder + "warming_levels_one_ens_all.yml"
-    with open(fN, 'w') as fid:
+    with open(fN, "w") as fid:
         write_info(fid)
         for warming_level in WARMING_LEVELS:
             string = warming_level_years(tas_list, warming_level)
@@ -57,22 +57,30 @@ def write_warming_level_to_file(tas_list, conf_cmip):
     for warming_level in WARMING_LEVELS:
 
         fN = conf_cmip.warming_levels_folder
-        fN += "warming_levels_one_ens_{}.yml".format(warming_level_to_str(warming_level))
+        fN += "warming_levels_one_ens_{}.yml".format(
+            warming_level_to_str(warming_level)
+        )
 
-        with open(fN, 'w') as fid:
+        with open(fN, "w") as fid:
             write_info(fid)
-            string = warming_level_years(tas_list, warming_level, print_warming_level=False)
+            string = warming_level_years(
+                tas_list, warming_level, print_warming_level=False
+            )
             fid.write(string)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     WARMING_LEVELS = [1.5, 2.0, 3.0, 4.0]
 
     # load data
-    c5_tas = conf.cmip5.load_postprocessed_all_concat(varn="tas", postprocess="global_mean")
+    c5_tas = conf.cmip5.load_postprocessed_all_concat(
+        varn="tas", postprocess="global_mean"
+    )
 
-    c6_tas = conf.cmip6.load_postprocessed_all_concat(varn="tas", postprocess="global_mean")
+    c6_tas = conf.cmip6.load_postprocessed_all_concat(
+        varn="tas", postprocess="global_mean"
+    )
 
     # write warming levels to file
     write_warming_level_to_file(c5_tas, conf.cmip5)
