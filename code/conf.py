@@ -17,7 +17,7 @@ root_folder_warming_levels = "../warming_levels/"
 # Reference Period
 # =============================================================================
 
-ANOMALY_YR_START = 1851
+ANOMALY_YR_START = 1850
 ANOMALY_YR_END = 1900
 
 # =============================================================================
