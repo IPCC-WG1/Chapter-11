@@ -46,7 +46,7 @@ class _cmip5_conf(_cmip_conf):
         self._warming_levels_folder = root_folder_warming_levels + "cmip5/cmip5_"
 
         self._hist_period = slice("1850", "2005")
-        self._proj_period = slice("2006", "2099")
+        self._proj_period = slice("2006", "2100")
 
         self._scenarios_all = ["rcp26", "rcp45", "rcp60", "rcp85"]
         self._scenarios = ["rcp26", "rcp45", "rcp60", "rcp85"]
@@ -83,7 +83,7 @@ class _cmip6_conf(_cmip_conf):
         self._warming_levels_folder = root_folder_warming_levels + "cmip6/cmip6_"
 
         self._hist_period = slice("1850", "2014")
-        self._proj_period = slice("2015", "2099")
+        self._proj_period = slice("2015", "2100")
 
         self._scenarios_all = [
             "ssp119",
