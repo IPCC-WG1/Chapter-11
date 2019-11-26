@@ -1,5 +1,5 @@
 import glob
-from ._fixes_common import fixes_common, _corresponds_to
+from ._fixes_common import fixes_common, _corresponds_to, _remove_matching_fN
 
 
 def cmip6_files(folder_in):
@@ -35,6 +35,20 @@ def cmip6_files(folder_in):
         # =========================================================================
 
         # fixes after glob
+
+        if _corresponds_to(
+            metadata,
+            exp="piControl",
+            table="day",
+            varn="tasmin",
+            model="FIO-ESM-2-0",
+            ens="r1i1p1f1",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in,
+                "tasmin_day_FIO-ESM-2-0_piControl_r1i1p1f1_gn_03001231-04010109.nc",
+                "tasmin_day_FIO-ESM-2-0_piControl_r1i1p1f1_gn_04010110-05010119.nc",
+            )
 
         return fNs_in
 

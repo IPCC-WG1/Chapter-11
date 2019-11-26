@@ -121,6 +121,31 @@ class _ProcessCmipData:
                 fixes=self.fixes_data,
             )
 
+    def postprocess_from_orig(
+        self, table, varn, postprocess_name, transform_func, exp=None, **kwargs
+    ):
+
+        files = self.find_input_orig(table=table, varn=varn, exp=exp, **kwargs)
+
+        self._create_folder_for_output(files, postprocess_name)
+
+        for folder_in, metadata in files:
+
+            fN_out = self.conf_cmip.files_post.create_full_name(
+                **metadata, postprocess=postprocess_name
+            )
+
+            print(metadata)
+            print(folder_in)
+
+            xru.postprocess(
+                fN_out,
+                fNs_in_or_creator=self.fixes_files(folder_in),
+                metadata=metadata,
+                transform_func=transform_func,
+                fixes=self.fixes_data,
+            )
+
     def regrid_from_post(
         self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
     ):
@@ -249,6 +274,75 @@ def txx():
     )
 
 
+# # =============================================================================
+# # calculate tnn
+# # =============================================================================
+
+
+def tnn():
+
+    transform_func = ResampleAnnual(var="tasmin", how="min")
+
+    process_cmip5_data.postprocess_from_orig(
+        table="day",
+        varn="tasmin",
+        postprocess_name="tnn",
+        transform_func=transform_func,
+        exp=None,
+    )
+
+    process_cmip6_data.postprocess_from_orig(
+        table="day",
+        varn="tasmin",
+        postprocess_name="tnn",
+        transform_func=transform_func,
+        exp=None,
+    )
+
+    process_cmip5_data.postprocess_from_orig(
+        table="day",
+        varn="tasmin",
+        postprocess_name="tnn",
+        transform_func=transform_func,
+        exp="piControl",
+    )
+
+    process_cmip6_data.postprocess_from_orig(
+        table="day",
+        varn="tasmin",
+        postprocess_name="tnn",
+        transform_func=transform_func,
+        exp="piControl",
+    )
+
+    # # regrid tnn
+    # # =============================================================================
+
+    process_cmip5_data.regrid_from_post(
+        varn="tasmin", postprocess_before="tnn", postprocess_name="tnn_regrid", exp="*"
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="tasmin", postprocess_before="tnn", postprocess_name="tnn_regrid", exp="*"
+    )
+
+    # # region average tnn
+    # # =============================================================================
+
+    process_cmip5_data.region_average_from_post(
+        varn="tasmin",
+        postprocess_before="tnn",
+        postprocess_name="tnn_reg_ave_ar6",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="tasmin",
+        postprocess_before="tnn",
+        postprocess_name="tnn_reg_ave_ar6",
+        exp="*",
+    )
+
+
 # =============================================================================
 # calculate rx1day
 # =============================================================================
@@ -331,6 +425,9 @@ def main(args=None):
 
     if postprocess == "txx":
         txx()
+
+    if postprocess == "tnn":
+        tnn()
 
     if postprocess == "rx1day":
         rx1day()
