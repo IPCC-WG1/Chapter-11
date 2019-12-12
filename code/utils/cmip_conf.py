@@ -7,12 +7,12 @@ from . import computation
 
 
 class _cmip_conf:
-    """docstring for cmip5_Conf"""
+    """common configuration for cmip5 and cmip6"""
 
     def __init__(self):
         raise ValueError("Use 'conf.cmip5' of 'conf.cmip6' instead")
 
-    # note: properties are defined in conf.py
+    # properties are defined in conf.py
 
     @property
     def cmip(self):
@@ -27,6 +27,11 @@ class _cmip_conf:
     def files_post(self):
         """FileFinder for the postprocessed cmip data"""
         return self._files_post
+
+    @property
+    def files_fx(self):
+        """FileFinder for the fx files (e.g. land fraction)"""
+        return self._files_fx
 
     @property
     def figure_folder(self):
@@ -151,7 +156,13 @@ class _cmip_conf:
         )
 
     def load_postprocessed_all_concat(
-        self, varn, postprocess, exp=None, anomaly="absolute", year_mean=True, ensnumber=0
+        self,
+        varn,
+        postprocess,
+        exp=None,
+        anomaly="absolute",
+        year_mean=True,
+        ensnumber=0,
     ):
         """load postprocessed data for all models concat for historical and scenario"""
 

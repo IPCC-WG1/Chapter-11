@@ -1,7 +1,7 @@
 import numpy as np
 
 from filefinder import FileFinder
-from utils.cmip import _cmip_conf
+from utils.cmip_conf import _cmip_conf
 
 # CONFIGURATION FILE
 
@@ -42,6 +42,11 @@ class _cmip5_conf(_cmip_conf):
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}.nc",
         )
 
+        self._files_fx = FileFinder(
+            path_pattern="/net/atmos/data/cmip5/{exp}/fx/{varn}/{model}/r0i0p0/",
+            file_pattern="{varn}_fx_{model}_{exp}_r0i0p0.nc",
+        )
+
         self._figure_folder = root_folder_figures + "cmip5/cmip5_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip5/cmip5_"
 
@@ -77,6 +82,11 @@ class _cmip6_conf(_cmip_conf):
         self._files_post = FileFinder(
             path_pattern=root_folder_postprocessed_data + "cmip6/{varn}/{postprocess}/",
             file_pattern="{postprocess}_{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
+        )
+
+        self._files_fx = FileFinder(
+            path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
+            file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
         )
 
         self._figure_folder = root_folder_figures + "cmip6/cmip6_"
