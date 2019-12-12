@@ -11,16 +11,18 @@ check_devel=true
 # can be helpful to ensure you run on a server
 print_hostname=true
 
+port=55000
 
 # ========================
 
 # show help
-if [ "$0" = "$BASH_SOURCE" ] && [ "$1" != "n" ] ; then
+if [ "$0" = "$BASH_SOURCE" ] && [ "$1" != "n" ] && [ "$1" != "r" ] ; then
 	echo USAGE
 
 	echo "source the file as 'source startup' to load the conda environment"
 	echo ""
-	echo "run as './startup n' to start jupyter notebook" 
+	echo "run as './startup n' to start jupyter notebook"
+    echo "run as './startup r' to start jupyter notebook without browser (for remote)"
 
 	exit 1
 fi
@@ -53,7 +55,8 @@ if [ -z ${CONDA_DEFAULT_ENV+x} ] || [ $CONDA_DEFAULT_ENV != "${dest_env}" ]; the
 	        echo ""
 		echo "The following packages are in development mode:"
 		conda list | grep '<develop>' | awk '{print $1}'
-        fi
+        echo
+    fi
 else
 	echo "Conda environment already loaded -- skipping"
 fi
@@ -61,9 +64,12 @@ fi
 # open jupyter notebook
 if [ "$1" = "n" ]; then
   jupyter notebook --browser=chromium
-else
-  echo ''
-
 fi
 
+if [ "$1" = "r" ]; then
+  echo "Use the following to tunnel the notebook (CHECK PORT NUMBERS)"
+  echo "ssh -f -N -L localhost:8888:localhost:$port ${HOSTNAME}"
+  echo
 
+  jupyter notebook --no-browser --port ${port}
+fi
