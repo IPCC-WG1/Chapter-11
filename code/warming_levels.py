@@ -82,7 +82,7 @@ def write_warming_level_to_file(tas_list, conf_cmip, add_grid_info=False):
     #         fid.write(string)
 
 
-WARMING_LEVELS = [1.5, 2.0, 3.0, 4.0]
+WARMING_LEVELS = [1.0, 1.5, 2.0, 3.0, 4.0, 0.61]
 
 if __name__ == "__main__":
 
