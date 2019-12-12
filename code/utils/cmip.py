@@ -88,7 +88,7 @@ class _cmip_conf:
 
         fN = self.files_post.create_full_name(**metadata)
 
-        # no error on missing file?
+        # error on missing file?
         if not _file_exists(fN):
             return []
 
@@ -151,7 +151,7 @@ class _cmip_conf:
         )
 
     def load_postprocessed_all_concat(
-        self, varn, postprocess, exp=None, anomaly="absolute", groupby=True, ensnumber=0
+        self, varn, postprocess, exp=None, anomaly="absolute", year_mean=True, ensnumber=0
     ):
         """load postprocessed data for all models concat for historical and scenario"""
 
@@ -162,7 +162,7 @@ class _cmip_conf:
             postprocess=postprocess,
             exp=exp,
             anomaly=anomaly,
-            groupby=groupby,
+            year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
         )
@@ -173,7 +173,7 @@ class _cmip_conf:
         postprocess,
         exp=None,
         anomaly="absolute",
-        groupby=True,
+        year_mean=True,
         ensnumber=0,
         func=None,
     ):
@@ -202,7 +202,7 @@ class _cmip_conf:
                     how=anomaly,
                 )
 
-            if ds and groupby:
+            if ds and year_mean:
                 ds = ds.groupby("time.year").mean("time")
 
             if ds:
