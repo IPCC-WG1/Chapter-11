@@ -139,7 +139,7 @@ class _cmip_conf:
         return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
 
     def load_postprocessed_all(
-        self, varn, postprocess, exp, anomaly="absolute", groupby=True, ensnumber=0
+        self, varn, postprocess, exp, anomaly="absolute", year_mean=True, ensnumber=0
     ):
         """load postprocessed data for all models for a given scenario"""
 
@@ -150,7 +150,7 @@ class _cmip_conf:
             postprocess=postprocess,
             exp=exp,
             anomaly=anomaly,
-            groupby=groupby,
+            year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
         )
