@@ -12,17 +12,22 @@ def warming_level_to_str(warming_level):
 
 
 def warming_level_years(
-    tas_list, warming_level, print_warming_level=True, add_grid_info=False
+    tas_list, warming_level, start_clim, end_clim, print_warming_level=True, add_grid_info=False
 ):
 
-    out = f"# warming level: {warming_level}°C above 1850-1900\n"
+    out = f"# warming level: {warming_level}°C above {start_clim}-{end_clim}\n"
 
+    # creates yml dict
     if print_warming_level:
         out += "warming_level_{}:\n".format(warming_level_to_str(warming_level))
 
     for ds, metadata in tas_list:
 
-        beg, end, mid = computation.calc_year_of_warming_level(ds.tas, warming_level)
+        ds = computation.calc_anomaly(
+            ds.tas, start=start_clim, end=end_clim, metadata=metadata, how="absolute",
+        )
+
+        beg, end, mid = computation.calc_year_of_warming_level(ds, warming_level)
 
         fmt = " {{model: {model}, ensemble: {ens}, exp: {exp}"
 
@@ -48,41 +53,37 @@ def write_info(fid):
     fid.write(f"# executed: {now}\n")
 
 
-def write_warming_level_to_file(tas_list, conf_cmip, add_grid_info=False):
+def write_warming_level_to_file(
+    tas_list, conf_cmip, warming_levels, clim=None, add_grid_info=False
+):
 
     # all warming levels in the same file
 
-    if add_grid_info:
-        fN = conf_cmip.warming_levels_folder + "warming_levels_one_ens_grid.yml"
+    if clim is None:
+        start_clim = conf_cmip.ANOMALY_YR_START
+        end_clim = conf_cmip.ANOMALY_YR_END
     else:
-        fN = conf_cmip.warming_levels_folder + "warming_levels_one_ens.yml"
+        start_clim, end_clim = clim
+
+    if add_grid_info:
+        fN = (
+            conf_cmip.warming_levels_folder
+            + f"warming_levels_one_ens_{start_clim}_{end_clim}_grid.yml"
+        )
+    else:
+        fN = (
+            conf_cmip.warming_levels_folder
+            + f"warming_levels_one_ens_{start_clim}_{end_clim}.yml"
+        )
 
     with open(fN, "w") as fid:
         write_info(fid)
-        for warming_level in WARMING_LEVELS:
+        for warming_level in warming_levels:
             string = warming_level_years(
-                tas_list, warming_level, add_grid_info=add_grid_info
+                tas_list, warming_level, start_clim, end_clim, add_grid_info=add_grid_info
             )
             fid.write(string)
 
-    # one file for all warming levels
-
-    # for warming_level in WARMING_LEVELS:
-
-    #     fN = conf_cmip.warming_levels_folder
-    #     fN += "warming_levels_one_ens_{}.yml".format(
-    #         warming_level_to_str(warming_level)
-    #     )
-
-    #     with open(fN, "w") as fid:
-    #         write_info(fid)
-    #         string = warming_level_years(
-    #             tas_list, warming_level, print_warming_level=False
-    #         )
-    #         fid.write(string)
-
-
-WARMING_LEVELS = [1.0, 1.5, 2.0, 3.0, 4.0, 0.61]
 
 if __name__ == "__main__":
 
@@ -95,9 +96,23 @@ if __name__ == "__main__":
         varn="tas", postprocess="global_mean"
     )
 
+    warming_levels = [1.0, 1.5, 2.0, 3.0, 4.0, 0.61]
+
     # write warming levels to file
-    write_warming_level_to_file(c5_tas, conf.cmip5)
+    write_warming_level_to_file(c5_tas, conf.cmip5, warming_levels)
 
-    write_warming_level_to_file(c6_tas, conf.cmip6)
+    write_warming_level_to_file(c6_tas, conf.cmip6, warming_levels)
 
-    write_warming_level_to_file(c6_tas, conf.cmip6, add_grid_info=True)
+    write_warming_level_to_file(c6_tas, conf.cmip6, warming_levels, add_grid_info=True)
+
+    # for Chapter 4
+    warming_levels = [0.94, 3.43]
+
+    # write warming levels to file
+    write_warming_level_to_file(c5_tas, conf.cmip5, warming_levels, clim=(1995, 2014))
+
+    write_warming_level_to_file(c6_tas, conf.cmip6, warming_levels, clim=(1995, 2014))
+
+    write_warming_level_to_file(
+        c6_tas, conf.cmip6, warming_levels, clim=(1995, 2014), add_grid_info=True
+    )
