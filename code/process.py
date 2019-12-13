@@ -71,56 +71,6 @@ class _ProcessCmipData:
 
         return files
 
-    def global_mean_from_orig(
-        self, table, varn, postprocess_name="global_mean", exp=None, **kwargs
-    ):
-
-        files = self.find_input_orig(table=table, varn=varn, exp=exp, **kwargs)
-
-        self._create_folder_for_output(files, postprocess_name)
-
-        for folder_in, metadata in files:
-
-            fN_out = self.conf_cmip.files_post.create_full_name(
-                **metadata, postprocess=postprocess_name
-            )
-
-            print(metadata)
-            print(folder_in)
-
-            xru.postprocess(
-                fN_out,
-                fNs_in_or_creator=self.fixes_files(folder_in),
-                metadata=metadata,
-                transform_func=Globmean(var=metadata["varn"]),
-                fixes=self.fixes_data,
-            )
-
-    def resample_annual_from_orig(
-        self, table, varn, postprocess_name, how, exp=None, **kwargs
-    ):
-
-        files = self.find_input_orig(table=table, varn=varn, exp=exp, **kwargs)
-
-        self._create_folder_for_output(files, postprocess_name)
-
-        for folder_in, metadata in files:
-
-            fN_out = self.conf_cmip.files_post.create_full_name(
-                **metadata, postprocess=postprocess_name
-            )
-
-            print(metadata)
-            print(folder_in)
-
-            xru.postprocess(
-                fN_out,
-                fNs_in_or_creator=self.fixes_files(folder_in),
-                metadata=metadata,
-                transform_func=ResampleAnnual(var=metadata["varn"], how=how),
-                fixes=self.fixes_data,
-            )
-
     def postprocess_from_orig(
         self, table, varn, postprocess_name, transform_func, exp=None, **kwargs
     ):
@@ -145,6 +95,36 @@ class _ProcessCmipData:
                 transform_func=transform_func,
                 fixes=self.fixes_data,
             )
+
+    def global_mean_from_orig(
+        self, table, varn, postprocess_name="global_mean", exp=None, **kwargs
+    ):
+
+        transform_func = (Globmean(var=varn),)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def resample_annual_from_orig(
+        self, table, varn, postprocess_name, how, exp=None, **kwargs
+    ):
+
+        transform_func = ResampleAnnual(var=varn, how=how)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def region_average_from_orig(
+        self, table, varn, postprocess_name, exp=None, **kwargs
+    ):
+
+        transform_func = RegionAverage(varn, regions=regions.ar6_region)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
 
     def regrid_from_post(
         self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
@@ -220,6 +200,25 @@ def tas_globmean():
         postprocess_name="global_mean",
         exp=conf.cmip6.scenarios_all_incl_hist,
         ensnumber=None,
+    )
+
+
+def tas_reg_ave():
+
+    process_cmip5_data.region_average_from_orig(
+        table="Amon",
+        varn="tas",
+        postprocess_name="reg_ave_ar6",
+        exp=conf.cmip5.scenarios_all_incl_hist,
+        ensnumber=0,
+    )
+
+    process_cmip6_data.region_average_from_orig(
+        table="Amon",
+        varn="tas",
+        postprocess_name="reg_ave_ar6",
+        exp=conf.cmip6.scenarios_all_incl_hist,
+        ensnumber=0,
     )
 
 
@@ -422,6 +421,10 @@ def main(args=None):
 
     if postprocess == "tas_globmean":
         tas_globmean()
+
+    if postprocess == "tas_reg_ave":
+        tas_reg_ave()
+
 
     if postprocess == "txx":
         txx()
