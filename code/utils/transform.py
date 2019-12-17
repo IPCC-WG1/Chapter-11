@@ -75,7 +75,7 @@ class ResampleAnnual(_ProcessWithXarray):
             if func is None:
                 raise KeyError(f"how cannot be '{self.how}'")
 
-            da = func("time", **self.kwargs)
+            da = func(dim="time", **self.kwargs)
 
             ds = da.to_dataset(name=self.var)
             ds.attrs = attrs
