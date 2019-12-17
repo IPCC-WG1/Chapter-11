@@ -124,6 +124,34 @@ def select_by_metadata(datalist, **attributes):
     return selection
 
 
+def remove_by_metadata(datalist, **attributes):
+    """Select specific metadata describing preprocessed data.
+    Parameters
+    ----------
+    metadata : list of (ds, metadata) pairs
+        A list of metadata describing preprocessed data.
+    **attributes :
+        Keyword arguments specifying the required variable attributes and
+        their values.
+        Use the value '*' to select any variable that has the attribute.
+
+    Returns
+    -------
+    list of (ds, metadata) pairs
+        A list of matching metadata.
+    """
+
+    selection = []
+    for data, attribs in datalist:
+
+        if any(
+            a in attribs and (attribs[a] != attributes[a])
+            for a in attributes
+        ):
+            selection.append((data, attribs))
+    return selection
+
+
 def at_warming_level(tas_list, index_list, warming_level):
     """ compute value of index at a certain warming level
 
