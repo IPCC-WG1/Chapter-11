@@ -495,6 +495,9 @@ def main(args=None):
     if postprocess == "txx":
         txx()
 
+    if postprocess == "txp95":
+        txp95()
+
     if postprocess == "tnn":
         tnn()
 
