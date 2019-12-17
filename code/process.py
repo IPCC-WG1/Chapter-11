@@ -116,6 +116,16 @@ class _ProcessCmipData:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+    def resample_annual_quantile_from_orig(
+        self, table, varn, postprocess_name, q, exp=None, **kwargs
+    ):
+
+        transform_func = ResampleAnnual(var=varn, how="quantile", q=q)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
     def region_average_from_orig(
         self, table, varn, postprocess_name, exp=None, **kwargs
     ):
@@ -274,6 +284,63 @@ def txx():
 
 
 # # =============================================================================
+# # calculate txp95
+# # =============================================================================
+
+
+def txp95():
+
+    process_cmip5_data.resample_annual_quantile_from_orig(
+        table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp=None
+    )
+
+    process_cmip6_data.resample_annual_quantile_from_orig(
+        table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp=None
+    )
+
+    # process_cmip5_data.resample_annual_quantile_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp="piControl"
+    # )
+    #
+    # process_cmip6_data.resample_annual_quantile_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp="piControl"
+    # )
+
+    # # regrid txp95
+    # # =============================================================================
+
+    process_cmip5_data.regrid_from_post(
+        varn="tasmax",
+        postprocess_before="txp95",
+        postprocess_name="txp95_regrid",
+        exp="*",
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="tasmax",
+        postprocess_before="txp95",
+        postprocess_name="txp95_regrid",
+        exp="*",
+    )
+
+    # # region average txp95
+    # # =============================================================================
+
+    process_cmip5_data.region_average_from_post(
+        varn="tasmax",
+        postprocess_before="txp95",
+        postprocess_name="txp95_reg_ave_ar6",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="tasmax",
+        postprocess_before="txp95",
+        postprocess_name="txp95_reg_ave_ar6",
+        exp="*",
+    )
+
+
+# # =============================================================================
 # # calculate tnn
 # # =============================================================================
 
@@ -424,7 +491,6 @@ def main(args=None):
 
     if postprocess == "tas_reg_ave":
         tas_reg_ave()
-
 
     if postprocess == "txx":
         txx()
