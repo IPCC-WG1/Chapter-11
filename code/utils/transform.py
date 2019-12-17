@@ -75,6 +75,9 @@ class ResampleAnnual(_ProcessWithXarray):
             if func is None:
                 raise KeyError(f"how cannot be '{self.how}'")
 
+            if self.how == "quantile":
+                ds = ds.load()
+
             da = func(dim="time", **self.kwargs)
 
             ds = da.to_dataset(name=self.var)
@@ -118,11 +121,11 @@ class GroupbyAnnual(_ProcessWithXarray):
 class RegionAverage(_ProcessWithXarray):
     """transformation function to GroupBy year"""
 
-    def __init__(self, var, regions, mask=None, land_only=True):
+    def __init__(self, var, regions, landmask=None, land_only=True):
 
         self.var = var
         self.regions = regions
-        self.mask = mask
+        self.landmask = landmask
         self.land_only = land_only
 
         if not isinstance(regions, regionmask.Regions):
@@ -144,12 +147,12 @@ class RegionAverage(_ProcessWithXarray):
 
         numbers = np.array(self.regions.numbers)
 
-        if self.mask is None:
-            mask = regionmask.defined_regions.natural_earth.land_110.mask(da)
-            mask = mask == 0
+        if self.landmask is None:
+            landmask = regionmask.defined_regions.natural_earth.land_110.mask(da)
+            landmask = landmask == 0
 
         if self.land_only:
-            wgt = weight * mask
+            wgt = weight * landmask
         else:
             wgt = weight
 
@@ -163,11 +166,11 @@ class RegionAverage(_ProcessWithXarray):
         ave.append(a)
 
         # global ocean mean
-        a = xru.average(da, dim=("lat", "lon"), weights=(weight * (1.0 - mask)))
+        a = xru.average(da, dim=("lat", "lon"), weights=(weight * (1.0 - landmask)))
         ave.append(a)
 
         # global land mean
-        a = xru.average(da, dim=("lat", "lon"), weights=(weight * mask))
+        a = xru.average(da, dim=("lat", "lon"), weights=(weight * landmask))
         ave.append(a)
 
         # global land mean w/o antarctica
