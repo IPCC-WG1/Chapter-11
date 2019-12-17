@@ -53,11 +53,12 @@ class Globmean(_ProcessWithXarray):
 class ResampleAnnual(_ProcessWithXarray):
     """transformation function to resample by year"""
 
-    def __init__(self, var, how):
+    def __init__(self, var, how, **kwargs):
 
         self.var = var
         self.how = how
         self._name = "resample_annual_" + how
+        self.kwargs = kwargs
 
     def _trans(self, ds):
 
@@ -74,7 +75,7 @@ class ResampleAnnual(_ProcessWithXarray):
             if func is None:
                 raise KeyError(f"how cannot be '{self.how}'")
 
-            da = func("time")
+            da = func("time", **self.kwargs)
 
             ds = da.to_dataset(name=self.var)
             ds.attrs = attrs
