@@ -34,7 +34,10 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
             Method to calculate the anomaly. Default "absolute".
     """
 
-    assert how in ("absolute", "relative", "norm", "no_anom")
+    assert how in ("absolute", "relative", "norm", "no_anom", "no_check")
+
+    if how == "no_check":
+        return ds
 
     if ("year" in ds.dims) and ("time" in ds.dims):
         msg = "'year' and 'time' in dims"
