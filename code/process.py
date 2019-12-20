@@ -7,7 +7,8 @@ import fixes
 import filefinder as ff
 from utils import xarray_utils as xru
 from utils import mkdir
-from utils import regions
+
+import regionmask
 
 import conf
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 # from dask.distributed import Client
 # client = Client()  # set up local cluster
 # print(client)
-
+ar6_land = regionmask.defined_regions.ar6.land
 
 # =============================================================================
 # define class to postprocess cmip5 and cmip6 data
@@ -130,7 +131,7 @@ class _ProcessCmipData:
         self, table, varn, postprocess_name, exp=None, **kwargs
     ):
 
-        transform_func = RegionAverage(varn, regions=regions.ar6_region)
+        transform_func = RegionAverage(varn, regions=ar6_land)
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
@@ -169,7 +170,7 @@ class _ProcessCmipData:
 
         self._create_folder_for_output(files, postprocess_name)
 
-        transform_func = RegionAverage(varn, regions=regions.ar6_region)
+        transform_func = RegionAverage(varn, regions=ar6_land)
 
         for fN_in, metadata in files:
 
@@ -290,9 +291,9 @@ def txx():
 
 def txp95():
 
-    process_cmip5_data.resample_annual_quantile_from_orig(
-        table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp=None
-    )
+    # process_cmip5_data.resample_annual_quantile_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp=None
+    # )
 
     process_cmip6_data.resample_annual_quantile_from_orig(
         table="day", varn="tasmax", postprocess_name="txp95", q=0.95, exp=None
@@ -309,35 +310,35 @@ def txp95():
     # # regrid txp95
     # # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="tasmax",
-        postprocess_before="txp95",
-        postprocess_name="txp95_regrid",
-        exp="*",
-    )
-
-    process_cmip6_data.regrid_from_post(
-        varn="tasmax",
-        postprocess_before="txp95",
-        postprocess_name="txp95_regrid",
-        exp="*",
-    )
+    # process_cmip5_data.regrid_from_post(
+    #     varn="tasmax",
+    #     postprocess_before="txp95",
+    #     postprocess_name="txp95_regrid",
+    #     exp="*",
+    # )
+    #
+    # process_cmip6_data.regrid_from_post(
+    #     varn="tasmax",
+    #     postprocess_before="txp95",
+    #     postprocess_name="txp95_regrid",
+    #     exp="*",
+    # )
 
     # # region average txp95
     # # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="tasmax",
-        postprocess_before="txp95",
-        postprocess_name="txp95_reg_ave_ar6",
-        exp="*",
-    )
-    process_cmip6_data.region_average_from_post(
-        varn="tasmax",
-        postprocess_before="txp95",
-        postprocess_name="txp95_reg_ave_ar6",
-        exp="*",
-    )
+    # process_cmip5_data.region_average_from_post(
+    #     varn="tasmax",
+    #     postprocess_before="txp95",
+    #     postprocess_name="txp95_reg_ave_ar6",
+    #     exp="*",
+    # )
+    # process_cmip6_data.region_average_from_post(
+    #     varn="tasmax",
+    #     postprocess_before="txp95",
+    #     postprocess_name="txp95_reg_ave_ar6",
+    #     exp="*",
+    # )
 
 
 # # =============================================================================
