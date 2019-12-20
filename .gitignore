@@ -6,6 +6,8 @@ deprecated/*
 tests/*
 tglobscaling/*
 
+*/dask-worker-space/*
+
 data/*
 
 # Byte-compiled / optimized / DLL files
