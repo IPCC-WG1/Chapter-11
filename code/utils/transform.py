@@ -119,9 +119,24 @@ class GroupbyAnnual(_ProcessWithXarray):
 
 
 class RegionAverage(_ProcessWithXarray):
-    """transformation function to GroupBy year"""
+    """calculate regional average"""
+
 
     def __init__(self, var, regions, landmask=None, land_only=True):
+        """
+        Parameters
+        ----------
+        var : string
+            Name of the variable to treat
+        regions : regionmask.Regions
+           regions to take the average over.
+        landmask : DataArray, optional
+            landmaks to use, land points must be ``True``. If none uses
+            regionmask.defined_regions.natural_earth.land_110.
+       land_only : bool, optional
+           Whether to mask out ocean points before calculating regional
+           means.
+    """
 
         self.var = var
         self.regions = regions
@@ -137,7 +152,13 @@ class RegionAverage(_ProcessWithXarray):
         self.abbrevs = abbrevs + regions.abbrevs
 
     def _trans(self, ds):
+        """
+        Parameters
+        ----------
+        da : DataArray
+            Object over which the weighted reduction operation is applied.
 
+        """
         attrs = ds.attrs
 
         da = ds[self.var]
@@ -154,7 +175,8 @@ class RegionAverage(_ProcessWithXarray):
         if self.land_only:
             wgt = weight * landmask
         else:
-            wgt = weight
+            # we need to add lon coordinates
+            wgt = xr.full_like(landmask, 1) * weight
 
         mask = self.regions.mask(da)
 
@@ -175,7 +197,7 @@ class RegionAverage(_ProcessWithXarray):
 
         # global land mean w/o antarctica
         da_selected = da.sel(lat=slice(-60, None))
-        a = xru.average(da_selected, dim=("lat", "lon"), weights=wgt)
+        a = xru.average(da_selected, dim=("lat", "lon"), weights=(weight * landmask))
         ave.append(a)
 
         # it is faster to calculate the weighted mean via groupby
@@ -186,7 +208,7 @@ class RegionAverage(_ProcessWithXarray):
 
         da = xr.concat(ave, dim="region")
 
-        # shift srex coordinates such that 1 to 26 corresponds to the
+        # shift region coordinates such that 1 to 26 corresponds to the
         # regions
 
         numbers = np.arange(numbers.min() - 4, numbers.max() + 1)
