@@ -189,7 +189,7 @@ def at_warming_level(tas_list, index_list, warming_level):
         if index:
 
             # determine year when the warming was first reached
-            beg, end, center = calc_year_of_warming_level(tas, warming_level)
+            beg, end, center = calc_year_of_warming_level(tas.tas, warming_level)
 
             # print(f"{beg} -- {end} {metadata['exp']} {metadata['model']} {metadata['ens']}")
 
