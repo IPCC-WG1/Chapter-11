@@ -25,6 +25,13 @@ def cmip5_files(folder_in):
         ):
             return None
 
+        # skip: something goes wrong in California ~ 2 °C temperature jump downwards
+        if _corresponds_to(
+            metadata,
+            model=["MIROC5", "MIROC-ESM-CHEM", "MIROC-ESM"]
+        ):
+            return None
+
         # skip: uses mixed Gregorian/Julian calendar but goes over 1582-10-15
         if _corresponds_to(
             metadata,
