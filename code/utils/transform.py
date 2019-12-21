@@ -1,5 +1,6 @@
-import xarray as xr
 import numpy as np
+import xclim
+import xarray as xr
 
 import regionmask
 
@@ -45,6 +46,29 @@ class Globmean(_ProcessWithXarray):
             da = xru.average(da, dim=self.dim, weights=wgt, keep_attrs=True)
             ds = da.to_dataset(name=self.var)
 
+            ds.attrs = attrs
+
+            return ds
+
+
+class CDD(_ProcessWithXarray):
+
+    def __init__(self, var="pr", freq='A'):
+
+        self.var = var
+        self.freq = freq
+        self._name = "CDD"
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+
+            attrs = ds.attrs
+            da = ds[self.var]
+            da = xclim.ICCLIM.CDD(da, freq=self.freq)
+            ds = da.to_dataset(name=self.var)
             ds.attrs = attrs
 
             return ds

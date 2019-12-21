@@ -1,7 +1,7 @@
 import logging
 import docopt
 
-from utils.transform import Globmean, ResampleAnnual, RegionAverage
+from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage
 from utils.transform_cdo import regrid_cdo
 import fixes
 import filefinder as ff
@@ -102,6 +102,16 @@ class _ProcessCmipData:
     ):
 
         transform_func = (Globmean(var=varn),)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def cdd_from_orig(
+        self, table, varn="pr", postprocess_name="CDD", freq="A", exp=None, **kwargs
+    ):
+
+        transform_func = CDD(var=varn, freq=freq)
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
@@ -465,6 +475,61 @@ def rx1day():
         exp="*",
     )
 
+# =============================================================================
+# calculate cdd
+# =============================================================================
+
+
+def cdd():
+
+    process_cmip5_data.cdd_from_orig(
+        table="day", varn="pr", postprocess_name="cdd", exp=None
+    )
+
+    process_cmip6_data.cdd_from_orig(
+        table="day", varn="pr", postprocess_name="cdd", exp=None
+    )
+
+    process_cmip5_data.cdd_from_orig(
+        table="day", varn="pr", postprocess_name="cdd", exp="piControl"
+    )
+    
+    process_cmip6_data.cdd_from_orig(
+        table="day", varn="pr", postprocess_name="cdd", exp="piControl"
+    )
+
+    # regrid cdd
+    # =============================================================================
+
+    process_cmip5_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="cdd",
+        postprocess_name="cdd_regrid",
+        exp="*",
+    )
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="cdd",
+        postprocess_name="cdd_regrid",
+        exp="*",
+    )
+
+    # region average cdd
+    # =============================================================================
+
+    process_cmip5_data.region_average_from_post(
+        varn="pr",
+        postprocess_before="cdd",
+        postprocess_name="cdd_reg_ave_ar6",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="pr",
+        postprocess_before="cdd",
+        postprocess_name="cdd_reg_ave_ar6",
+        exp="*",
+    )
+
 
 # =============================================================================
 # main
@@ -505,6 +570,8 @@ def main(args=None):
     if postprocess == "rx1day":
         rx1day()
 
+    if postprocess == "cdd":
+        cdd()
 
 if __name__ == "__main__":
     main()
