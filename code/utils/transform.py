@@ -24,6 +24,25 @@ class _ProcessWithXarray:
         return self._name
 
 
+class NoTransform(_ProcessWithXarray):
+    """transformation which does nothing"""
+
+    def __init__(self, var):
+
+        self.var = var
+        self._name = "no_transform"
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+
+            # check variable is available
+            da = ds[self.var]
+
+            return ds
+
 class Globmean(_ProcessWithXarray):
     """transformation function to get a global average"""
 
