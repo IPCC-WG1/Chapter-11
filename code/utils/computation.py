@@ -1,4 +1,6 @@
 import numpy as np
+import scipy as sp
+import statsmodels.api as sm
 import xarray as xr
 
 
@@ -147,10 +149,12 @@ def remove_by_metadata(datalist, **attributes):
     selection = []
     for data, attribs in datalist:
 
-        if any(
-            a in attribs and (attribs[a] != attributes[a])
+        if all(
+            a in attribs and (attribs[a] == attributes[a] or attributes[a] == "*")
             for a in attributes
         ):
+            pass
+        else:
             selection.append((data, attribs))
     return selection
 
@@ -203,3 +207,130 @@ def at_warming_level(tas_list, index_list, warming_level):
                 out.append(idx)
 
     return xr.concat(out, dim="ens")
+
+
+def mannwhitney(d1, d2):
+    """Wilcoxon–Mann–Whitney-U test with Benjamini and Hochberg correction"""
+
+    # make lat/ lon a 1D variable
+    d1_stack = d1.stack(lat_lon=("lat", "lon"))
+    d2_stack = d2.stack(lat_lon=("lat", "lon"))
+
+    # create dummy array to store the results
+    result = d1_stack.mean(("ens"))
+
+    for i in range(result.lat_lon.shape[0]):
+
+        # unpack ens/ time
+        v1 = d1_stack.isel(lat_lon=i).values.ravel()
+        v2 = d2_stack.isel(lat_lon=i).values.ravel()
+
+        # only calculate if we actually have data
+        if (~np.isnan(v1)).sum() > 0:
+            _, p_val = sp.stats.mannwhitneyu(v1, v2)
+        else:
+            p_val = 1.0
+
+        result[i] = p_val
+
+    result = result.unstack("lat_lon")
+
+    # apply Benjamini and Hochberg correction
+    shape = result.shape
+    p_adjust = sm.stats.multipletests(
+        result.values.ravel(), alpha=0.05, method="fdr_bh"
+    )[0]
+    p_adjust = p_adjust.reshape(shape)
+
+    result.values[:] = p_adjust
+
+    return result
+
+
+MANNWHITNEY_DICT = dict()
+
+
+def get_mannwhitney(d1, d2, name):
+    # cache the results of mannwhitney, as it is slow
+
+    if name not in MANNWHITNEY_DICT.keys():
+
+        mw = mannwhitney(d1, d2)
+
+        MANNWHITNEY_DICT[name] = mw
+
+    return MANNWHITNEY_DICT[name]
+
+
+def concat_xarray_with_metadata(
+    datalist,
+    process=None,
+    index={"mod_ens": ("model", "ens")},
+    retain=("model", "ens", "ensnumber", "exp"),
+):
+    """create xr Dataset with 'ens' and 'model' as multiindex
+    
+        Input
+        -----
+        data : nested dict
+        
+    
+    """
+
+    all_ds = list()
+    retain_dict = dict()
+
+    retain_dict["ensi"] = ("ensi", list())
+    for r in retain:
+        retain_dict[r] = (r, list())
+
+    for i, (ds, metadata) in enumerate(datalist):
+
+        if process is not None:
+            ds = process(ds)
+
+        all_ds.append(ds)
+
+        retain_dict["ensi"][1].append(i)
+        for r in retain:
+            retain_dict[r][1].append(metadata[r])
+
+    # concate all data
+    out = xr.concat(all_ds, "mod_ens")
+    # assign coordinates
+    out = out.assign_coords(**retain_dict)
+
+    index = {"mod_ens": retain + ("ensi",)}
+
+    # create multiindex
+    out = out.set_index(**index)
+
+    return out
+
+
+def concat_xarray_without_metadata(
+    datalist,
+    process=None,
+):
+    """create xr Dataset with 'ens' and 'model' as multiindex
+    
+        Input
+        -----
+        data : nested dict
+        
+    
+    """
+
+    all_ds = list()
+
+    for i, (ds, metadata) in enumerate(datalist):
+
+        if process is not None:
+            ds = process(ds)
+
+        all_ds.append(ds)
+
+    # concate all data
+    out = xr.concat(all_ds, "ens")
+
+    return out
