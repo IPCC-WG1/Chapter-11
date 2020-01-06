@@ -97,7 +97,15 @@ class _cmip_conf:
         if not _file_exists(fN):
             return []
 
-        return xr.open_dataset(fN, use_cftime=True)
+        ds = xr.open_dataset(fN, decode_cf=False)
+
+        # get rid of the "days" units, else CDD will have dtype = timedelta
+        varn = metadata["varn"]
+        units = ds[varn].attrs.get("units", None)
+        if units in ["seconds", "days"]:
+            ds[varn].attrs.pop("units")
+
+        return xr.decode_cf(ds, use_cftime=True)
 
     def load_postprocessed_concat(self, **metadata):
         """combine historical simulation and projection
