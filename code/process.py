@@ -1,7 +1,7 @@
 import logging
 import docopt
 
-from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage
+from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage, NoTransform
 from utils.transform_cdo import regrid_cdo
 import fixes
 import filefinder as ff
@@ -76,6 +76,8 @@ class _ProcessCmipData:
         self, table, varn, postprocess_name, transform_func, exp=None, **kwargs
     ):
 
+        print(f"=== postprocess_from_orig: {postprocess_name} ===\n")
+
         files = self.find_input_orig(table=table, varn=varn, exp=exp, **kwargs)
 
         self._create_folder_for_output(files, postprocess_name)
@@ -102,6 +104,16 @@ class _ProcessCmipData:
     ):
 
         transform_func = (Globmean(var=varn),)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def no_transform_from_orig(
+        self, table, varn, postprocess_name="no_transform", exp=None, **kwargs
+    ):
+
+        transform_func = NoTransform(var=varn)
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
@@ -151,6 +163,8 @@ class _ProcessCmipData:
         self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
     ):
 
+        print("=== regrid_from_post ===\n")
+
         files = self.find_input_post(
             postprocess=postprocess_before, varn=varn, exp=exp, **kwargs
         )
@@ -172,6 +186,8 @@ class _ProcessCmipData:
         self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
     ):
 
+        print("=== region_average_from_post ===\n")
+
         files = self.find_input_post(
             postprocess=postprocess_before, varn=varn, exp=exp, **kwargs
         )
@@ -188,6 +204,7 @@ class _ProcessCmipData:
                 **metadata, postprocess=postprocess_name
             )
 
+            print(metadata)
             xru.postprocess(fN_out, fN_in, metadata, transform_func=transform_func)
 
 
@@ -490,13 +507,13 @@ def cdd():
         table="day", varn="pr", postprocess_name="cdd", exp=None
     )
 
-    process_cmip5_data.cdd_from_orig(
-        table="day", varn="pr", postprocess_name="cdd", exp="piControl"
-    )
-    
-    process_cmip6_data.cdd_from_orig(
-        table="day", varn="pr", postprocess_name="cdd", exp="piControl"
-    )
+    #process_cmip5_data.cdd_from_orig(
+    #    table="day", varn="pr", postprocess_name="cdd", exp="piControl"
+    #)
+
+    #process_cmip6_data.cdd_from_orig(
+    #    table="day", varn="pr", postprocess_name="cdd", exp="piControl"
+    #)
 
     # regrid cdd
     # =============================================================================
@@ -527,6 +544,116 @@ def cdd():
         varn="pr",
         postprocess_before="cdd",
         postprocess_name="cdd_reg_ave_ar6",
+        exp="*",
+    )
+
+# =============================================================================
+# calculate mrso
+# =============================================================================
+
+
+def mrso():
+
+    process_cmip5_data.no_transform_from_orig(
+        table="Lmon", varn="mrso", postprocess_name="sm", exp=None
+    )
+
+    process_cmip6_data.no_transform_from_orig(
+        table="Lmon", varn="mrso", postprocess_name="sm", exp=None
+    )
+
+    #process_cmip5_data.no_transform_from_orig(
+    #    table="Lmon", varn="mrso", postprocess_name="sm", exp="piControl"
+    #)
+
+    #process_cmip6_data.no_transform_from_orig(
+    #    table="Lmon", varn="mrso", postprocess_name="sm", exp="piControl"
+    #)
+
+    # regrid sm
+    # =============================================================================
+
+    process_cmip5_data.regrid_from_post(
+        varn="mrso",
+        postprocess_before="sm",
+        postprocess_name="sm_regrid",
+        exp="*",
+    )
+    process_cmip6_data.regrid_from_post(
+        varn="mrso",
+        postprocess_before="sm",
+        postprocess_name="sm_regrid",
+        exp="*",
+    )
+
+    # region average sm
+    # =============================================================================
+
+    process_cmip5_data.region_average_from_post(
+        varn="mrso",
+        postprocess_before="sm",
+        postprocess_name="sm_reg_ave_ar6",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="mrso",
+        postprocess_before="sm",
+        postprocess_name="sm_reg_ave_ar6",
+        exp="*",
+    )
+
+# =============================================================================
+# calculate mrsos
+# =============================================================================
+
+
+def mrsos():
+
+    process_cmip5_data.no_transform_from_orig(
+        table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
+    )
+
+    process_cmip6_data.no_transform_from_orig(
+        table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
+    )
+
+    #process_cmip5_data.no_transform_from_orig(
+    #    table="Lmon", varn="mrsos", postprocess_name="sm", exp="piControl"
+    #)
+
+    #process_cmip6_data.no_transform_from_orig(
+    #    table="Lmon", varn="mrsos", postprocess_name="sm", exp="piControl"
+    #)
+
+    # regrid sm
+    # =============================================================================
+
+    process_cmip5_data.regrid_from_post(
+        varn="mrsos",
+        postprocess_before="sm",
+        postprocess_name="sm_regrid",
+        exp="*",
+    )
+    process_cmip6_data.regrid_from_post(
+        varn="mrsos",
+        postprocess_before="sm",
+        postprocess_name="sm_regrid",
+        exp="*",
+    )
+
+    # region average sm
+    # =============================================================================
+
+    process_cmip5_data.region_average_from_post(
+        varn="mrsos",
+        postprocess_before="sm",
+        postprocess_name="sm_reg_ave_ar6",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="mrsos",
+        postprocess_before="sm",
+        postprocess_name="sm_reg_ave_ar6",
         exp="*",
     )
 
@@ -572,6 +699,12 @@ def main(args=None):
 
     if postprocess == "cdd":
         cdd()
+
+    if postprocess == "mrso":
+        mrso()
+
+    if postprocess == "mrsos":
+        mrsos()
 
 if __name__ == "__main__":
     main()
