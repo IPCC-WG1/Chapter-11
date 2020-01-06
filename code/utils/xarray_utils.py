@@ -58,6 +58,10 @@ def postprocess(
         # add source files
         ds.attrs["source_files"] = ", ".join(fNs_in)
 
+        # fix for: https://github.com/pydata/xarray/issues/3665
+        if "time" in ds:
+            ds.time.encoding.pop("_FillValue", None)
+
         # save as netcdf
         ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
 
@@ -71,15 +75,23 @@ def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwa
 
     ds = xr.open_mfdataset(
         files,
-        use_cftime=True,
         concat_dim="time",
         combine="by_coords",
         coords="minimal",
         data_vars="minimal",
         compat="override",
         parallel=True,
+        decode_cf=False,
         # preprocess=preprocess,
     )
+
+    # get rid of the "days" units, else CDD will have dtype = timedelta
+    varn = metadata["varn"]
+    units = ds[varn].attrs.get("units", None)
+    if units in ["seconds", "days"]:
+        ds[varn].attrs.pop("units")
+
+    ds = xr.decode_cf(ds, use_cftime=True)
 
     if fixes is not None:
         ds = fixes(ds, metadata, None)
