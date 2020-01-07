@@ -206,7 +206,7 @@ def at_warming_level(tas_list, index_list, warming_level):
                 idx = da_idx.sel(year=slice(beg, end)).mean("year")
                 out.append(idx)
 
-    return xr.concat(out, dim="ens")
+    return xr.concat(out, dim="ens", coords="minimal", compat="override")
 
 
 def mannwhitney(d1, d2):
@@ -269,12 +269,12 @@ def concat_xarray_with_metadata(
     retain=("model", "ens", "ensnumber", "exp"),
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
-    
+
         Input
         -----
         data : nested dict
-        
-    
+
+
     """
 
     all_ds = list()
@@ -313,12 +313,12 @@ def concat_xarray_without_metadata(
     process=None,
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
-    
+
         Input
         -----
         data : nested dict
-        
-    
+
+
     """
 
     all_ds = list()
