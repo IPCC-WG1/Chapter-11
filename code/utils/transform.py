@@ -87,6 +87,10 @@ class CDD(_ProcessWithXarray):
             attrs = ds.attrs
             da = ds[self.var]
             da = xclim.ICCLIM.CDD(da, freq=self.freq)
+
+            # get rid of the "days" units, else CDD will have dtype = timedelta
+            da.attrs.pop("units")
+
             ds = da.to_dataset(name=self.var)
             ds.attrs = attrs
 
