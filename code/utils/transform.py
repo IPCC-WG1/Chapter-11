@@ -1,6 +1,6 @@
 import numpy as np
-import xclim
 import xarray as xr
+from xclim import atmos
 
 import regionmask
 
@@ -86,7 +86,7 @@ class CDD(_ProcessWithXarray):
 
             attrs = ds.attrs
             da = ds[self.var]
-            da = xclim.ICCLIM.CDD(da, freq=self.freq)
+            da = atmos.maximum_consecutive_dry_days(da, freq=self.freq)
 
             # get rid of the "days" units, else CDD will have dtype = timedelta
             da.attrs.pop("units")
