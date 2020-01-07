@@ -7,7 +7,7 @@ from .file_utils import _any_file_does_not_exist
 
 
 def postprocess(
-    fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, **kwargs
+    fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, fixes_preprocess=None, **kwargs
 ):
     """ postprocessing-on-the-fly and loading function
 
@@ -41,6 +41,7 @@ def postprocess(
                 metadata=metadata,
                 transform_func=transform_func,
                 fixes=fixes,
+                fixes_preprocess=fixes_preprocess,
                 **kwargs
             )
         except Exception as e:
@@ -71,7 +72,7 @@ def postprocess(
         return xr.open_dataset(fN_out, use_cftime=True)
 
 
-def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwargs):
+def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, fixes_preprocess=None, **kwargs):
 
     ds = xr.open_mfdataset(
         files,
@@ -81,17 +82,18 @@ def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, **kwa
         data_vars="minimal",
         compat="override",
         parallel=True,
-        decode_cf=False,
-        # preprocess=preprocess,
+        decode_cf=True,
+        use_cftime=True,
+        preprocess=fixes_preprocess,
     )
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
-    varn = metadata["varn"]
-    units = ds[varn].attrs.get("units", None)
-    if units in ["seconds", "days"]:
-        ds[varn].attrs.pop("units")
+    # varn = metadata["varn"]
+    # units = ds[varn].attrs.get("units", None)
+    # if units in ["seconds", "days"]:
+    #     ds[varn].attrs.pop("units")
 
-    ds = xr.decode_cf(ds, use_cftime=True)
+    # ds = xr.decode_cf(ds, use_cftime=True)
 
     if fixes is not None:
         ds = fixes(ds, metadata, None)

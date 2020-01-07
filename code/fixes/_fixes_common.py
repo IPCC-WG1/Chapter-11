@@ -24,7 +24,7 @@ def _corresponds_to(metadata, **conditions):
     return all(metadata[key] in cond for key, cond in conditions.items())
 
 
-def fixes_common(ds, metadata):
+def fixes_common(ds):
     """
     Apply fixes that may apply to all datasets.
 

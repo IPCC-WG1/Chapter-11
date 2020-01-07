@@ -32,6 +32,7 @@ class _ProcessCmipData:
         self.conf_cmip = conf_cmip
         self.fixes_data = fixes_data
         self.fixes_files = fixes_files
+        self.fixes_common = fixes.fixes_common
 
     def _create_folder_for_output(self, files, postprocess_name):
 
@@ -97,6 +98,7 @@ class _ProcessCmipData:
                 metadata=metadata,
                 transform_func=transform_func,
                 fixes=self.fixes_data,
+                fixes_preprocess=self.fixes_common,
             )
 
     def global_mean_from_orig(

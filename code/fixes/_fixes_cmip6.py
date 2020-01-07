@@ -61,6 +61,6 @@ def cmip6_data(ds, metadata, next_path):
         if "latitude" in ds.dims and "longitude" in ds.dims:
             ds = ds.rename({"latitude": "lat", "longitude": "lon"})
 
-    ds = fixes_common(ds, metadata)
+    ds = fixes_common(ds)
 
     return ds
