@@ -54,6 +54,17 @@ def cmip5_files(folder_in):
         ):
             return None
 
+        # at least one year of data is missing
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="day",
+            varn="pr",
+            model="CESM1-CAM5",
+            ens="r1i1p1",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
@@ -220,6 +231,27 @@ def cmip5_files(folder_in):
                 "tas_Amon_EC-EARTH_rcp85_r6i1p1_205101-210012.nc",
             )
 
+        # the grid changes after 2100
+        if _corresponds_to(
+            metadata,
+            exp=["rcp45", "rcp60", "rcp85"],
+            table="day",
+            varn="tas",
+            model="CCSM4",
+            ens="r1i1p1",
+        ):
+            fNs_in = _remove_non_matching_fN(
+                fNs_in,
+                "_r1i1p1_21010101-21241231.nc",
+                "_r1i1p1_21250101-21491231.nc",
+                "_r1i1p1_21500101-21741231.nc",
+                "_r1i1p1_21750101-21991231.nc",
+                "_r1i1p1_22000101-22241231.nc",
+                "_r1i1p1_22250101-22491231.nc",
+                "_r1i1p1_22500101-22741231.nc",
+                "_r1i1p1_22750101-22991231.nc",
+            )
+
         if _corresponds_to(
             metadata,
             exp="rcp85",
@@ -321,7 +353,7 @@ def cmip5_files(folder_in):
 
 def cmip5_data(ds, metadata, next_path):
 
-    ds = fixes_common(ds, metadata)
+    ds = fixes_common(ds)
 
     # the year 1941 is wrong
     if _corresponds_to(
