@@ -26,6 +26,7 @@ def cmip5_files(folder_in):
             return None
 
         # skip: something goes wrong in California ~ 2 °C temperature jump downwards
+        # e.g. 29.36°N 253°E in 1960
         if _corresponds_to(
             metadata,
             model=["MIROC5", "MIROC-ESM-CHEM", "MIROC-ESM"]
