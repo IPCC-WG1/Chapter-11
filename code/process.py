@@ -105,7 +105,7 @@ class _ProcessCmipData:
         self, table, varn, postprocess_name="global_mean", exp=None, **kwargs
     ):
 
-        transform_func = (Globmean(var=varn),)
+        transform_func = Globmean(var=varn)
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
