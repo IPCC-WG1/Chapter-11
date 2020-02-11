@@ -16,6 +16,15 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # the time axis is totally wrong (overlapping)
+        if _corresponds_to(
+            metadata,
+            table="day",
+            varn=["pr"],
+            model=["CESM2-WACCM-FV2"],
+        ):
+            return None
+
         # non-monotonic time - not sure where...
         if _corresponds_to(
             metadata,
