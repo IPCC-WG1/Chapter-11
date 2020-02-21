@@ -159,7 +159,7 @@ def remove_by_metadata(datalist, **attributes):
     return selection
 
 
-def at_warming_level(tas_list, index_list, warming_level):
+def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
     """ compute value of index at a certain warming level
 
         Parameters
@@ -174,6 +174,7 @@ def at_warming_level(tas_list, index_list, warming_level):
     """
 
     out = list()
+    models = list()
 
     # loop through all global mean temperatures
     for tas, metadata in tas_list:
@@ -204,9 +205,16 @@ def at_warming_level(tas_list, index_list, warming_level):
                 # get the Dataarray
                 da_idx = ds_idx[metadata_idx["varn"]]
                 idx = da_idx.sel(year=slice(beg, end)).mean("year")
+
+                models.append(metadata["model"])
+
                 out.append(idx)
 
-    return xr.concat(out, dim="ens", coords="minimal", compat="override")
+    out = xr.concat(out, dim="ens", coords="minimal", compat="override")
+
+    if add_meta:
+        out = out.assign_coords(model=("ens", models))
+    return out
 
 
 def mannwhitney(d1, d2):
