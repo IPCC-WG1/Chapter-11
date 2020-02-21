@@ -1,7 +1,7 @@
 import logging
 import docopt
 
-from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage, NoTransform
+from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage, NoTransform, TX_Days_Above
 from utils.transform_cdo import regrid_cdo
 import fixes
 import filefinder as ff
@@ -131,6 +131,16 @@ class _ProcessCmipData:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+    def tx_days_above_from_orig(
+        self, table, varn="tasmax", postprocess_name="tx_days_above_35", thresh="35.0 degC",  freq="A", exp=None, **kwargs
+    ):
+
+        transform_func = TX_Days_Above(var=varn, freq=freq, thresh=thresh)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
     def resample_annual_from_orig(
         self, table, varn, postprocess_name, how, exp=None, **kwargs
     ):
@@ -242,6 +252,32 @@ def tas_globmean():
         ensnumber=None,
     )
 
+def tas_annmean():
+
+    process_cmip6_data.resample_annual_from_orig(
+        table="Amon", varn="tas", postprocess_name="annmean", how="mean", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="tas",
+        postprocess_before="annmean",
+        postprocess_name="annmean_regrid",
+        exp=None,
+    )
+
+
+def pr_annmean():
+
+    process_cmip6_data.resample_annual_from_orig(
+        table="Amon", varn="pr", postprocess_name="annmean", how="mean", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="annmean",
+        postprocess_name="annmean_regrid",
+        exp=None,
+    )
 
 def tas_reg_ave():
 
@@ -310,6 +346,20 @@ def txx():
         postprocess_before="txx",
         postprocess_name="txx_reg_ave_ar6",
         exp="*",
+    )
+
+# # =============================================================================
+# # calculate > 35° C
+# # =============================================================================
+
+def tx_days_above():
+
+    process_cmip6_data.tx_days_above_from_orig(
+        table="day", varn="tasmax", postprocess_name="tx_days_above_35", thresh="35.0 degC",  freq="A", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="tasmax", postprocess_before="tx_days_above_35", postprocess_name="tx_days_above_35_regrid", exp=None
     )
 
 
@@ -684,11 +734,20 @@ def main(args=None):
     if postprocess == "tas_globmean":
         tas_globmean()
 
+    if postprocess == "tas_annmean":
+        tas_annmean()
+
+    if postprocess == "pr_annmean":
+        pr_annmean()
+
     if postprocess == "tas_reg_ave":
         tas_reg_ave()
 
     if postprocess == "txx":
         txx()
+
+    if postprocess == "tx_days_above":
+        tx_days_above()
 
     if postprocess == "txp95":
         txp95()
@@ -707,6 +766,7 @@ def main(args=None):
 
     if postprocess == "mrsos":
         mrsos()
+
 
 if __name__ == "__main__":
     main()
