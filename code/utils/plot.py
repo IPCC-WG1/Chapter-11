@@ -131,11 +131,17 @@ def at_warming_level_diff(
         d = ave_fnc(at_warming_c5[i], "ens")
         h = d.plot(ax=ax, **opt)
 
+        n = len(at_warming_c5[i].ens)
+        ax.text(1, 1, f"{n}", va="top", ha="right", transform=ax.transAxes, fontsize=9)
+
     for i in range(3):
 
         ax = axes[i * 3 + 1]
         d = ave_fnc(at_warming_c6[i], "ens")
         h = d.plot(ax=ax, **opt)
+
+        n = len(at_warming_c6[i].ens)
+        ax.text(1, 1, f"{n}", va="top", ha="right", transform=ax.transAxes, fontsize=9)
 
     cbar = mpu.colorbar(
         h, axes[-3], axes[-2], aspect=25, shrink=0.2, orientation="horizontal"
@@ -144,6 +150,7 @@ def at_warming_level_diff(
     cbar.ax.tick_params(labelsize=10)
 
     # =====
+    opt.pop("colors", None)
 
     # diference plots
 
