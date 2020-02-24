@@ -36,6 +36,19 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        if _corresponds_to(
+            metadata,
+            table="day",
+            varn=["tasmax", "tasmin"],
+            model="NorESM2-LM",
+            ens="r1i1p1f1",
+        ):
+            return None
+
+
+
+
+
         # =========================================================================
 
         # get the files in the directory
