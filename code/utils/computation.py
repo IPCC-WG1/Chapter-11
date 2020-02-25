@@ -319,8 +319,7 @@ def concat_xarray_with_metadata(
 
 
 def concat_xarray_without_metadata(
-    datalist,
-    process=None,
+    datalist, process=None,
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
 

@@ -7,7 +7,13 @@ from .file_utils import _any_file_does_not_exist
 
 
 def postprocess(
-    fN_out, fNs_in_or_creator, metadata, transform_func=None, fixes=None, fixes_preprocess=None, **kwargs
+    fN_out,
+    fNs_in_or_creator,
+    metadata,
+    transform_func=None,
+    fixes=None,
+    fixes_preprocess=None,
+    **kwargs
 ):
     """ postprocessing-on-the-fly and loading function
 
@@ -34,21 +40,21 @@ def postprocess(
             return []
 
         # postprocess
-        try:
-            ds = mf_read_netcdfs(
-                fNs_in,
-                dim=dim,
-                metadata=metadata,
-                transform_func=transform_func,
-                fixes=fixes,
-                fixes_preprocess=fixes_preprocess,
-                **kwargs
-            )
-        except Exception as e:
-            print("ERROR\n\n\n")
-            print(str(e))
-            print("ERROR\n\n\n")
-            return []
+        # try:
+        ds = mf_read_netcdfs(
+            fNs_in,
+            dim=dim,
+            metadata=metadata,
+            transform_func=transform_func,
+            fixes=fixes,
+            fixes_preprocess=fixes_preprocess,
+            **kwargs
+        )
+        # except Exception as e:
+        #     print("ERROR\n\n\n")
+        #     print(str(e))
+        #     print("ERROR\n\n\n")
+        #     return []
 
         if ds is None:
             return []
@@ -72,7 +78,15 @@ def postprocess(
         return xr.open_dataset(fN_out, use_cftime=True)
 
 
-def mf_read_netcdfs(files, dim, metadata, transform_func=None, fixes=None, fixes_preprocess=None, **kwargs):
+def mf_read_netcdfs(
+    files,
+    dim,
+    metadata,
+    transform_func=None,
+    fixes=None,
+    fixes_preprocess=None,
+    **kwargs
+):
 
     ds = xr.open_mfdataset(
         files,

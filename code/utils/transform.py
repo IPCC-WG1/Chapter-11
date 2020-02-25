@@ -43,6 +43,7 @@ class NoTransform(_ProcessWithXarray):
 
             return ds
 
+
 class Globmean(_ProcessWithXarray):
     """transformation function to get a global average"""
 
@@ -71,8 +72,7 @@ class Globmean(_ProcessWithXarray):
 
 
 class CDD(_ProcessWithXarray):
-
-    def __init__(self, var="pr", freq='A'):
+    def __init__(self, var="pr", freq="A"):
 
         self.var = var
         self.freq = freq
@@ -88,7 +88,7 @@ class CDD(_ProcessWithXarray):
             da = ds[self.var]
 
             # rechunk into a single dask array chunk along time
-            da = da.chunk({'time': -1})
+            da = da.chunk({"time": -1})
 
             da = atmos.maximum_consecutive_dry_days(da, freq=self.freq)
 
@@ -100,9 +100,9 @@ class CDD(_ProcessWithXarray):
 
             return ds
 
-class TX_Days_Above(_ProcessWithXarray):
 
-    def __init__(self, thresh="25.0 degC", var="tasmax", freq='A'):
+class TX_Days_Above(_ProcessWithXarray):
+    def __init__(self, thresh="25.0 degC", var="tasmax", freq="A"):
 
         self.thresh = thresh
         self.var = var
@@ -119,7 +119,7 @@ class TX_Days_Above(_ProcessWithXarray):
             da = ds[self.var]
 
             # rechunk into a single dask array chunk along time
-            da = da.chunk({'time': -1})
+            da = da.chunk({"time": -1})
 
             da = atmos.tx_days_above(da, thresh=self.thresh, freq=self.freq)
 
@@ -130,6 +130,7 @@ class TX_Days_Above(_ProcessWithXarray):
             ds.attrs = attrs
 
             return ds
+
 
 class ResampleAnnual(_ProcessWithXarray):
     """transformation function to resample by year"""
@@ -201,7 +202,6 @@ class GroupbyAnnual(_ProcessWithXarray):
 
 class RegionAverage(_ProcessWithXarray):
     """calculate regional average"""
-
 
     def __init__(self, var, regions, landmask=None, land_only=True):
         """
