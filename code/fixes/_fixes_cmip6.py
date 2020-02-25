@@ -45,9 +45,15 @@ def cmip6_files(folder_in):
         ):
             return None
 
-
-
-
+        # has all zero tas in 01.2000 and 01.2007
+        if _corresponds_to(
+            metadata,
+            table="Amon",
+            varn="tas",
+            model="E3SM-1-1-ECA",
+            ens="r1i1p1f1",
+        ):
+            return None
 
         # =========================================================================
 
