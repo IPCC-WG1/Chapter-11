@@ -175,6 +175,7 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
 
     out = list()
     models = list()
+    ensname = list()
 
     # loop through all global mean temperatures
     for tas, metadata in tas_list:
@@ -207,13 +208,14 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
                 idx = da_idx.sel(year=slice(beg, end)).mean("year")
 
                 models.append(metadata["model"])
+                ensname.append(metadata["ens"])
 
                 out.append(idx)
 
     out = xr.concat(out, dim="ens", coords="minimal", compat="override")
 
     if add_meta:
-        out = out.assign_coords(model=("ens", models))
+        out = out.assign_coords(model=("ens", models), ensname=("ens", ensname))
     return out
 
 
