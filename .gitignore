@@ -5,6 +5,7 @@ figures/*
 deprecated/*
 tests/*
 tglobscaling/*
+warming_levels/*
 
 */dask-worker-space/*
 
