@@ -55,6 +55,16 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # only goes until 2055
+        if _corresponds_to(
+            metadata,
+            table="Amon",
+            exp="ssp370"
+            varn="tas",
+            model="BCC-ESM1",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
