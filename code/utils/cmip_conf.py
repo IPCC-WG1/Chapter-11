@@ -116,7 +116,7 @@ class _cmip_conf:
             Metadata idenrtifiying the simulation to load.
 
         ..note:: ``exp="historical"`` raises a ValueError
-        use load_postprocessed instead
+        use load_postprocessed(..., exp="historical") instead
 
         """
 
@@ -147,7 +147,14 @@ class _cmip_conf:
         return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
 
     def load_postprocessed_all(
-        self, varn, postprocess, exp, anomaly="absolute", year_mean=True, ensnumber=0
+        self,
+        varn,
+        postprocess,
+        exp,
+        anomaly="absolute",
+        year_mean=True,
+        ensnumber=0,
+        **metadata,
     ):
         """load postprocessed data for all models for a given scenario"""
 
@@ -161,6 +168,7 @@ class _cmip_conf:
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
+            **metadata,
         )
 
     def load_postprocessed_all_concat(
@@ -171,6 +179,7 @@ class _cmip_conf:
         anomaly="absolute",
         year_mean=True,
         ensnumber=0,
+        **metadata,
     ):
         """load postprocessed data for all models concat for historical and scenario"""
 
@@ -184,6 +193,7 @@ class _cmip_conf:
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
+            **metadata,
         )
 
     def _load_postprocessed_all_maybe_concat(
@@ -195,12 +205,15 @@ class _cmip_conf:
         year_mean=True,
         ensnumber=0,
         func=None,
+        **metadata,
     ):
 
         if exp is None:
             exp = self.scenarios
 
-        files = self.files_post.find_files(varn=varn, postprocess=postprocess, exp=exp)
+        files = self.files_post.find_files(
+            varn=varn, postprocess=postprocess, exp=exp, **metadata
+        )
 
         files = ff.cmip.parse_ens(files)
         files = ff.cmip.create_ensnumber(files)
