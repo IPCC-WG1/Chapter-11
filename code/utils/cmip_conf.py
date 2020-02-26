@@ -152,6 +152,7 @@ class _cmip_conf:
         postprocess,
         exp,
         anomaly="absolute",
+        at_least_until=2099,
         year_mean=True,
         ensnumber=0,
         **metadata,
@@ -165,6 +166,7 @@ class _cmip_conf:
             postprocess=postprocess,
             exp=exp,
             anomaly=anomaly,
+            at_least_until=at_least_until,
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
@@ -177,6 +179,7 @@ class _cmip_conf:
         postprocess,
         exp=None,
         anomaly="absolute",
+        at_least_until=2099,
         year_mean=True,
         ensnumber=0,
         **metadata,
@@ -190,6 +193,7 @@ class _cmip_conf:
             postprocess=postprocess,
             exp=exp,
             anomaly=anomaly,
+            at_least_until=at_least_until,
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
@@ -202,6 +206,7 @@ class _cmip_conf:
         postprocess,
         exp=None,
         anomaly="absolute",
+        at_least_until=2099,
         year_mean=True,
         ensnumber=0,
         func=None,
@@ -233,6 +238,17 @@ class _cmip_conf:
                     metadata=metadata,
                     how=anomaly,
                 )
+
+            # check if the dataset is long enough
+            if ds and at_least_until:
+                ds = computation.calc_anomaly(
+                    ds,
+                    start=at_least_until,
+                    end=at_least_until,
+                    metadata=metadata,
+                    how="no_anom",
+                )
+
 
             if ds and year_mean:
                 ds = ds.groupby("time.year").mean("time")
