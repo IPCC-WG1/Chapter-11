@@ -1,7 +1,14 @@
 import logging
 import docopt
 
-from utils.transform import CDD, Globmean, ResampleAnnual, RegionAverage, NoTransform, TX_Days_Above
+from utils.transform import (
+    CDD,
+    Globmean,
+    ResampleAnnual,
+    RegionAverage,
+    NoTransform,
+    TX_Days_Above,
+)
 from utils.transform_cdo import regrid_cdo
 import fixes
 import filefinder as ff
@@ -132,7 +139,14 @@ class _ProcessCmipData:
         )
 
     def tx_days_above_from_orig(
-        self, table, varn="tasmax", postprocess_name="tx_days_above_35", thresh="35.0 degC",  freq="A", exp=None, **kwargs
+        self,
+        table,
+        varn="tasmax",
+        postprocess_name="tx_days_above_35",
+        thresh="35.0 degC",
+        freq="A",
+        exp=None,
+        **kwargs,
     ):
 
         transform_func = TX_Days_Above(var=varn, freq=freq, thresh=thresh)
@@ -252,6 +266,7 @@ def tas_globmean():
         ensnumber=None,
     )
 
+
 def tas_annmean():
 
     process_cmip6_data.resample_annual_from_orig(
@@ -278,6 +293,7 @@ def pr_annmean():
         postprocess_name="annmean_regrid",
         exp=None,
     )
+
 
 def tas_reg_ave():
 
@@ -313,12 +329,22 @@ def txx():
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
     )
 
+    process_cmip6_data.resample_annual_from_orig(
+        table="day",
+        varn="tasmax",
+        postprocess_name="txx",
+        how="max",
+        exp=None,
+        model="CanESM5",
+        ensnumber=None,
+    )
+
     process_cmip5_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
     )
 
     process_cmip6_data.resample_annual_from_orig(
-        table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
+        table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl",
     )
 
     # # regrid txx
@@ -329,7 +355,11 @@ def txx():
     )
 
     process_cmip6_data.regrid_from_post(
-        varn="tasmax", postprocess_before="txx", postprocess_name="txx_regrid", exp="*"
+        varn="tasmax",
+        postprocess_before="txx",
+        postprocess_name="txx_regrid",
+        exp="*",
+        ensnumber=None,
     )
 
     # # region average txx
@@ -348,18 +378,28 @@ def txx():
         exp="*",
     )
 
+
 # # =============================================================================
 # # calculate > 35° C
 # # =============================================================================
 
+
 def tx_days_above():
 
     process_cmip6_data.tx_days_above_from_orig(
-        table="day", varn="tasmax", postprocess_name="tx_days_above_35", thresh="35.0 degC",  freq="A", exp=None
+        table="day",
+        varn="tasmax",
+        postprocess_name="tx_days_above_35",
+        thresh="35.0 degC",
+        freq="A",
+        exp=None,
     )
 
     process_cmip6_data.regrid_from_post(
-        varn="tasmax", postprocess_before="tx_days_above_35", postprocess_name="tx_days_above_35_regrid", exp=None
+        varn="tasmax",
+        postprocess_before="tx_days_above_35",
+        postprocess_name="tx_days_above_35_regrid",
+        exp=None,
     )
 
 
@@ -544,6 +584,7 @@ def rx1day():
         exp="*",
     )
 
+
 # =============================================================================
 # calculate cdd
 # =============================================================================
@@ -559,28 +600,22 @@ def cdd():
         table="day", varn="pr", postprocess_name="cdd", exp=None
     )
 
-    #process_cmip5_data.cdd_from_orig(
+    # process_cmip5_data.cdd_from_orig(
     #    table="day", varn="pr", postprocess_name="cdd", exp="piControl"
-    #)
+    # )
 
-    #process_cmip6_data.cdd_from_orig(
-    #    table="day", varn="pr", postprocess_name="cdd", exp="piControl"
-    #)
+    # process_cmip6_data.cdd_from_orig(
+    #     table="day", varn="pr", postprocess_name="cdd", exp="piControl"
+    # )
 
     # regrid cdd
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="pr",
-        postprocess_before="cdd",
-        postprocess_name="cdd_regrid",
-        exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*",
     )
     process_cmip6_data.regrid_from_post(
-        varn="pr",
-        postprocess_before="cdd",
-        postprocess_name="cdd_regrid",
-        exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*",
     )
 
     # region average cdd
@@ -599,6 +634,7 @@ def cdd():
         exp="*",
     )
 
+
 # =============================================================================
 # calculate mrso
 # =============================================================================
@@ -614,28 +650,22 @@ def mrso():
         table="Lmon", varn="mrso", postprocess_name="sm", exp=None
     )
 
-    #process_cmip5_data.no_transform_from_orig(
+    # process_cmip5_data.no_transform_from_orig(
     #    table="Lmon", varn="mrso", postprocess_name="sm", exp="piControl"
-    #)
+    # )
 
-    #process_cmip6_data.no_transform_from_orig(
+    # process_cmip6_data.no_transform_from_orig(
     #    table="Lmon", varn="mrso", postprocess_name="sm", exp="piControl"
-    #)
+    # )
 
     # regrid sm
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="mrso",
-        postprocess_before="sm",
-        postprocess_name="sm_regrid",
-        exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
     )
     process_cmip6_data.regrid_from_post(
-        varn="mrso",
-        postprocess_before="sm",
-        postprocess_name="sm_regrid",
-        exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
     )
 
     # region average sm
@@ -654,6 +684,7 @@ def mrso():
         exp="*",
     )
 
+
 # =============================================================================
 # calculate mrsos
 # =============================================================================
@@ -669,28 +700,22 @@ def mrsos():
         table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
     )
 
-    #process_cmip5_data.no_transform_from_orig(
+    # process_cmip5_data.no_transform_from_orig(
     #    table="Lmon", varn="mrsos", postprocess_name="sm", exp="piControl"
-    #)
+    # )
 
-    #process_cmip6_data.no_transform_from_orig(
+    # process_cmip6_data.no_transform_from_orig(
     #    table="Lmon", varn="mrsos", postprocess_name="sm", exp="piControl"
-    #)
+    # )
 
     # regrid sm
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="mrsos",
-        postprocess_before="sm",
-        postprocess_name="sm_regrid",
-        exp="*",
+        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
     )
     process_cmip6_data.regrid_from_post(
-        varn="mrsos",
-        postprocess_before="sm",
-        postprocess_name="sm_regrid",
-        exp="*",
+        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
     )
 
     # region average sm
