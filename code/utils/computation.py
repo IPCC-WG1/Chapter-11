@@ -119,13 +119,13 @@ def select_by_metadata(datalist, **attributes):
     """
 
     selection = []
-    for data, attribs in datalist:
+    for data, metadata in datalist:
 
         if all(
-            a in attribs and (attribs[a] == attributes[a] or attributes[a] == "*")
+            a in metadata and (metadata[a] == attributes[a] or attributes[a] == "*")
             for a in attributes
         ):
-            selection.append((data, attribs))
+            selection.append((data, metadata))
     return selection
 
 
@@ -147,15 +147,15 @@ def remove_by_metadata(datalist, **attributes):
     """
 
     selection = []
-    for data, attribs in datalist:
+    for data, metadata in datalist:
 
         if all(
-            a in attribs and (attribs[a] == attributes[a] or attributes[a] == "*")
+            a in metadata and (metadata[a] == attributes[a] or attributes[a] == "*")
             for a in attributes
         ):
             pass
         else:
-            selection.append((data, attribs))
+            selection.append((data, metadata))
     return selection
 
 
