@@ -251,7 +251,7 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce
     return out
 
 
-def mannwhitney(d1, d2, stack=("lat", "lon")):
+def mannwhitney(d1, d2, alpha=0.05, stack=("lat", "lon")):
     """Wilcoxon–Mann–Whitney-U test with Benjamini and Hochberg correction"""
 
     # make lat/ lon a 1D variable
@@ -280,7 +280,7 @@ def mannwhitney(d1, d2, stack=("lat", "lon")):
     # apply Benjamini and Hochberg correction
     shape = result.shape
     p_adjust = sm.stats.multipletests(
-        result.values.ravel(), alpha=0.05, method="fdr_bh"
+        result.values.ravel(), alpha=alpha, method="fdr_bh"
     )[0]
     p_adjust = p_adjust.reshape(shape)
 
