@@ -7,7 +7,6 @@ import xarray as xr
 def time_in_range(start, end, yr_min, yr_max, metadata):
     """determine if start--end is in time vector"""
 
-    #     print(start, yr_min, end, yr_max)
     if (start < yr_min) or (end > yr_max):
         msg = f"no data for {start} - {end} ({yr_min.values}..{yr_max.values})"
 
@@ -157,6 +156,29 @@ def remove_by_metadata(datalist, **attributes):
         else:
             selection.append((data, metadata))
     return selection
+
+
+def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False):
+    """ compute value of index at a several warming levels
+
+        Parameters
+        ==========
+        tas_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual mean global mean
+            temperature data.
+        index_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual data of the index.
+        warming_levels : iterable of float
+            warming levels at which to assess the index
+    """
+
+    out = list()
+
+    for warming_level in warming_levels:
+        res = at_warming_level(tas_list, index_list, warming_level, add_meta=add_meta)
+        out.append(res)
+
+    return out
 
 
 def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
