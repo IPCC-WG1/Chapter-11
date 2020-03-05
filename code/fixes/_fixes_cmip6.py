@@ -59,7 +59,7 @@ def cmip6_files(folder_in):
         if _corresponds_to(
             metadata,
             table="Amon",
-            exp="ssp370"
+            exp="ssp370",
             varn="tas",
             model="BCC-ESM1",
         ):
@@ -69,7 +69,7 @@ def cmip6_files(folder_in):
         if _corresponds_to(
             metadata,
             table="Amon",
-            exp="ssp370"
+            exp="ssp370",
             varn="tas",
             model="MPI-ESM-1-2-HAM",
         ):
