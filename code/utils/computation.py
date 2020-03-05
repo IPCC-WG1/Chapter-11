@@ -158,7 +158,7 @@ def remove_by_metadata(datalist, **attributes):
     return selection
 
 
-def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False):
+def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False, reduce="mean"):
     """ compute value of index at a several warming levels
 
         Parameters
@@ -175,13 +175,13 @@ def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False)
     out = list()
 
     for warming_level in warming_levels:
-        res = at_warming_level(tas_list, index_list, warming_level, add_meta=add_meta)
+        res = at_warming_level(tas_list, index_list, warming_level, add_meta=add_meta, reduce=reduce)
         out.append(res)
 
     return out
 
 
-def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
+def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce="mean"):
     """ compute value of index at a certain warming level
 
         Parameters
@@ -227,12 +227,22 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False):
 
                 # get the Dataarray
                 da_idx = ds_idx[metadata_idx["varn"]]
-                idx = da_idx.sel(year=slice(beg, end)).mean("year")
+                idx = da_idx.sel(year=slice(beg, end))
+
+                if reduce is not None:
+                    # calculate mean
+                    idx = getattr(idx, reduce)("year")
+                else:
+                    # drop year to enable concatenating
+                    idx = idx.drop_vars("year")
 
                 models.append(metadata["model"])
                 ensname.append(metadata["ens"])
 
                 out.append(idx)
+
+    if not out:
+        return []
 
     out = xr.concat(out, dim="ens", coords="minimal", compat="override")
 
