@@ -259,7 +259,8 @@ def mannwhitney(d1, d2, alpha=0.05, stack=("lat", "lon")):
     d2_stack = d2.stack(stacked=stack)
 
     # create dummy array to store the results
-    result = d1_stack.mean(("ens"))
+    dims = set(d1_stack.dims) - set(["stacked"])
+    result = d1_stack.mean(dims)
 
     for i in range(result.stacked.shape[0]):
 
