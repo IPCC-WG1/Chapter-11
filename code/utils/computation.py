@@ -251,21 +251,21 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce
     return out
 
 
-def mannwhitney(d1, d2):
+def mannwhitney(d1, d2, stack=("lat", "lon")):
     """Wilcoxon–Mann–Whitney-U test with Benjamini and Hochberg correction"""
 
     # make lat/ lon a 1D variable
-    d1_stack = d1.stack(lat_lon=("lat", "lon"))
-    d2_stack = d2.stack(lat_lon=("lat", "lon"))
+    d1_stack = d1.stack(stacked=stack)
+    d2_stack = d2.stack(stacked=stack)
 
     # create dummy array to store the results
     result = d1_stack.mean(("ens"))
 
-    for i in range(result.lat_lon.shape[0]):
+    for i in range(result.stacked.shape[0]):
 
         # unpack ens/ time
-        v1 = d1_stack.isel(lat_lon=i).values.ravel()
-        v2 = d2_stack.isel(lat_lon=i).values.ravel()
+        v1 = d1_stack.isel(stacked=i).values.ravel()
+        v2 = d2_stack.isel(stacked=i).values.ravel()
 
         # only calculate if we actually have data
         if (~np.isnan(v1)).sum() > 0:
@@ -275,7 +275,7 @@ def mannwhitney(d1, d2):
 
         result[i] = p_val
 
-    result = result.unstack("lat_lon")
+    result = result.unstack("stacked")
 
     # apply Benjamini and Hochberg correction
     shape = result.shape
