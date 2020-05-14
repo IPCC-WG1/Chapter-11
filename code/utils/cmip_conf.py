@@ -249,7 +249,6 @@ class _cmip_conf:
                     how="no_anom",
                 )
 
-
             if ds and year_mean:
                 ds = ds.groupby("time.year").mean("time")
 
@@ -258,7 +257,16 @@ class _cmip_conf:
 
         return output
 
-    def _not_found(self, **metadata):
-
+    @staticmethod
+    def _not_found(**metadata):
+        
+        metadata = metadata.copy()
+        
+        # get rid of the ens labels
+        metadata.pop("r", None)
+        metadata.pop("i", None)
+        metadata.pop("p", None)
+        metadata.pop("f", None)        
+        
         msg = "-- no data found for: {}".format(metadata)
         print(msg)
