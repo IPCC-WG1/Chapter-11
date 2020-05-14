@@ -99,6 +99,9 @@ def at_warming_level_diff(
     projection=ccrs.Robinson(),
     opt_diff=dict(),
     signif=True,
+    title_left="CMIP5",
+    title_right="CMIP6",
+    title_diff=None,
     **kwargs,
 ):
 
@@ -157,11 +160,11 @@ def at_warming_level_diff(
     opt.update(**opt_diff)
 
     for i in range(3):
-        d1 = at_warming_c6[i]
-        d2 = at_warming_c5[i]
+        d1 = at_warming_c5[i]
+        d2 = at_warming_c6[i]
 
         ax = axes[i * 3 + 2]
-        d = ave_fnc(d1, "ens") - ave_fnc(d2, "ens")
+        d = ave_fnc(d2, "ens") - ave_fnc(d1, "ens")
         h = d.plot(ax=ax, **opt)
 
         if signif:
@@ -202,10 +205,13 @@ def at_warming_level_diff(
     mpu.ylabel_map("T glob +2.0 °C", ax=axes[3], fontsize=9, labelpad=6)
     mpu.ylabel_map("T glob +4.0 °C", ax=axes[6], fontsize=9, labelpad=6)
 
-    axes[0].set_title("CMIP5", fontsize=11)
-    axes[1].set_title("CMIP6", fontsize=11)
+    axes[0].set_title(title_left, fontsize=11)
+    axes[1].set_title(title_right, fontsize=11)
 
-    axes[2].set_title("CMIP6 - CMIP5", fontsize=11)
+    if title_diff is None:
+        title_diff = f"{title_right} - {title_left}"
+
+    axes[2].set_title(title_diff, fontsize=11)
 
     f.suptitle(title, fontsize=11, y=0.975)
 
