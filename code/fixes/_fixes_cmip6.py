@@ -18,10 +18,7 @@ def cmip6_files(folder_in):
 
         # the time axis is totally wrong (overlapping)
         if _corresponds_to(
-            metadata,
-            table="day",
-            varn=["pr"],
-            model=["CESM2-WACCM-FV2"],
+            metadata, table="day", varn=["pr"], model=["CESM2-WACCM-FV2"],
         ):
             return None
 
@@ -47,31 +44,19 @@ def cmip6_files(folder_in):
 
         # has all zero tas in 01.2000 and 01.2007
         if _corresponds_to(
-            metadata,
-            table="Amon",
-            varn="tas",
-            model="E3SM-1-1-ECA",
-            ens="r1i1p1f1",
+            metadata, table="Amon", varn="tas", model="E3SM-1-1-ECA", ens="r1i1p1f1",
         ):
             return None
 
         # only goes until 2055
         if _corresponds_to(
-            metadata,
-            table="Amon",
-            exp="ssp370",
-            varn="tas",
-            model="BCC-ESM1",
+            metadata, table="Amon", exp="ssp370", varn="tas", model="BCC-ESM1",
         ):
             return None
 
         # only goes until 2055
         if _corresponds_to(
-            metadata,
-            table="Amon",
-            exp="ssp370",
-            varn="tas",
-            model="MPI-ESM-1-2-HAM",
+            metadata, table="Amon", exp="ssp370", varn="tas", model="MPI-ESM-1-2-HAM",
         ):
             return None
 
@@ -96,6 +81,19 @@ def cmip6_files(folder_in):
                 fNs_in,
                 "tasmin_day_FIO-ESM-2-0_piControl_r1i1p1f1_gn_03001231-04010109.nc",
                 "tasmin_day_FIO-ESM-2-0_piControl_r1i1p1f1_gn_04010110-05010119.nc",
+            )
+
+        # duplicate file
+        if _corresponds_to(
+            metadata,
+            exp="ssp370",
+            table="Amon",
+            varn="tas",
+            model="CESM2",
+            ens="r4i1p1f1",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in, "tas_Amon_CESM2_ssp370_r4i1p1f1_gn_201501-210012.nc",
             )
 
         return fNs_in
