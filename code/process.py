@@ -376,6 +376,7 @@ def txx():
         postprocess_before="txx",
         postprocess_name="txx_reg_ave_ar6",
         exp="*",
+        ensnumber=None,
     )
 
 
