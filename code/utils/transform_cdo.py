@@ -57,7 +57,7 @@ def _regrid_cdo(fN_in, fN_out, target_grid, method):
 
 
 def regrid_cdo(
-    fN_in, fN_out, target_grid, overwrite=False, method="con2", cdo_version="1.9.7.1"
+    fN_in, fN_out, target_grid, overwrite=False, method="con2", cdo_version="1.9.8"
 ):
 
     if isinstance(cdo_version, str):
