@@ -1,0 +1,55 @@
+name: ipcc_ar6
+
+channels:
+    - conda-forge
+
+dependencies:
+  - python=3.7
+  - affine
+  - black
+  - bottleneck
+  - cartopy
+  - cdo
+  - cf_units
+  - cftime
+  - cmocean
+  - dask
+  - docopt
+  - ecmwf_grib
+  - flake8
+  - geopandas
+  - gridfill
+  - h5netcdf
+  - ipython
+  - isort
+  - jupyter_contrib_nbextensions
+  - jupyter
+  - line_profiler
+  - matplotlib
+  - nc-time-axis
+  - netcdf4
+  - numba
+  - numpy
+  - pandas
+  - parse
+  - patsy
+  - pint
+  - pip
+  - pytest
+  - python-cdo
+  - pyyaml
+  - rasterio
+  - scikit-learn
+  - scipy
+  - seaborn
+  - shapely
+  - statsmodels
+  - windspharm
+  - xarray
+  - xarray
+  - xclim=0.17
+  - xesmf
+  - zarr
+  - pip:
+    - git+https://github.com/mathause/regionmask.git@feature/ar6_regions
+    - git+https://github.com/mathause/mplotutils.git
