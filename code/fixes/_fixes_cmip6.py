@@ -60,6 +60,18 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # the global mean temperature decreases ~8K after 2090
+        # if _corresponds_to(
+        #     metadata, table="Amon", exp="ssp585", varn="tas", model="CIESM",
+        # ):
+        #     return None
+
+        # discontinuity between historical and ssp
+        if _corresponds_to(
+            metadata, table="day", exp=["ssp245", "ssp370"], varn="tasmax", model="KACE-1-0-G",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
@@ -94,6 +106,18 @@ def cmip6_files(folder_in):
         ):
             fNs_in = _remove_matching_fN(
                 fNs_in, "tas_Amon_CESM2_ssp370_r4i1p1f1_gn_201501-210012.nc",
+            )
+
+        # remove files that only go to March 2014
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="day",
+            varn=["tasmax", "tasmin"],
+            model="KACE-1-0-G",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in, "_gr_18500101-20140330.nc",
             )
 
         return fNs_in
