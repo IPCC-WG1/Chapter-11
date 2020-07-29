@@ -1,5 +1,6 @@
 import glob
-from ._fixes_common import fixes_common, _corresponds_to, _remove_matching_fN
+
+from ._fixes_common import _corresponds_to, _remove_matching_fN, fixes_common
 
 
 def cmip6_files(folder_in):
@@ -18,7 +19,17 @@ def cmip6_files(folder_in):
 
         # the time axis is totally wrong (overlapping)
         if _corresponds_to(
-            metadata, table="day", varn=["pr"], model=["CESM2-WACCM-FV2"],
+            metadata, table="day", varn=["pr"], model=["CESM2-WACCM-FV2"]
+        ):
+            return None
+
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="day",
+            varn="tasmax",
+            model="ACCESS-CM2",
+            ens="r2i1p1f1",
         ):
             return None
 
@@ -33,6 +44,28 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # not reading
+        if _corresponds_to(
+            metadata,
+            exp="ssp119",
+            table="Amon",
+            varn="tas",
+            model="EC-Earth3",
+            ens="r102i1p1f1",
+        ):
+            return None
+
+        # HDF error
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="day",
+            varn="tasmax",
+            model="EC-Earth3",
+            ens=["r20i1p1f1", "r4i1p1f1"],
+        ):
+            return None
+
         if _corresponds_to(
             metadata,
             table="day",
@@ -44,19 +77,19 @@ def cmip6_files(folder_in):
 
         # has all zero tas in 01.2000 and 01.2007
         if _corresponds_to(
-            metadata, table="Amon", varn="tas", model="E3SM-1-1-ECA", ens="r1i1p1f1",
+            metadata, table="Amon", varn="tas", model="E3SM-1-1-ECA", ens="r1i1p1f1"
         ):
             return None
 
         # only goes until 2055
         if _corresponds_to(
-            metadata, table="Amon", exp="ssp370", varn="tas", model="BCC-ESM1",
+            metadata, table="Amon", exp="ssp370", varn="tas", model="BCC-ESM1"
         ):
             return None
 
         # only goes until 2055
         if _corresponds_to(
-            metadata, table="Amon", exp="ssp370", varn="tas", model="MPI-ESM-1-2-HAM",
+            metadata, table="Amon", exp="ssp370", varn="tas", model="MPI-ESM-1-2-HAM"
         ):
             return None
 
@@ -68,7 +101,11 @@ def cmip6_files(folder_in):
 
         # discontinuity between historical and ssp
         if _corresponds_to(
-            metadata, table="day", exp=["ssp245", "ssp370"], varn="tasmax", model="KACE-1-0-G",
+            metadata,
+            table="day",
+            exp=["ssp245", "ssp370"],
+            varn="tasmax",
+            model="KACE-1-0-G",
         ):
             return None
 
@@ -105,7 +142,7 @@ def cmip6_files(folder_in):
             ens="r4i1p1f1",
         ):
             fNs_in = _remove_matching_fN(
-                fNs_in, "tas_Amon_CESM2_ssp370_r4i1p1f1_gn_201501-210012.nc",
+                fNs_in, "tas_Amon_CESM2_ssp370_r4i1p1f1_gn_201501-210012.nc"
             )
 
         # remove files that only go to March 2014
@@ -116,9 +153,7 @@ def cmip6_files(folder_in):
             varn=["tasmax", "tasmin"],
             model="KACE-1-0-G",
         ):
-            fNs_in = _remove_matching_fN(
-                fNs_in, "_gr_18500101-20140330.nc",
-            )
+            fNs_in = _remove_matching_fN(fNs_in, "_gr_18500101-20140330.nc")
 
         return fNs_in
 
