@@ -1,6 +1,7 @@
 import glob
-import parse
+
 import matplotlib.pyplot as plt
+import parse
 import xarray as xr
 
 
