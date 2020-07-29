@@ -1,12 +1,7 @@
 import glob
 
-
-from ._fixes_common import (
-    fixes_common,
-    _corresponds_to,
-    _remove_matching_fN,
-    _remove_non_matching_fN,
-)
+from ._fixes_common import (_corresponds_to, _remove_matching_fN,
+                            _remove_non_matching_fN, fixes_common)
 
 
 def cmip5_files(folder_in):
@@ -27,10 +22,7 @@ def cmip5_files(folder_in):
 
         # skip: something goes wrong in California ~ 2 °C temperature jump downwards
         # e.g. 29.36°N 253°E in 1960
-        if _corresponds_to(
-            metadata,
-            model=["MIROC5", "MIROC-ESM-CHEM", "MIROC-ESM"]
-        ):
+        if _corresponds_to(metadata, model=["MIROC5", "MIROC-ESM-CHEM", "MIROC-ESM"]):
             return None
 
         # skip: uses mixed Gregorian/Julian calendar but goes over 1582-10-15
