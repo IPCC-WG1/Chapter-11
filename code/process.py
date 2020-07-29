@@ -1,23 +1,17 @@
 import logging
+
 import docopt
-
-from utils.transform import (
-    CDD,
-    Globmean,
-    ResampleAnnual,
-    RegionAverage,
-    NoTransform,
-    TX_Days_Above,
-)
-from utils.transform_cdo import regrid_cdo
-import fixes
-import filefinder as ff
-from utils import xarray_utils as xru
-from utils import mkdir
-
 import regionmask
 
 import conf
+import filefinder as ff
+import fixes
+from utils import mkdir
+from utils import xarray_utils as xru
+from utils.transform import (CDD, Globmean, NoTransform, RegionAverage,
+                             ResampleAnnual, ResampleMonthly, SelectGridpoint,
+                             SelectRegion, TX_Days_Above)
+from utils.transform_cdo import regrid_cdo
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +122,26 @@ class _ProcessCmipData:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+    def select_coords_from_orig(
+        self, table, varn, postprocess_name, coords, exp=None, **kwargs
+    ):
+
+        transform_func = SelectGridpoint(var=varn, **coords)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def select_region_from_orig(
+        self, table, varn, postprocess_name, coords, exp=None, **kwargs
+    ):
+
+        transform_func = SelectRegion(var=varn, **coords)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
     def cdd_from_orig(
         self, table, varn="pr", postprocess_name="CDD", freq="A", exp=None, **kwargs
     ):
@@ -165,6 +179,16 @@ class _ProcessCmipData:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+    def resample_monthly_from_orig(
+        self, table, varn, postprocess_name, how, exp=None, **kwargs
+    ):
+
+        transform_func = ResampleMonthly(var=varn, how=how)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
     def resample_annual_quantile_from_orig(
         self, table, varn, postprocess_name, q, exp=None, **kwargs
     ):
@@ -176,10 +200,10 @@ class _ProcessCmipData:
         )
 
     def region_average_from_orig(
-        self, table, varn, postprocess_name, exp=None, **kwargs
+        self, table, varn, postprocess_name, exp=None, regions=ar6_land, **kwargs
     ):
 
-        transform_func = RegionAverage(varn, regions=ar6_land)
+        transform_func = RegionAverage(varn, regions=regions)
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
@@ -209,7 +233,13 @@ class _ProcessCmipData:
             regrid_cdo(fN_in, fN_out, "g025")
 
     def region_average_from_post(
-        self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
+        self,
+        varn,
+        postprocess_before,
+        postprocess_name,
+        exp=None,
+        regions=ar6_land,
+        **kwargs,
     ):
 
         print("=== region_average_from_post ===\n")
@@ -222,7 +252,7 @@ class _ProcessCmipData:
 
         self._create_folder_for_output(files, postprocess_name)
 
-        transform_func = RegionAverage(varn, regions=ar6_land)
+        transform_func = RegionAverage(varn, regions=regions)
 
         for fN_in, metadata in files:
 
@@ -297,6 +327,14 @@ def pr_annmean():
 
 def tas_reg_ave():
 
+    process_cmip6_data.no_transform_from_orig(
+        table="Amon",
+        varn="tas",
+        postprocess_name="monthly",
+        exp=["historical", "ssp585"],
+        ensnumber=None,
+    )
+
     process_cmip5_data.region_average_from_orig(
         table="Amon",
         varn="tas",
@@ -339,12 +377,17 @@ def txx():
         ensnumber=None,
     )
 
+    # monthly maximum temperature
+    process_cmip6_data.resample_monthly_from_orig(
+        table="day", varn="tasmax", postprocess_name="txx_monthly", how="max", exp=None
+    )
+
     process_cmip5_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
     )
 
     process_cmip6_data.resample_annual_from_orig(
-        table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl",
+        table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
     )
 
     # # regrid txx
@@ -613,26 +656,20 @@ def cdd():
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*"
     )
     process_cmip6_data.regrid_from_post(
-        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*"
     )
 
     # region average cdd
     # =============================================================================
 
     process_cmip5_data.region_average_from_post(
-        varn="pr",
-        postprocess_before="cdd",
-        postprocess_name="cdd_reg_ave_ar6",
-        exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_reg_ave_ar6", exp="*"
     )
     process_cmip6_data.region_average_from_post(
-        varn="pr",
-        postprocess_before="cdd",
-        postprocess_name="cdd_reg_ave_ar6",
-        exp="*",
+        varn="pr", postprocess_before="cdd", postprocess_name="cdd_reg_ave_ar6", exp="*"
     )
 
 
@@ -663,26 +700,20 @@ def mrso():
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
     process_cmip6_data.regrid_from_post(
-        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
 
     # region average sm
     # =============================================================================
 
     process_cmip5_data.region_average_from_post(
-        varn="mrso",
-        postprocess_before="sm",
-        postprocess_name="sm_reg_ave_ar6",
-        exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_reg_ave_ar6", exp="*"
     )
     process_cmip6_data.region_average_from_post(
-        varn="mrso",
-        postprocess_before="sm",
-        postprocess_name="sm_reg_ave_ar6",
-        exp="*",
+        varn="mrso", postprocess_before="sm", postprocess_name="sm_reg_ave_ar6", exp="*"
     )
 
 
@@ -713,10 +744,10 @@ def mrsos():
     # =============================================================================
 
     process_cmip5_data.regrid_from_post(
-        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
+        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
     process_cmip6_data.regrid_from_post(
-        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*",
+        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
 
     # region average sm

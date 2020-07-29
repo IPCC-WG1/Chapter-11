@@ -11,15 +11,15 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
         msg = f"no data for {start} - {end} ({yr_min.values}..{yr_max.values})"
 
         if metadata is not None:
-            
+
             metadata = metadata.copy()
-        
+
             # get rid of the ens labels
             metadata.pop("r", None)
             metadata.pop("i", None)
             metadata.pop("p", None)
-            metadata.pop("f", None)   
-            
+            metadata.pop("f", None)
+
             msg = f" -- {metadata}: " + msg
 
         print(msg)
@@ -167,7 +167,15 @@ def remove_by_metadata(datalist, **attributes):
     return selection
 
 
-def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False, reduce="mean", select_by=("model", "exp", "ens"), factor=None):
+def at_warming_levels_list(
+    tas_list,
+    index_list,
+    warming_levels,
+    add_meta=False,
+    reduce="mean",
+    select_by=("model", "exp", "ens"),
+    factor=None,
+):
     """ compute value of index at a several warming levels
 
         Parameters
@@ -184,17 +192,31 @@ def at_warming_levels_list(tas_list, index_list, warming_levels, add_meta=False,
     out = list()
 
     for warming_level in warming_levels:
-        res = at_warming_level(tas_list, index_list, warming_level, add_meta=add_meta, reduce=reduce, select_by=select_by)
-        
+        res = at_warming_level(
+            tas_list,
+            index_list,
+            warming_level,
+            add_meta=add_meta,
+            reduce=reduce,
+            select_by=select_by,
+        )
+
         if factor is not None:
             res *= factor
-        
+
         out.append(res)
 
     return out
 
 
-def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce="mean", select_by=("model", "exp", "ens")):
+def at_warming_level(
+    tas_list,
+    index_list,
+    warming_level,
+    add_meta=False,
+    reduce="mean",
+    select_by=("model", "exp", "ens"),
+):
     """ compute value of index at a certain warming level
 
         Parameters
@@ -221,13 +243,11 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce
         attributes = {key: metadata[key] for key in select_by}
 
         # try to find the index
-        index = select_by_metadata(
-            index_list,
-            **attributes
-        )
+        index = select_by_metadata(index_list, **attributes)
 
         # make sure only one dataset is found in index_list
-        assert len(index) <= 1, metadata
+        if len(index) != 1:
+            raise ValueError(metadata)
 
         # an index was found for this tas dataset
         if index:
@@ -256,7 +276,6 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce
                 ensname.append(metadata["ens"])
                 exp.append(metadata["exp"])
 
-
                 out.append(idx)
 
     if not out:
@@ -265,8 +284,36 @@ def at_warming_level(tas_list, index_list, warming_level, add_meta=False, reduce
     out = xr.concat(out, dim="ens", coords="minimal", compat="override")
 
     if add_meta:
-        out = out.assign_coords(model=("ens", models), ensname=("ens", ensname), exp=("ens", exp))
+        out = out.assign_coords(
+            model=("ens", models), ensname=("ens", ensname), exp=("ens", exp)
+        )
     return out
+
+
+def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=True):
+
+    out_a = list()
+    out_b = list()
+
+    # loop through all global mean temperatures
+    for ds_a, metadata in list_a:
+
+        attributes = {key: metadata[key] for key in select_by}
+
+        # try to find the index
+        match = select_by_metadata(list_b, **attributes)
+
+        # make sure only one dataset is found in index_list
+        if check and len(match) > 1:
+            print(match)
+            raise ValueError(metadata)
+
+        # an index was found for this tas dataset
+        if match:
+            out_a += [[ds_a, metadata]]
+            out_b += match
+
+    return out_a, out_b
 
 
 def mannwhitney(d1, d2, alpha=0.05, stack=("lat", "lon")):
@@ -369,9 +416,7 @@ def concat_xarray_with_metadata(
     return out
 
 
-def concat_xarray_without_metadata(
-    datalist, process=None,
-):
+def concat_xarray_without_metadata(datalist, process=None):
     """create xr Dataset with 'ens' and 'model' as multiindex
 
         Input
@@ -391,6 +436,6 @@ def concat_xarray_without_metadata(
         all_ds.append(ds)
 
     # concate all data
-    out = xr.concat(all_ds, "ens", compat='override', coords="minimal")
+    out = xr.concat(all_ds, "ens", compat="override", coords="minimal")
 
     return out
