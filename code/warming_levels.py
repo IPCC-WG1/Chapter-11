@@ -3,7 +3,6 @@
 from datetime import datetime
 
 import conf
-
 from utils import computation
 
 
@@ -12,7 +11,12 @@ def warming_level_to_str(warming_level):
 
 
 def warming_level_years(
-    tas_list, warming_level, start_clim, end_clim, print_warming_level=True, add_grid_info=False
+    tas_list,
+    warming_level,
+    start_clim,
+    end_clim,
+    print_warming_level=True,
+    add_grid_info=False,
 ):
 
     out = f"# warming level: {warming_level}°C above {start_clim}-{end_clim}\n"
@@ -24,7 +28,7 @@ def warming_level_years(
     for ds, metadata in tas_list:
 
         ds = computation.calc_anomaly(
-            ds.tas, start=start_clim, end=end_clim, metadata=metadata, how="absolute",
+            ds.tas, start=start_clim, end=end_clim, metadata=metadata, how="absolute"
         )
 
         beg, end, mid = computation.calc_year_of_warming_level(ds, warming_level)
@@ -47,8 +51,8 @@ def warming_level_years(
 
 
 def write_info(fid):
-    fid.write(f"# author: Mathias Hauser (mathias.hauser@env.ethz.ch)\n")
-    fid.write(f"# script: warming_levels.py\n")
+    fid.write("# author: Mathias Hauser (mathias.hauser@env.ethz.ch)\n")
+    fid.write("# script: warming_levels.py\n")
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S\n")
     fid.write(f"# executed: {now}\n")
 
@@ -80,7 +84,11 @@ def write_warming_level_to_file(
         write_info(fid)
         for warming_level in warming_levels:
             string = warming_level_years(
-                tas_list, warming_level, start_clim, end_clim, add_grid_info=add_grid_info
+                tas_list,
+                warming_level,
+                start_clim,
+                end_clim,
+                add_grid_info=add_grid_info,
             )
             fid.write(string)
 
