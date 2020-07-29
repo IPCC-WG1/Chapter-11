@@ -39,7 +39,7 @@ class NoTransform(_ProcessWithXarray):
         else:
 
             # check variable is available
-            da = ds[self.var]
+            ds[self.var]
 
             return ds
 
@@ -168,6 +168,42 @@ class ResampleAnnual(_ProcessWithXarray):
         return ds
 
 
+class ResampleMonthly(_ProcessWithXarray):
+    """transformation function to resample by month"""
+
+    def __init__(self, var, how, **kwargs):
+
+        self.var = var
+        self.how = how
+        self._name = "resample_monthly_" + how
+        self.kwargs = kwargs
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+
+            da = ds[self.var]
+            resampler = da.resample(time="M")
+
+            func = getattr(resampler, self.how, None)
+
+            if func is None:
+                raise KeyError(f"how cannot be '{self.how}'")
+
+            if self.how == "quantile":
+                ds = ds.load()
+
+            da = func(dim="time", **self.kwargs)
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
+
+
 class GroupbyAnnual(_ProcessWithXarray):
     """transformation function to GroupBy year"""
 
@@ -193,6 +229,64 @@ class GroupbyAnnual(_ProcessWithXarray):
                 raise KeyError(f"how cannot be '{self.how}'")
 
             da = func("time")
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
+
+
+class SelectGridpoint(_ProcessWithXarray):
+    """transformation function to select a gridpoint"""
+
+    def __init__(self, var, **coords):
+
+        self.var = var
+        self.coords = coords
+        name = "__".join([f"{key}_{value}" for key, value in coords.items()])
+        self._name = "sel_" + name
+
+    def _trans(self, ds):
+
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+
+            da = ds[self.var]
+
+            da = da.sel(**self.coords, method="nearest")
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
+
+
+class SelectRegion(_ProcessWithXarray):
+    """transformation function to subset a square region"""
+
+    def __init__(self, var, **coords):
+
+        self.var = var
+        self.coords = coords
+        name = "__".join(
+            [f"{key}_{value.start}_{value.stop}" for key, value in coords.items()]
+        )
+        self._name = "sel_" + name
+
+    def _trans(self, ds):
+
+        # TODO: normalize to 0..360 or -180..180?
+
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+
+            da = ds[self.var]
+
+            da = da.sel(**self.coords)
 
             ds = da.to_dataset(name=self.var)
             ds.attrs = attrs
@@ -226,6 +320,9 @@ class RegionAverage(_ProcessWithXarray):
 
         if not isinstance(regions, regionmask.Regions):
             raise ValueError("'regions' must be a regionmask.Regions instance")
+
+        if regions.name is None:
+            raise ValueError("regions require a name")
 
         self._name = "region_average_" + regions.name
 

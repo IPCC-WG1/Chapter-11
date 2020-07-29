@@ -2,8 +2,8 @@ import xarray as xr
 
 import filefinder as ff
 
-from .file_utils import _file_exists
 from . import computation
+from .file_utils import _file_exists
 
 
 class _cmip_conf:
@@ -259,14 +259,14 @@ class _cmip_conf:
 
     @staticmethod
     def _not_found(**metadata):
-        
+
         metadata = metadata.copy()
-        
+
         # get rid of the ens labels
         metadata.pop("r", None)
         metadata.pop("i", None)
         metadata.pop("p", None)
-        metadata.pop("f", None)        
-        
+        metadata.pop("f", None)
+
         msg = "-- no data found for: {}".format(metadata)
         print(msg)
