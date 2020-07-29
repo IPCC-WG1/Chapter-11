@@ -1,6 +1,5 @@
 from .cmip6 import FileFinder
 
-
 cmip6_ng = FileFinder(
     root_path="/net/atmos/data/cmip6-ng",
     file_pattern="{varname}_{timeres}_{model}_{scenaio}_{ens}_{grid}.nc",

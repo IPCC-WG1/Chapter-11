@@ -1,5 +1,5 @@
-import parse
 import pandas as pd
+import parse
 
 
 def parse_ens(filelist):

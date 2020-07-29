@@ -1,5 +1,5 @@
-import re
 import itertools
+import re
 
 
 def _find_keys(pattern):

@@ -1,14 +1,14 @@
-from os import path
-import re
-import pandas as pd
-import os
-import parse
 import copy
-import logging
-import numpy as np
 import glob
+import logging
+import os
+from os import path
 
-from .utils import _find_keys, atoi, natural_keys, product_dict
+import numpy as np
+import pandas as pd
+import parse
+
+from .utils import _find_keys, natural_keys, product_dict
 
 logger = logging.getLogger(__name__)
 
