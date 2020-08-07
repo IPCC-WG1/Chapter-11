@@ -1,8 +1,7 @@
 import numpy as np
+import regionmask
 import xarray as xr
 from xclim import atmos
-
-import regionmask
 
 from . import xarray_utils as xru
 

@@ -1,7 +1,11 @@
 import glob
 
-from ._fixes_common import (_corresponds_to, _remove_matching_fN,
-                            _remove_non_matching_fN, fixes_common)
+from ._fixes_common import (
+    _corresponds_to,
+    _remove_matching_fN,
+    _remove_non_matching_fN,
+    fixes_common,
+)
 
 
 def cmip5_files(folder_in):
