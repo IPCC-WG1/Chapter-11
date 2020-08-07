@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-import statsmodels.api as sm
 import xarray as xr
 
 
@@ -314,60 +312,6 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
             out_b += match
 
     return out_a, out_b
-
-
-def mannwhitney(d1, d2, alpha=0.05, stack=("lat", "lon")):
-    """Wilcoxon–Mann–Whitney-U test with Benjamini and Hochberg correction"""
-
-    # make lat/ lon a 1D variable
-    d1_stack = d1.stack(stacked=stack)
-    d2_stack = d2.stack(stacked=stack)
-
-    # create dummy array to store the results
-    dims = set(d1_stack.dims) - set(["stacked"])
-    result = d1_stack.mean(dims)
-
-    for i in range(result.stacked.shape[0]):
-
-        # unpack ens/ time
-        v1 = d1_stack.isel(stacked=i).values.ravel()
-        v2 = d2_stack.isel(stacked=i).values.ravel()
-
-        # only calculate if we actually have data
-        if (~np.isnan(v1)).sum() > 0:
-            _, p_val = sp.stats.mannwhitneyu(v1, v2)
-        else:
-            p_val = 1.0
-
-        result[i] = p_val
-
-    result = result.unstack("stacked")
-
-    # apply Benjamini and Hochberg correction
-    shape = result.shape
-    p_adjust = sm.stats.multipletests(
-        result.values.ravel(), alpha=alpha, method="fdr_bh"
-    )[0]
-    p_adjust = p_adjust.reshape(shape)
-
-    result.values[:] = p_adjust
-
-    return result
-
-
-MANNWHITNEY_DICT = dict()
-
-
-def get_mannwhitney(d1, d2, name):
-    # cache the results of mannwhitney, as it is slow
-
-    if name not in MANNWHITNEY_DICT.keys():
-
-        mw = mannwhitney(d1, d2)
-
-        MANNWHITNEY_DICT[name] = mw
-
-    return MANNWHITNEY_DICT[name]
 
 
 def concat_xarray_with_metadata(
