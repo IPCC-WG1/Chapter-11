@@ -1,6 +1,6 @@
+import regionmask
 import geopandas as gp
 import pooch
-import regionmask
 
 
 class REGIONS:
@@ -29,7 +29,7 @@ class REGIONS:
                 name="continent",
             )
 
-        return self._cont
+        return self._continents
 
 
 regions = REGIONS()
