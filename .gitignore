@@ -2,6 +2,7 @@
 *.ipynb
 !clean_notebooks/*.ipynb
 figures/*
+archive/*
 deprecated/*
 tests/*
 tglobscaling/*
