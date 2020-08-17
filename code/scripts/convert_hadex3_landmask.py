@@ -1,5 +1,6 @@
 import warnings
 from datetime import datetime
+from os import path
 
 import pandas as pd
 import xarray as xr
@@ -7,16 +8,18 @@ import xarray as xr
 # we would get 13 warnings otherwise
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
+BASE_PATH = "../../data/HadEX3/raw"
+
 
 def convert_hadex3_landmask():
     """convert HadEX3 landfrac from 1D csv to 2D netCDF landmask"""
 
     # load TXx dataset for the coordinates and attributes
-    fN = "../data/HadEX3/raw/HadEX3_TXx_1901-2018_ADW_61-90_1.25x1.875deg.nc"
+    fN = path.join(BASE_PATH, "HadEX3_TXx_1901-2018_ADW_61-90_1.25x1.875deg.nc")
     ds = xr.open_dataset(fN)
 
     # load landmask text file
-    fN = "../data/HadEX3/raw/land_mask_144x192.msk"
+    fN = path.join(BASE_PATH, "land_mask_144x192.msk")
 
     df = pd.read_csv(
         fN,
@@ -73,7 +76,9 @@ def convert_hadex3_landmask():
         landmask[var].encoding["_FillValue"] = -99.9
 
     # write netCDF
-    fN_out = "../data/HadEX3/raw/HadEX3_landmask_1901-2018_ADW_XX-XX_1.25x1.875deg.nc"
+    fN_out = path.join(
+        BASE_PATH, "HadEX3_landmask_1901-2018_ADW_XX-XX_1.25x1.875deg.nc"
+    )
     landmask.to_netcdf(fN_out)
 
 
