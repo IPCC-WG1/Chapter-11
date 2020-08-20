@@ -296,7 +296,7 @@ class SelectRegion(_ProcessWithXarray):
 class RegionAverage(_ProcessWithXarray):
     """calculate regional average"""
 
-    def __init__(self, var, regions, landmask=None, land_only=True):
+    def __init__(self, var, regions, landmask=None, land_only=True, weights=None):
         """
         Parameters
         ----------
@@ -316,6 +316,7 @@ class RegionAverage(_ProcessWithXarray):
         self.regions = regions
         self.landmask = landmask
         self.land_only = land_only
+        self.weights = weights
 
         if not isinstance(regions, regionmask.Regions):
             raise ValueError("'regions' must be a regionmask.Regions instance")
@@ -323,10 +324,7 @@ class RegionAverage(_ProcessWithXarray):
         if regions.name is None:
             raise ValueError("regions require a name")
 
-        self._name = "region_average_" + regions.name
-
-        abbrevs = ["global", "ocean", "land", "land_wo_antarctica"]
-        self.abbrevs = abbrevs + regions.abbrevs
+        self._name = "region_average_" + regions.name.replace(" ", "_")
 
     def _trans(self, ds):
         """
@@ -334,67 +332,42 @@ class RegionAverage(_ProcessWithXarray):
         ----------
         da : DataArray
             Object over which the weighted reduction operation is applied.
-
         """
+
+        from . import regions
+
         attrs = ds.attrs
 
         da = ds[self.var]
 
-        # get cosine weights
-        weight = xru.cos_wgt(da)
-
-        numbers = np.array(self.regions.numbers)
+        if self.weights is None:
+            # get cosine weights
+            weight = xru.cos_wgt(da)
 
         if self.landmask is None:
-            landmask = regionmask.defined_regions.natural_earth.land_110.mask(da)
-            landmask = landmask == 0
+            landmask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
+            landmask = landmask.squeeze(drop=True)
+
+        if landmask.max() > 1.0 or landmask.min() < 0.0:
+            msg = "landmask must be in the range 0..1. Found values {}..{}"
+            msg = msg.format(landmask.min().values, landmask.max().values)
+            raise ValueError(msg)
+
+        # prepend the global regions
+        numbers = np.array(self.regions.numbers)
+        numbers_global = np.arange(numbers.min() - 4, numbers.min())
+        global_mask_3D = regions.global_mask_3D(
+            da, landmask=landmask, numbers=numbers_global
+        )
+
+        regional_mask_3D = self.regions.mask_3D(da)
 
         if self.land_only:
-            wgt = weight * landmask
-        else:
-            # we need to add lon coordinates
-            wgt = xr.full_like(landmask, 1) * weight
+            regional_mask_3D = regional_mask_3D * landmask
 
-        mask = self.regions.mask(da)
+        mask_3D = xr.concat([global_mask_3D, regional_mask_3D], dim="region")
 
-        # list to accumulate averages
-        ave = list()
-
-        # global mean
-        a = xru.average(da, dim=("lat", "lon"), weights=weight)
-        ave.append(a)
-
-        # global ocean mean
-        a = xru.average(da, dim=("lat", "lon"), weights=(weight * (1.0 - landmask)))
-        ave.append(a)
-
-        # global land mean
-        a = xru.average(da, dim=("lat", "lon"), weights=(weight * landmask))
-        ave.append(a)
-
-        # global land mean w/o antarctica
-        da_selected = da.sel(lat=slice(-60, None))
-        a = xru.average(da_selected, dim=("lat", "lon"), weights=(weight * landmask))
-        ave.append(a)
-
-        # it is faster to calculate the weighted mean via groupby
-        g = da.groupby(mask)
-        wgt_stacked = wgt.stack(stacked_lat_lon=("lat", "lon"))
-        a = g.apply(xru.average, dim=("stacked_lat_lon"), weights=wgt_stacked)
-        ave.append(a.drop("region"))
-
-        da = xr.concat(ave, dim="region")
-
-        # shift region coordinates such that 1 to 26 corresponds to the
-        # regions
-
-        numbers = np.arange(numbers.min() - 4, numbers.max() + 1)
-        #         da.region.values[:] = x
-
-        # add the abbreviations of the regions, update the numbers
-        da = da.assign_coords(
-            **{"abbrev": ("region", self.abbrevs), "region": ("region", numbers)}
-        )
+        da = da.weighted(mask_3D * weight).mean(("lat", "lon"))
 
         ds = da.to_dataset(name=self.var)
 
