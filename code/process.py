@@ -15,6 +15,7 @@ from utils.transform import (
     RegionAverage,
     ResampleAnnual,
     ResampleMonthly,
+    RollingResampleAnnual,
     SelectGridpoint,
     SelectRegion,
     TX_Days_Above,
@@ -150,6 +151,18 @@ class ProcessCmipDataFromOrig:
     ):
 
         transform_func = CDD(var=varn, freq=freq)
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
+    def rx5day_from_orig(
+        self, table="day", varn="pr", postprocess_name="Rx5day", exp=None, **kwargs
+    ):
+
+        transform_func = RollingResampleAnnual(
+            var=varn, window=5, how_rolling="sum", how="max"
+        )
 
         return self.postprocess_from_orig(
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
@@ -647,6 +660,34 @@ def rx1day():
 
 
 # =============================================================================
+# calculate rx5day
+# =============================================================================
+
+
+def rx5day():
+
+    process_cmip6_data.rx5day_from_orig(
+        table="day", varn="pr", postprocess_name="rx5day", exp=None
+    )
+
+    process_cmip6_data.rx5day_from_orig(
+        table="day", varn="pr", postprocess_name="rx5day", exp="piControl"
+    )
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="rx5day",
+        postprocess_name="rx5day_regrid",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="pr",
+        postprocess_before="rx5day",
+        postprocess_name="rx5day_reg_ave_ar6",
+        exp="*",
+    )
+
+
+# =============================================================================
 # calculate cdd
 # =============================================================================
 
@@ -831,6 +872,9 @@ def main(args=None):
 
     if postprocess == "rx1day":
         rx1day()
+
+    if postprocess == "rx5day":
+        rx5day()
 
     if postprocess == "cdd":
         cdd()
