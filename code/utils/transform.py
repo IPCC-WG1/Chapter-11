@@ -11,9 +11,21 @@ class _ProcessWithXarray:
     _name = None
 
     def __call__(self, ds):
-        return self._trans(ds)
 
-    def _trans(self, ds):
+        if len(ds) == 0:
+            return []
+        else:
+            attrs = ds.attrs
+            da = ds[self.var]
+
+            da, attrs = self._trans(da, attrs)
+
+            ds = da.to_dataset(name=self.var)
+            ds.attrs = attrs
+
+        return ds
+
+    def _trans(self, da, attrs):
         raise NotImplementedError("Implement _trans in the subclass")
 
     @property
@@ -21,6 +33,16 @@ class _ProcessWithXarray:
         if self._name is None:
             raise NotImplementedError("Please define a name")
         return self._name
+
+
+def _get_func(object, how):
+
+    func = getattr(object, how, None)
+
+    if func is None:
+        raise KeyError(f"how cannot be '{how}'")
+
+    return func
 
 
 class NoTransform(_ProcessWithXarray):
@@ -31,16 +53,9 @@ class NoTransform(_ProcessWithXarray):
         self.var = var
         self._name = "no_transform"
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
-
-            # check variable is available
-            ds[self.var]
-
-            return ds
+        return da, attrs
 
 
 class Globmean(_ProcessWithXarray):
@@ -52,22 +67,12 @@ class Globmean(_ProcessWithXarray):
         self.dim = dim
         self._name = "globmean"
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
-            wgt = xru.cos_wgt(ds)
+        wgt = xru.cos_wgt(da)
+        da = xru.average(da, dim=self.dim, weights=wgt, keep_attrs=True)
 
-            attrs = ds.attrs
-
-            da = ds[self.var]
-            da = xru.average(da, dim=self.dim, weights=wgt, keep_attrs=True)
-            ds = da.to_dataset(name=self.var)
-
-            ds.attrs = attrs
-
-            return ds
+        return da, attrs
 
 
 class CDD(_ProcessWithXarray):
@@ -77,27 +82,17 @@ class CDD(_ProcessWithXarray):
         self.freq = freq
         self._name = "CDD"
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
+        # rechunk into a single dask array chunk along time
+        da = da.chunk({"time": -1})
 
-            attrs = ds.attrs
-            da = ds[self.var]
+        da = atmos.maximum_consecutive_dry_days(da, freq=self.freq)
 
-            # rechunk into a single dask array chunk along time
-            da = da.chunk({"time": -1})
+        # get rid of the "days" units, else CDD will have dtype = timedelta
+        da.attrs.pop("units")
 
-            da = atmos.maximum_consecutive_dry_days(da, freq=self.freq)
-
-            # get rid of the "days" units, else CDD will have dtype = timedelta
-            da.attrs.pop("units")
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-            return ds
+        return da, attrs
 
 
 class TX_Days_Above(_ProcessWithXarray):
@@ -108,27 +103,17 @@ class TX_Days_Above(_ProcessWithXarray):
         self.freq = freq
         self._name = "CDD"
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
+        # rechunk into a single dask array chunk along time
+        da = da.chunk({"time": -1})
 
-            attrs = ds.attrs
-            da = ds[self.var]
+        da = atmos.tx_days_above(da, thresh=self.thresh, freq=self.freq)
 
-            # rechunk into a single dask array chunk along time
-            da = da.chunk({"time": -1})
+        # get rid of the "days" units, else CDD will have dtype = timedelta
+        da.attrs.pop("units")
 
-            da = atmos.tx_days_above(da, thresh=self.thresh, freq=self.freq)
-
-            # get rid of the "days" units, else CDD will have dtype = timedelta
-            da.attrs.pop("units")
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-            return ds
+        return da, attrs
 
 
 class ResampleAnnual(_ProcessWithXarray):
@@ -141,30 +126,18 @@ class ResampleAnnual(_ProcessWithXarray):
         self._name = "resample_annual_" + how
         self.kwargs = kwargs
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
-            attrs = ds.attrs
+        resampler = da.resample(time="A")
 
-            da = ds[self.var]
-            resampler = da.resample(time="A")
+        func = _get_func(resampler, self.how)
 
-            func = getattr(resampler, self.how, None)
+        if self.how == "quantile":
+            da = da.load()
 
-            if func is None:
-                raise KeyError(f"how cannot be '{self.how}'")
+        da = func(dim="time", **self.kwargs)
 
-            if self.how == "quantile":
-                ds = ds.load()
-
-            da = func(dim="time", **self.kwargs)
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-        return ds
+        return da, attrs
 
 
 class ResampleMonthly(_ProcessWithXarray):
@@ -177,30 +150,47 @@ class ResampleMonthly(_ProcessWithXarray):
         self._name = "resample_monthly_" + how
         self.kwargs = kwargs
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
-            attrs = ds.attrs
+        resampler = da.resample(time="M")
+        func = _get_func(resampler, self.how)
 
-            da = ds[self.var]
-            resampler = da.resample(time="M")
+        if self.how == "quantile":
+            da = da.load()
 
-            func = getattr(resampler, self.how, None)
+        da = func(dim="time", **self.kwargs)
 
-            if func is None:
-                raise KeyError(f"how cannot be '{self.how}'")
+        return da, attrs
 
-            if self.how == "quantile":
-                ds = ds.load()
 
-            da = func(dim="time", **self.kwargs)
+class RollingResampleAnnual(_ProcessWithXarray):
+    """transformation function to resample by year"""
 
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
+    def __init__(self, var, window, how_rolling, how, **kwargs):
 
-        return ds
+        self.var = var
+        self.window = window
+        self.how_rolling = how_rolling
+        self.how = how
+        self._name = f"rolling_{how_rolling}_{window}_resample_annual_{how}"
+        self.kwargs = kwargs
+
+    def _trans(self, da, attrs):
+
+        rolling = da.rolling(time=self.window)
+        func = _get_func(rolling, self.how_rolling)
+        # its much less memory intensive with skipna=False
+        da = func(skipna=False)
+
+        resampler = da.resample(time="A")
+        func = _get_func(resampler, self.how)
+
+        if self.how == "quantile":
+            da = da.load()
+
+        da = func(dim="time", **self.kwargs)
+
+        return da, attrs
 
 
 class GroupbyAnnual(_ProcessWithXarray):
@@ -212,27 +202,14 @@ class GroupbyAnnual(_ProcessWithXarray):
         self.how = how
         self._name = "groupby_annual_" + how
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
-        if len(ds) == 0:
-            return []
-        else:
-            attrs = ds.attrs
+        grouper = da.groupby("time.year")
+        func = _get_func(grouper, self.how)
 
-            da = ds[self.var]
-            grouper = da.groupby("time.year")
+        da = func("time")
 
-            func = getattr(grouper, self.how, None)
-
-            if func is None:
-                raise KeyError(f"how cannot be '{self.how}'")
-
-            da = func("time")
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-        return ds
+        return da, attrs
 
 
 class SelectGridpoint(_ProcessWithXarray):
@@ -245,21 +222,12 @@ class SelectGridpoint(_ProcessWithXarray):
         name = "__".join([f"{key}_{value}" for key, value in coords.items()])
         self._name = "sel_" + name
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
+        # TODO: normalize to 0..360 or -180..180?
 
-        if len(ds) == 0:
-            return []
-        else:
-            attrs = ds.attrs
+        da = da.sel(**self.coords, method="nearest")
 
-            da = ds[self.var]
-
-            da = da.sel(**self.coords, method="nearest")
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-        return ds
+        return da, attrs
 
 
 class SelectRegion(_ProcessWithXarray):
@@ -274,23 +242,13 @@ class SelectRegion(_ProcessWithXarray):
         )
         self._name = "sel_" + name
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
 
         # TODO: normalize to 0..360 or -180..180?
 
-        if len(ds) == 0:
-            return []
-        else:
-            attrs = ds.attrs
+        da = da.sel(**self.coords)
 
-            da = ds[self.var]
-
-            da = da.sel(**self.coords)
-
-            ds = da.to_dataset(name=self.var)
-            ds.attrs = attrs
-
-        return ds
+        return da, attrs
 
 
 class RegionAverage(_ProcessWithXarray):
@@ -326,7 +284,7 @@ class RegionAverage(_ProcessWithXarray):
 
         self._name = "region_average_" + regions.name.replace(" ", "_")
 
-    def _trans(self, ds):
+    def _trans(self, da, attrs):
         """
         Parameters
         ----------
@@ -335,10 +293,6 @@ class RegionAverage(_ProcessWithXarray):
         """
 
         from . import regions
-
-        attrs = ds.attrs
-
-        da = ds[self.var]
 
         if self.weights is None:
             # get cosine weights
@@ -369,7 +323,4 @@ class RegionAverage(_ProcessWithXarray):
 
         da = da.weighted(mask_3D * weight).mean(("lat", "lon"))
 
-        ds = da.to_dataset(name=self.var)
-
-        ds.attrs = attrs
-        return ds
+        return da, attrs

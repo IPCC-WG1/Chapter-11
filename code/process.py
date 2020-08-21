@@ -34,14 +34,7 @@ ar6_land = regionmask.defined_regions.ar6.land
 
 
 class _ProcessCmipData:
-    """docstring for ProcessCmipData"""
-
-    def __init__(self, conf_cmip, fixes_data, fixes_files):
-
-        self.conf_cmip = conf_cmip
-        self.fixes_data = fixes_data
-        self.fixes_files = fixes_files
-        self.fixes_common = fixes.fixes_common
+    """mixin class: general functions for the processing of cmip data"""
 
     def _create_folder_for_output(self, files, postprocess_name):
 
@@ -82,6 +75,8 @@ class _ProcessCmipData:
 
         return files
 
+
+class ProcessCmipDataFromOrig:
     def postprocess_from_orig(
         self, table, varn, postprocess_name, transform_func, exp=None, **kwargs
     ):
@@ -217,6 +212,8 @@ class _ProcessCmipData:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+
+class ProcessCmipDataFromPost:
     def regrid_from_post(
         self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
     ):
@@ -272,13 +269,24 @@ class _ProcessCmipData:
             xru.postprocess(fN_out, fN_in, metadata, transform_func=transform_func)
 
 
+class ProcessCmipData(
+    _ProcessCmipData, ProcessCmipDataFromOrig, ProcessCmipDataFromPost
+):
+    def __init__(self, conf_cmip, fixes_data, fixes_files):
+
+        self.conf_cmip = conf_cmip
+        self.fixes_data = fixes_data
+        self.fixes_files = fixes_files
+        self.fixes_common = fixes.fixes_common
+
+
 # =============================================================================
 # instantiate the postprocess class
 # =============================================================================
 
 
-process_cmip5_data = _ProcessCmipData(conf.cmip5, fixes.cmip5_data, fixes.cmip5_files)
-process_cmip6_data = _ProcessCmipData(conf.cmip6, fixes.cmip6_data, fixes.cmip6_files)
+process_cmip5_data = ProcessCmipData(conf.cmip5, fixes.cmip5_data, fixes.cmip5_files)
+process_cmip6_data = ProcessCmipData(conf.cmip6, fixes.cmip6_data, fixes.cmip6_files)
 
 
 # =============================================================================
@@ -340,16 +348,16 @@ def tas_reg_ave():
         varn="tas",
         postprocess_name="monthly",
         exp=["historical", "ssp585"],
-        ensnumber=None,
+        # ensnumber=None,
     )
 
-    process_cmip5_data.region_average_from_orig(
-        table="Amon",
-        varn="tas",
-        postprocess_name="reg_ave_ar6",
-        exp=conf.cmip5.scenarios_all_incl_hist,
-        ensnumber=0,
-    )
+    # process_cmip5_data.region_average_from_orig(
+    #     table="Amon",
+    #     varn="tas",
+    #     postprocess_name="reg_ave_ar6",
+    #     exp=conf.cmip5.scenarios_all_incl_hist,
+    #     ensnumber=0,
+    # )
 
     process_cmip6_data.region_average_from_orig(
         table="Amon",
@@ -367,32 +375,32 @@ def tas_reg_ave():
 
 def txx():
 
-    process_cmip5_data.resample_annual_from_orig(
-        table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
-    )
+    # process_cmip5_data.resample_annual_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
+    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
     )
 
-    process_cmip6_data.resample_annual_from_orig(
-        table="day",
-        varn="tasmax",
-        postprocess_name="txx",
-        how="max",
-        exp=None,
-        model="CanESM5",
-        ensnumber=None,
-    )
+    # process_cmip6_data.resample_annual_from_orig(
+    #     table="day",
+    #     varn="tasmax",
+    #     postprocess_name="txx",
+    #     how="max",
+    #     exp=None,
+    #     model="CanESM5",
+    #     ensnumber=None,
+    # )
 
     # monthly maximum temperature
-    process_cmip6_data.resample_monthly_from_orig(
-        table="day", varn="tasmax", postprocess_name="txx_monthly", how="max", exp=None
-    )
+    # process_cmip6_data.resample_monthly_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txx_monthly", how="max", exp=None
+    # )
 
-    process_cmip5_data.resample_annual_from_orig(
-        table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
-    )
+    # process_cmip5_data.resample_annual_from_orig(
+    #     table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
+    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
@@ -401,33 +409,34 @@ def txx():
     # # regrid txx
     # # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="tasmax", postprocess_before="txx", postprocess_name="txx_regrid", exp="*"
-    )
+    # process_cmip5_data.regrid_from_post(
+    #     varn="tasmax", postprocess_before="txx", postprocess_name="txx_regrid", exp="*"
+    # )
 
     process_cmip6_data.regrid_from_post(
         varn="tasmax",
         postprocess_before="txx",
         postprocess_name="txx_regrid",
         exp="*",
-        ensnumber=None,
+        # ensnumber=None,
     )
 
     # # region average txx
     # # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="tasmax",
-        postprocess_before="txx",
-        postprocess_name="txx_reg_ave_ar6",
-        exp="*",
-    )
+    # process_cmip5_data.region_average_from_post(
+    #     varn="tasmax",
+    #     postprocess_before="txx",
+    #     postprocess_name="txx_reg_ave_ar6",
+    #     exp="*",
+    # )
+
     process_cmip6_data.region_average_from_post(
         varn="tasmax",
         postprocess_before="txx",
         postprocess_name="txx_reg_ave_ar6",
         exp="*",
-        ensnumber=None,
+        # ensnumber=None,
     )
 
 
@@ -521,13 +530,13 @@ def tnn():
 
     transform_func = ResampleAnnual(var="tasmin", how="min")
 
-    process_cmip5_data.postprocess_from_orig(
-        table="day",
-        varn="tasmin",
-        postprocess_name="tnn",
-        transform_func=transform_func,
-        exp=None,
-    )
+    # process_cmip5_data.postprocess_from_orig(
+    #     table="day",
+    #     varn="tasmin",
+    #     postprocess_name="tnn",
+    #     transform_func=transform_func,
+    #     exp=None,
+    # )
 
     process_cmip6_data.postprocess_from_orig(
         table="day",
@@ -537,13 +546,13 @@ def tnn():
         exp=None,
     )
 
-    process_cmip5_data.postprocess_from_orig(
-        table="day",
-        varn="tasmin",
-        postprocess_name="tnn",
-        transform_func=transform_func,
-        exp="piControl",
-    )
+    # process_cmip5_data.postprocess_from_orig(
+    #     table="day",
+    #     varn="tasmin",
+    #     postprocess_name="tnn",
+    #     transform_func=transform_func,
+    #     exp="piControl",
+    # )
 
     process_cmip6_data.postprocess_from_orig(
         table="day",
@@ -556,9 +565,9 @@ def tnn():
     # # regrid tnn
     # # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="tasmin", postprocess_before="tnn", postprocess_name="tnn_regrid", exp="*"
-    )
+    # process_cmip5_data.regrid_from_post(
+    #     varn="tasmin", postprocess_before="tnn", postprocess_name="tnn_regrid", exp="*"
+    # )
 
     process_cmip6_data.regrid_from_post(
         varn="tasmin", postprocess_before="tnn", postprocess_name="tnn_regrid", exp="*"
@@ -567,12 +576,12 @@ def tnn():
     # # region average tnn
     # # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="tasmin",
-        postprocess_before="tnn",
-        postprocess_name="tnn_reg_ave_ar6",
-        exp="*",
-    )
+    # process_cmip5_data.region_average_from_post(
+    #     varn="tasmin",
+    #     postprocess_before="tnn",
+    #     postprocess_name="tnn_reg_ave_ar6",
+    #     exp="*",
+    # )
     process_cmip6_data.region_average_from_post(
         varn="tasmin",
         postprocess_before="tnn",
@@ -588,17 +597,17 @@ def tnn():
 
 def rx1day():
 
-    process_cmip5_data.resample_annual_from_orig(
-        table="day", varn="pr", postprocess_name="rx1day", how="max", exp=None
-    )
+    # process_cmip5_data.resample_annual_from_orig(
+    #     table="day", varn="pr", postprocess_name="rx1day", how="max", exp=None
+    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="pr", postprocess_name="rx1day", how="max", exp=None
     )
 
-    process_cmip5_data.resample_annual_from_orig(
-        table="day", varn="pr", postprocess_name="rx1day", how="max", exp="piControl"
-    )
+    # process_cmip5_data.resample_annual_from_orig(
+    #     table="day", varn="pr", postprocess_name="rx1day", how="max", exp="piControl"
+    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="pr", postprocess_name="rx1day", how="max", exp="piControl"
@@ -607,12 +616,12 @@ def rx1day():
     # regrid rx1day
     # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="pr",
-        postprocess_before="rx1day",
-        postprocess_name="rx1day_regrid",
-        exp="*",
-    )
+    # process_cmip5_data.regrid_from_post(
+    #     varn="pr",
+    #     postprocess_before="rx1day",
+    #     postprocess_name="rx1day_regrid",
+    #     exp="*",
+    # )
     process_cmip6_data.regrid_from_post(
         varn="pr",
         postprocess_before="rx1day",
@@ -623,12 +632,12 @@ def rx1day():
     # region average rx1day
     # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="pr",
-        postprocess_before="rx1day",
-        postprocess_name="rx1day_reg_ave_ar6",
-        exp="*",
-    )
+    # process_cmip5_data.region_average_from_post(
+    #     varn="pr",
+    #     postprocess_before="rx1day",
+    #     postprocess_name="rx1day_reg_ave_ar6",
+    #     exp="*",
+    # )
     process_cmip6_data.region_average_from_post(
         varn="pr",
         postprocess_before="rx1day",
