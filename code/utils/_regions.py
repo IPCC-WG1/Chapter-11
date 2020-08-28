@@ -1,8 +1,8 @@
-import regionmask
 import geopandas as gp
-import pooch
-import xarray as xr
 import numpy as np
+import pooch
+import regionmask
+import xarray as xr
 
 ORDER_REGIONS_IN_TABLE = [
     "SAH",
@@ -50,6 +50,7 @@ ORDER_REGIONS_IN_TABLE = [
     "ENA",
     "NCA",
 ]
+
 
 class REGIONS:
     """container for regions (so they can be loaded lazily)"""
@@ -101,7 +102,6 @@ class REGIONS:
             3D_mask : xr.DataArray
                 Boolean mask of shape 4 x lax x lon.
         """
-
 
         if landmask is None:
             landmask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
