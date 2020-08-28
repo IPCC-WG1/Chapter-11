@@ -168,6 +168,18 @@ class ProcessCmipDataFromOrig:
             table, varn, postprocess_name, transform_func, exp=exp, **kwargs
         )
 
+    def rx30day_from_orig(
+        self, table="day", varn="pr", postprocess_name="Rx5day", exp=None, **kwargs
+    ):
+
+        transform_func = RollingResampleAnnual(
+            var=varn, window=30, how_rolling="sum", how="max"
+        )
+
+        return self.postprocess_from_orig(
+            table, varn, postprocess_name, transform_func, exp=exp, **kwargs
+        )
+
     def tx_days_above_from_orig(
         self,
         table,
@@ -688,6 +700,34 @@ def rx5day():
 
 
 # =============================================================================
+# calculate rx30day
+# =============================================================================
+
+
+def rx30day():
+
+    process_cmip6_data.rx30day_from_orig(
+        table="day", varn="pr", postprocess_name="rx30day", exp=None
+    )
+
+    process_cmip6_data.rx30day_from_orig(
+        table="day", varn="pr", postprocess_name="rx30day", exp="piControl"
+    )
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="rx30day",
+        postprocess_name="rx30day_regrid",
+        exp="*",
+    )
+    process_cmip6_data.region_average_from_post(
+        varn="pr",
+        postprocess_before="rx30day",
+        postprocess_name="rx30day_reg_ave_ar6",
+        exp="*",
+    )
+
+
+# =============================================================================
 # calculate cdd
 # =============================================================================
 
@@ -738,9 +778,9 @@ def cdd():
 
 def mrso():
 
-    process_cmip5_data.no_transform_from_orig(
-        table="Lmon", varn="mrso", postprocess_name="sm", exp=None
-    )
+    #     process_cmip5_data.no_transform_from_orig(
+    #         table="Lmon", varn="mrso", postprocess_name="sm", exp=None
+    #     )
 
     process_cmip6_data.no_transform_from_orig(
         table="Lmon", varn="mrso", postprocess_name="sm", exp=None
@@ -757,9 +797,9 @@ def mrso():
     # regrid sm
     # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
-    )
+    #     process_cmip5_data.regrid_from_post(
+    #         varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
+    #     )
     process_cmip6_data.regrid_from_post(
         varn="mrso", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
@@ -767,9 +807,9 @@ def mrso():
     # region average sm
     # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="mrso", postprocess_before="sm", postprocess_name="sm_reg_ave_ar6", exp="*"
-    )
+    #     process_cmip5_data.region_average_from_post(
+    #         varn="mrso", postprocess_before="sm", postprocess_name="sm_reg_ave_ar6", exp="*"
+    #     )
     process_cmip6_data.region_average_from_post(
         varn="mrso", postprocess_before="sm", postprocess_name="sm_reg_ave_ar6", exp="*"
     )
@@ -782,9 +822,9 @@ def mrso():
 
 def mrsos():
 
-    process_cmip5_data.no_transform_from_orig(
-        table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
-    )
+    #     process_cmip5_data.no_transform_from_orig(
+    #         table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
+    #     )
 
     process_cmip6_data.no_transform_from_orig(
         table="Lmon", varn="mrsos", postprocess_name="sm", exp=None
@@ -801,9 +841,9 @@ def mrsos():
     # regrid sm
     # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
-    )
+    #     process_cmip5_data.regrid_from_post(
+    #         varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
+    #     )
     process_cmip6_data.regrid_from_post(
         varn="mrsos", postprocess_before="sm", postprocess_name="sm_regrid", exp="*"
     )
@@ -811,12 +851,12 @@ def mrsos():
     # region average sm
     # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="mrsos",
-        postprocess_before="sm",
-        postprocess_name="sm_reg_ave_ar6",
-        exp="*",
-    )
+    #     process_cmip5_data.region_average_from_post(
+    #         varn="mrsos",
+    #         postprocess_before="sm",
+    #         postprocess_name="sm_reg_ave_ar6",
+    #         exp="*",
+    #     )
     process_cmip6_data.region_average_from_post(
         varn="mrsos",
         postprocess_before="sm",
@@ -875,6 +915,9 @@ def main(args=None):
 
     if postprocess == "rx5day":
         rx5day()
+
+    if postprocess == "rx30day":
+        rx30day()
 
     if postprocess == "cdd":
         cdd()
