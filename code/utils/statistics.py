@@ -58,6 +58,52 @@ def get_mannwhitney(d1, d2, name):
     return MANNWHITNEY_DICT[name]
 
 
+def mannwhitney_ufunc(da1, da2, dim="time", alpha=0.05):
+    def mannwhitney_(v1, v2):
+
+        # return NaN for all-nan vectors
+        if np.isnan(v1).all() or np.isnan(v2).all():
+            return np.NaN
+
+        # use masked-stats if any is nan
+        if np.isnan(v1).any() or np.isnan(v2).any():
+            v1 = np.ma.masked_invalid(v1)
+            v2 = np.ma.masked_invalid(v2)
+
+            _, p_val = sp.stats.mstats.mannwhitneyu(v1, v2)
+
+        else:
+            _, p_val = sp.stats.mannwhitneyu(v1, v2)
+
+        return p_val
+
+    dim = [dim] if isinstance(dim, str) else dim
+
+    # use xr.apply_ufunc to handle vectorization
+    result = xr.apply_ufunc(
+        mannwhitney_,
+        da1,
+        da2,
+        input_core_dims=[dim, dim],
+        output_core_dims=[[]],
+        exclude_dims=set(dim),
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+    ).compute()
+
+    # apply Benjamini and Hochberg correction
+    shape = result.shape
+    p_adjust = sm.stats.multipletests(
+        result.values.ravel(), alpha=alpha, method="fdr_bh"
+    )[0]
+    p_adjust = p_adjust.reshape(shape)
+
+    result.values[:] = p_adjust
+
+    return result
+
+
 def theil_ufunc(da, dim="time", alpha=0.1):
     """theil sen slope for xarray
 
@@ -107,6 +153,7 @@ def theil_ufunc(da, dim="time", alpha=0.1):
     kwargs = dict(alpha=alpha)
     dim = [dim] if isinstance(dim, str) else dim
 
+    # use xr.apply_ufunc to handle vectorization
     theil_slope, theil_sign = xr.apply_ufunc(
         theil_,
         da,
