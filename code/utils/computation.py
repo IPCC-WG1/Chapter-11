@@ -1,4 +1,3 @@
-import numpy as np
 import xarray as xr
 
 
@@ -97,7 +96,7 @@ def calc_year_of_warming_level(anomalies, warming_level):
         return None, None, None
 
     # find index of central year
-    idx = np.argmax(sel > 0).values
+    idx = sel.argmax().values
 
     central_year = anomalies.isel(year=idx).year.values
 
