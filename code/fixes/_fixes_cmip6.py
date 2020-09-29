@@ -109,6 +109,10 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # discontinuity between historical and ssp
+        if _corresponds_to(metadata, table="Lmon", varn="mrsos", model="FGOALS-g3",):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
