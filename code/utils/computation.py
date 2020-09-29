@@ -41,10 +41,12 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
             Method to calculate the anomaly. Default "absolute".
     """
 
-    assert how in ("absolute", "relative", "norm", "no_anom", "no_check")
+    check_time_bounds = True
+    if how.startswith("no_check"):
+        check_time_bounds = False
+        how = how.replace("no_check_", "")
 
-    if how == "no_check":
-        return ds
+    assert how in ("absolute", "relative", "norm", "no_anom")
 
     if ("year" in ds.dims) and ("time" in ds.dims):
         msg = "'year' and 'time' in dims"
@@ -62,10 +64,16 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
 
     # check if time series spans reference period
     yr_min, yr_max = years.min(), years.max()
-    if not time_in_range(int(start), int(end), yr_min, yr_max, metadata=metadata):
+    if check_time_bounds and not time_in_range(
+        int(start), int(end), yr_min, yr_max, metadata=metadata
+    ):
         return []
 
     selector = {time_str: slice(start, end)}
+
+    # require at least one year of data even when doing no check
+    if not check_time_bounds and len(ds.sel(**selector)[time_str]) == 0:
+        return []
 
     if how != "no_anom":
         mean = ds.sel(**selector).mean(time_str, skipna=skipna)
@@ -206,6 +214,48 @@ def at_warming_levels_list(
     return out
 
 
+def at_warming_levels_dict(
+    tas_list,
+    index_list,
+    warming_levels,
+    add_meta=False,
+    reduce="mean",
+    select_by=("model", "exp", "ens"),
+    factor=None,
+):
+    """ compute value of index at a several warming levels
+
+        Parameters
+        ==========
+        tas_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual mean global mean
+            temperature data.
+        index_list : list of (ds, metadata) pairs
+            List of (ds, metadata) pairs containing annual data of the index.
+        warming_levels : iterable of float
+            warming levels at which to assess the index
+    """
+
+    out = dict()
+
+    for warming_level in warming_levels:
+        res = at_warming_level(
+            tas_list,
+            index_list,
+            warming_level,
+            add_meta=add_meta,
+            reduce=reduce,
+            select_by=select_by,
+        )
+
+        if factor is not None:
+            res *= factor
+
+        out[str(warming_level)] = res
+
+    return out
+
+
 def at_warming_level(
     tas_list,
     index_list,
@@ -243,8 +293,8 @@ def at_warming_level(
         index = select_by_metadata(index_list, **attributes)
 
         # make sure only one dataset is found in index_list
-        if len(index) != 1:
-            raise ValueError(metadata)
+        if len(index) > 1:
+            raise ValueError("Found more than one dataset:\n", metadata)
 
         # an index was found for this tas dataset
         if index:
@@ -347,7 +397,7 @@ def concat_xarray_with_metadata(
             retain_dict[r][1].append(metadata[r])
 
     # concate all data
-    out = xr.concat(all_ds, "mod_ens")
+    out = xr.concat(all_ds, "mod_ens", compat="override", coords="minimal")
     # assign coordinates
     out = out.assign_coords(**retain_dict)
 
