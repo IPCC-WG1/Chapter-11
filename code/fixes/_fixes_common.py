@@ -95,3 +95,21 @@ def fixes_hadgem(ds, metadata, next_path):
         ds = xr.concat([ds, ds_next], dim="time", compat="override", coords="minimal")
 
     return ds.sel(time=slice(year_beg, year_end))
+
+
+# DRAFT:
+# def add_year_of_data(ds, year_template, where, delta_days):
+
+#         temp = ds.sel(time=slice('2099', '2099'))
+#         temp *= np.nan
+
+#         temp['time'].data += timedelta(days=delta_days)
+
+#         if where == "before":
+#             ds = xr.concat([temp, ds], dim='time')
+#         elif: where == "after"
+#             ds = xr.concat([ds, temp], dim='time')
+#         else:
+#             raise ValueError("'where' must be one of 'before' and 'after'")
+
+#         return ds
