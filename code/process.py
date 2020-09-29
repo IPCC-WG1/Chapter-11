@@ -351,6 +351,13 @@ def tas_annmean():
         exp=None,
     )
 
+    process_cmip6_data.region_average_from_post(
+        varn="tas",
+        postprocess_before="annmean",
+        postprocess_name="annmean_reg_ave_ar6",
+        exp="*",
+    )
+
 
 def pr_annmean():
 
@@ -367,30 +374,32 @@ def pr_annmean():
 
 
 def tas_reg_ave():
+    pass
 
-    process_cmip6_data.no_transform_from_orig(
-        table="Amon",
-        varn="tas",
-        postprocess_name="monthly",
-        exp=["historical", "ssp585"],
-        # ensnumber=None,
-    )
 
-    # process_cmip5_data.region_average_from_orig(
-    #     table="Amon",
-    #     varn="tas",
-    #     postprocess_name="reg_ave_ar6",
-    #     exp=conf.cmip5.scenarios_all_incl_hist,
-    #     ensnumber=0,
-    # )
+#     process_cmip6_data.no_transform_from_orig(
+#         table="Amon",
+#         varn="tas",
+#         postprocess_name="monthly",
+#         exp=["historical", "ssp585"],
+#         # ensnumber=None,
+#     )
 
-    process_cmip6_data.region_average_from_orig(
-        table="Amon",
-        varn="tas",
-        postprocess_name="reg_ave_ar6",
-        exp=conf.cmip6.scenarios_all_incl_hist,
-        ensnumber=0,
-    )
+# process_cmip5_data.region_average_from_orig(
+#     table="Amon",
+#     varn="tas",
+#     postprocess_name="reg_ave_ar6",
+#     exp=conf.cmip5.scenarios_all_incl_hist,
+#     ensnumber=0,
+# )
+
+#     process_cmip6_data.region_average_from_orig(
+#         table="Amon",
+#         varn="tas",
+#         postprocess_name="reg_ave_ar6",
+#         exp=conf.cmip6.scenarios_all_incl_hist,
+#         ensnumber=0,
+#     )
 
 
 # # =============================================================================
@@ -734,9 +743,9 @@ def rx30day():
 
 def cdd():
 
-    process_cmip5_data.cdd_from_orig(
-        table="day", varn="pr", postprocess_name="cdd", exp=None
-    )
+    #     process_cmip5_data.cdd_from_orig(
+    #         table="day", varn="pr", postprocess_name="cdd", exp=None
+    #     )
 
     process_cmip6_data.cdd_from_orig(
         table="day", varn="pr", postprocess_name="cdd", exp=None
@@ -753,9 +762,9 @@ def cdd():
     # regrid cdd
     # =============================================================================
 
-    process_cmip5_data.regrid_from_post(
-        varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*"
-    )
+    #     process_cmip5_data.regrid_from_post(
+    #         varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*"
+    #     )
     process_cmip6_data.regrid_from_post(
         varn="pr", postprocess_before="cdd", postprocess_name="cdd_regrid", exp="*"
     )
@@ -763,9 +772,9 @@ def cdd():
     # region average cdd
     # =============================================================================
 
-    process_cmip5_data.region_average_from_post(
-        varn="pr", postprocess_before="cdd", postprocess_name="cdd_reg_ave_ar6", exp="*"
-    )
+    #     process_cmip5_data.region_average_from_post(
+    #         varn="pr", postprocess_before="cdd", postprocess_name="cdd_reg_ave_ar6", exp="*"
+    #     )
     process_cmip6_data.region_average_from_post(
         varn="pr", postprocess_before="cdd", postprocess_name="cdd_reg_ave_ar6", exp="*"
     )
@@ -815,6 +824,33 @@ def mrso():
     )
 
 
+def mrso_annmean():
+
+    process_cmip6_data.resample_annual_from_orig(
+        table="Lmon", varn="mrso", postprocess_name="sm_annmean", how="mean", exp=None
+    )
+
+    # regrid sm
+    # =============================================================================
+
+    process_cmip6_data.regrid_from_post(
+        varn="mrso",
+        postprocess_before="sm_annmean",
+        postprocess_name="sm_annmean_regrid",
+        exp="*",
+    )
+
+    # region average sm
+    # =============================================================================
+
+    process_cmip6_data.region_average_from_post(
+        varn="mrso",
+        postprocess_before="sm_annmean",
+        postprocess_name="sm_annmean_reg_ave_ar6",
+        exp="*",
+    )
+
+
 # =============================================================================
 # calculate mrsos
 # =============================================================================
@@ -861,6 +897,33 @@ def mrsos():
         varn="mrsos",
         postprocess_before="sm",
         postprocess_name="sm_reg_ave_ar6",
+        exp="*",
+    )
+
+
+def mrsos_annmean():
+
+    process_cmip6_data.resample_annual_from_orig(
+        table="Lmon", varn="mrsos", postprocess_name="sm_annmean", how="mean", exp=None
+    )
+
+    # regrid sm
+    # =============================================================================
+
+    process_cmip6_data.regrid_from_post(
+        varn="mrsos",
+        postprocess_before="sm_annmean",
+        postprocess_name="sm_annmean_regrid",
+        exp="*",
+    )
+
+    # region average sm
+    # =============================================================================
+
+    process_cmip6_data.region_average_from_post(
+        varn="mrsos",
+        postprocess_before="sm_annmean",
+        postprocess_name="sm_annmean_reg_ave_ar6",
         exp="*",
     )
 
@@ -925,8 +988,14 @@ def main(args=None):
     if postprocess == "mrso":
         mrso()
 
+    if postprocess == "mrso_annmean":
+        mrso_annmean()
+
     if postprocess == "mrsos":
         mrsos()
+
+    if postprocess == "mrsos_annmean":
+        mrsos_annmean()
 
 
 if __name__ == "__main__":
