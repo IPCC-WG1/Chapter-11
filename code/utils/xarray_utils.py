@@ -102,10 +102,10 @@ def mf_read_netcdfs(
     )
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
-    # varn = metadata["varn"]
-    # units = ds[varn].attrs.get("units", None)
-    # if units in ["seconds", "days"]:
-    #     ds[varn].attrs.pop("units")
+    varn = metadata["varn"]
+    units = ds[varn].attrs.get("units", None)
+    if units in ["seconds", "days"]:
+        ds[varn].attrs.pop("units")
 
     # ds = xr.decode_cf(ds, use_cftime=True)
 
