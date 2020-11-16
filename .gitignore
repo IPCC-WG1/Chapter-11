@@ -7,6 +7,7 @@ deprecated/*
 tests/*
 tglobscaling/*
 warming_levels/*
+diagram_EA_method
 
 */dask-worker-space/*
 
