@@ -114,17 +114,13 @@ def cmip6_files(folder_in):
         # discontinuity between historical and ssp
         if _corresponds_to(metadata, table="Lmon", varn="mrsos", model="FGOALS-g3",):
             return None
-        
+
         # time axis not monotonic
         if _corresponds_to(
-            metadata,
-            table="day",
-            exp="ssp245",
-            varn="tasmax",
-            model="KIOST-ESM",
+            metadata, table="day", exp="ssp245", varn="tasmax", model="KIOST-ESM",
         ):
             return None
-        
+
         # =========================================================================
 
         # get the files in the directory
@@ -183,8 +179,7 @@ def cmip6_data(ds, metadata, next_path):
             ds = ds.rename({"latitude": "lat", "longitude": "lon"})
 
     ds = fixes_common(ds)
-    
-    
+
     if _corresponds_to(
         metadata,
         exp="historical",
@@ -193,9 +188,7 @@ def cmip6_data(ds, metadata, next_path):
         model="CAMS-CSM1-0",
         ens="r2i1p1f1",
     ):
-        ds.load() # need to load
+        ds.load()  # need to load
         ds["tasmax"][dict(time=0)] = np.NaN
-
-    
 
     return ds

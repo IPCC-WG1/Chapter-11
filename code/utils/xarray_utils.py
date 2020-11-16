@@ -74,7 +74,7 @@ def postprocess(
             ds = ds.to_dataset(name=var_out)
 
         # add source files
-        
+
         fNs_in = [fNs_in] if isinstance(fNs_in, str) else fNs_in
         ds.attrs["source_files"] = ", ".join(fNs_in)
 

@@ -3,8 +3,7 @@ import numpy as np
 import pooch
 import regionmask
 import xarray as xr
-from shapely.geometry import Polygon, MultiPolygon
-
+from shapely.geometry import MultiPolygon, Polygon
 
 ORDER_REGIONS_IN_TABLE = [
     "SAH",
@@ -53,8 +52,9 @@ ORDER_REGIONS_IN_TABLE = [
     "NCA",
 ]
 
+
 def retrieve_continents():
-    
+
     file = pooch.retrieve(
         "https://pubs.usgs.gov/of/2006/1187/basemaps/continents/continents.zip",
         known_hash="af0ba524a62ad31deee92a9700fc572088c2b93a39ba66f320677dd8dacaaaaf",
@@ -64,12 +64,8 @@ def retrieve_continents():
     continents_gdf = gp.read_file("zip://" + file)
 
     return regionmask.from_geopandas(
-        continents_gdf,
-        names="CONTINENT",
-        abbrevs="_from_name",
-        name="continent",
+        continents_gdf, names="CONTINENT", abbrevs="_from_name", name="continent",
     )
-
 
 
 def create_mid_lat_arctic_region():
@@ -110,7 +106,6 @@ def create_mid_lat_arctic_region():
     return mid_lat_arctic
 
 
-
 class REGIONS:
     """container for regions (so they can be loaded lazily)"""
 
@@ -119,7 +114,7 @@ class REGIONS:
         self._continents = None
         self._mid_lat_arctic_region = None
         self.ORDER_REGIONS_IN_TABLE = ORDER_REGIONS_IN_TABLE
-        
+
     @property
     def continents(self):
 
@@ -127,15 +122,13 @@ class REGIONS:
             self._continents = retrieve_continents()
 
         return self._continents
-    
-    
+
     @property
     def mid_lat_arctic_region(self):
         if self._mid_lat_arctic_region is None:
             self._mid_lat_arctic_region = create_mid_lat_arctic_region()
         return self._mid_lat_arctic_region
 
-    
     @staticmethod
     def global_mask_3D(da, landmask=None, numbers=None):
         """create 3D mask: global, ocean, land, land w/o Antarctica

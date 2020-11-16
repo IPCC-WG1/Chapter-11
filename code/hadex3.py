@@ -104,19 +104,19 @@ class HadEx3_cls:
         fc = self.all_files_raw
         fN, meta = fc.search(varn=varn, climatology=climatology)[0]
 
-        ds = xr.open_dataset(fN, decode_cf=False)        
-        
+        ds = xr.open_dataset(fN, decode_cf=False)
+
         ds = ds.rename(longitude="lon", latitude="lat")
-        
+
         # get rid of the "days" units, else CDD will have dtype = timedelta
         units = ds[variable].attrs.get("units", None)
         if units in ["seconds", "days"]:
             ds[variable].attrs.pop("units")
-            
+
         ds = xr.decode_cf(ds, use_cftime=True)
 
         da = ds[variable]
-        
+
         return da, meta
 
     def read_file(self, varn, climatology="61-90", variable="Ann"):
@@ -267,14 +267,13 @@ def plot_theilslope(
     add_colorbar=True,
     colorbar_kwargs=None,
     no_data_color="0.8",
-    **kwargs
+    **kwargs,
 ):
     """plot theil slope and significance"""
 
-    
     if colorbar_kwargs is None:
         colorbar_kwargs = {}
-    
+
     ax.coastlines()
     ax.add_feature(cfeatures.LAND, color=no_data_color)
 
@@ -293,7 +292,7 @@ def plot_theilslope(
         add_colorbar=False,
         ax=ax,
     )
-    
+
     cbar = None
     if add_colorbar:
         cbar = mpu.colorbar(h, ax, orientation="horizontal", **colorbar_kwargs)
@@ -305,8 +304,7 @@ def plot_theilslope(
         ax.set_title(title, size=8)
 
     return cbar
-        
-        
+
 
 def delta_after_dunn(
     da, last_timestep=2009, alpha=0.05, time=slice(1950, 2018), minimum_valid=0.66

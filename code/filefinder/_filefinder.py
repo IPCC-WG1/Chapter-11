@@ -123,7 +123,7 @@ class FileFinder:
         else:
             msg = "Found no files matching criteria"
             raise ValueError(msg)
-            
+
         fc = FileContainer(df)
 
         len_all = len(fc.df)

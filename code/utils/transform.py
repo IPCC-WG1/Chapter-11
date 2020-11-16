@@ -253,7 +253,7 @@ class RollingResampleAnnual(_ProcessWithXarray):
         rolling = da.rolling(time=self.window)
         func = _get_func(rolling, self.how_rolling)
         # its much less memory intensive with skipna=False
-        da = func(skipna=skipna)
+        da = func(skipna=self.skipna)
 
         resampler = da.resample(time="A")
         func = _get_func(resampler, self.how)

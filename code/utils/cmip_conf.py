@@ -88,13 +88,13 @@ class _cmip_conf:
     @property
     def ANOMALY_YR_END(self):
         return self._ANOMALY_YR_END
-    
+
     def figure_filename(self, name, *subfolders, add_prefix=True):
-        
+
         prefix = f"{self.cmip}_" if add_prefix else ""
-        
+
         folders = (self.root_folder_figures, self.cmip) + subfolders
-        
+
         return path.join(*folders, prefix + name)
 
     def load_postprocessed(self, **metadata):

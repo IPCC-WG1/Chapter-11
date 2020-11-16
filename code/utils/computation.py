@@ -26,7 +26,9 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
         return True
 
 
-def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None):
+def calc_anomaly(
+    ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None
+):
     """calc anomaly of dataset
 
         Parameters
@@ -68,7 +70,7 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None, at_
         int(start), int(end), yr_min, yr_max, metadata=metadata
     ):
         return []
-    
+
     if at_least_until is not None and not time_in_range(
         int(at_least_until), int(at_least_until), yr_min, yr_max, metadata=metadata
     ):
@@ -378,6 +380,7 @@ def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
 
     return list(xr.align(*res))
 
+
 def concat_xarray_with_metadata(
     datalist,
     process=None,
@@ -448,9 +451,10 @@ def concat_xarray_without_metadata(datalist, process=None):
 
     return out
 
+
 def process_datalist(func, datalist, pass_meta=False, **kwargs):
     """loop over a datalist and apply a function
-    
+
     Parameters
     ----------
     func : callable
@@ -460,22 +464,19 @@ def process_datalist(func, datalist, pass_meta=False, **kwargs):
     **kwargs : extra arguments
         passed to func
     """
-    
-    
+
     datalist_out = list()
-    
+
     for ds, meta in datalist:
-        
+
         if pass_meta:
             ds = func(ds, meta, **kwargs)
         else:
             ds = func(ds, **kwargs)
-        
+
         if len(ds) == 0:
             continue
-        
+
         datalist_out.append([ds, meta])
-        
+
     return datalist_out
-
-
