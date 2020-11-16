@@ -1,3 +1,5 @@
+import os.path as path
+
 import numpy as np
 
 from filefinder import FileFinder
@@ -12,6 +14,12 @@ from utils.cmip_conf import _cmip_conf
 root_folder_postprocessed_data = "../data/"
 root_folder_figures = "../figures/"
 root_folder_warming_levels = "../warming_levels/"
+
+def figure_filename(name, *subfolders):
+
+    folders = (root_folder_figures, ) + subfolders
+
+    return path.join(*folders, name)
 
 # =============================================================================
 # Reference Period
@@ -49,7 +57,8 @@ class _cmip5_conf(_cmip_conf):
 
         self._figure_folder = root_folder_figures + "cmip5/cmip5_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip5"
-
+        self.root_folder_figures = root_folder_figures
+        
         self._hist_period = slice("1850", "2005")
         self._proj_period = slice("2006", "2100")
 
@@ -91,6 +100,7 @@ class _cmip6_conf(_cmip_conf):
 
         self._figure_folder = root_folder_figures + "cmip6/cmip6_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip6"
+        self.root_folder_figures = root_folder_figures
 
         self._hist_period = slice("1850", "2014")
         self._proj_period = slice("2015", "2100")
