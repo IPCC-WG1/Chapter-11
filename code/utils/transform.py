@@ -12,15 +12,23 @@ class _ProcessWithXarray:
 
     def __call__(self, ds):
 
+        # handle non-existing data
         if len(ds) == 0:
             return []
         else:
+            # get attrs
             attrs = ds.attrs
+
+            # read single variable
             da = ds[self.var]
 
+            # apply the transformation funcion
             da, attrs = self._trans(da, attrs)
 
+            # back to dataset again
             ds = da.to_dataset(name=self.var)
+
+            # add the attrs again
             ds.attrs = attrs
 
         return ds
@@ -36,6 +44,7 @@ class _ProcessWithXarray:
 
 
 def _get_func(object, how):
+    """get a function by name"""
 
     func = getattr(object, how, None)
 
@@ -70,7 +79,7 @@ class Globmean(_ProcessWithXarray):
     def _trans(self, da, attrs):
 
         wgt = xru.cos_wgt(da)
-        da = xru.average(da, dim=self.dim, weights=wgt, keep_attrs=True)
+        da = da.weighted(wgt).mean(dim=self.dim, keep_attrs=True)
 
         return da, attrs
 
@@ -116,11 +125,12 @@ class TX_Days_Above(_ProcessWithXarray):
         return da, attrs
 
 
-class ResampleAnnual(_ProcessWithXarray):
+class Resample(_ProcessWithXarray):
     """transformation function to resample by year"""
 
-    def __init__(self, var, how, **kwargs):
+    def __init__(self, indexer, var, how, **kwargs):
 
+        self.indexer = indexer
         self.var = var
         self.how = how
         self._name = "resample_annual_" + how
@@ -128,7 +138,7 @@ class ResampleAnnual(_ProcessWithXarray):
 
     def _trans(self, da, attrs):
 
-        resampler = da.resample(time="A")
+        resampler = da.resample(self.indexer)
 
         func = _get_func(resampler, self.how)
 
@@ -140,33 +150,96 @@ class ResampleAnnual(_ProcessWithXarray):
         return da, attrs
 
 
-class ResampleMonthly(_ProcessWithXarray):
+class ResampleAnnual(Resample):
+    """transformation function to resample by year"""
+
+    def __init__(self, var, how, **kwargs):
+
+        self.indexer = {"time": "A"}
+        self.var = var
+        self.how = how
+        self._name = "resample_annual_" + how
+        self.kwargs = kwargs
+
+
+#     def _trans(self, da, attrs):
+
+#         resampler = da.resample(time="A")
+
+#         func = _get_func(resampler, self.how)
+
+#         if self.how == "quantile":
+#             da = da.load()
+
+#         da = func(dim="time", **self.kwargs)
+
+#         return da, attrs
+
+
+class ResampleMonthly(Resample):
     """transformation function to resample by month"""
 
     def __init__(self, var, how, **kwargs):
 
+        self.indexer = {"time": "M"}
         self.var = var
         self.how = how
         self._name = "resample_monthly_" + how
         self.kwargs = kwargs
 
+
+#     def _trans(self, da, attrs):
+
+#         resampler = da.resample(time="M")
+#         func = _get_func(resampler, self.how)
+
+#         if self.how == "quantile":
+#             da = da.load()
+
+#         da = func(dim="time", **self.kwargs)
+
+#         return da, attrs
+
+
+class ResampleSeasonal(Resample):
+    """transformation function to resample by month"""
+
+    def __init__(self, var, how, invalidate_beg_end, **kwargs):
+
+        self.indexer = {"time": "Q-FEB"}
+        self.var = var
+        self.how = how
+        self._name = "resample_seasonal_" + how
+        self.invalidate_beg_end = invalidate_beg_end
+        self.kwargs = kwargs
+
     def _trans(self, da, attrs):
 
-        resampler = da.resample(time="M")
-        func = _get_func(resampler, self.how)
+        # call the parent method
+        da, attrs = super()._trans(da, attrs)
 
-        if self.how == "quantile":
-            da = da.load()
-
-        da = func(dim="time", **self.kwargs)
+        # as DJF is not complete we can set it to NaN here
+        if self.invalidate_beg_end:
+            da[{"time": [0, -1]}] = np.NaN
 
         return da, attrs
+
+
+#         resampler = da.resample(time="M")
+#         func = _get_func(resampler, self.how)
+
+#         if self.how == "quantile":
+#             da = da.load()
+
+#         da = func(dim="time", **self.kwargs)
+
+#         return da, attrs
 
 
 class RollingResampleAnnual(_ProcessWithXarray):
     """transformation function to resample by year"""
 
-    def __init__(self, var, window, how_rolling, how, **kwargs):
+    def __init__(self, var, window, how_rolling, how, skipna=False, **kwargs):
 
         self.var = var
         self.window = window
@@ -180,7 +253,7 @@ class RollingResampleAnnual(_ProcessWithXarray):
         rolling = da.rolling(time=self.window)
         func = _get_func(rolling, self.how_rolling)
         # its much less memory intensive with skipna=False
-        da = func(skipna=False)
+        da = func(skipna=skipna)
 
         resampler = da.resample(time="A")
         func = _get_func(resampler, self.how)
