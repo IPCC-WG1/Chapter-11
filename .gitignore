@@ -8,6 +8,7 @@ tests/*
 tglobscaling/*
 warming_levels/*
 diagram_EA_method
+for_isort.py
 
 */dask-worker-space/*
 
