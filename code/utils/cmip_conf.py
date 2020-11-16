@@ -1,3 +1,5 @@
+import os.path as path
+
 import xarray as xr
 
 import filefinder as ff
@@ -86,6 +88,14 @@ class _cmip_conf:
     @property
     def ANOMALY_YR_END(self):
         return self._ANOMALY_YR_END
+    
+    def figure_filename(self, name, *subfolders, add_prefix=True):
+        
+        prefix = f"{self.cmip}_" if add_prefix else ""
+        
+        folders = (self.root_folder_figures, self.cmip) + subfolders
+        
+        return path.join(*folders, prefix + name)
 
     def load_postprocessed(self, **metadata):
         """ load postprocessed data for a single scenario
@@ -150,7 +160,7 @@ class _cmip_conf:
         self,
         varn,
         postprocess,
-        exp,
+        exp=None,
         anomaly="absolute",
         at_least_until=2099,
         year_mean=True,
@@ -200,6 +210,22 @@ class _cmip_conf:
             **metadata,
         )
 
+    def find_all_files_postprocessed(
+        self, varn, postprocess, exp=None, ensnumber=0, **metadata,
+    ):
+
+        if exp is None:
+            exp = self.scenarios
+
+        files = self.files_post.find_files(
+            varn=varn, postprocess=postprocess, exp=exp, **metadata
+        )
+
+        files = ff.cmip.parse_ens(files)
+        files = ff.cmip.create_ensnumber(files)
+
+        return files.search(ensnumber=ensnumber)
+
     def _load_postprocessed_all_maybe_concat(
         self,
         varn,
@@ -213,16 +239,13 @@ class _cmip_conf:
         **metadata,
     ):
 
-        if exp is None:
-            exp = self.scenarios
-
-        files = self.files_post.find_files(
-            varn=varn, postprocess=postprocess, exp=exp, **metadata
+        files = self.find_all_files_postprocessed(
+            varn=varn,
+            postprocess=postprocess,
+            exp=exp,
+            ensnumber=ensnumber,
+            **metadata,
         )
-
-        files = ff.cmip.parse_ens(files)
-        files = ff.cmip.create_ensnumber(files)
-        files = files.search(ensnumber=ensnumber)
 
         output = list()
 
