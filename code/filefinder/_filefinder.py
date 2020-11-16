@@ -78,27 +78,29 @@ class FileFinder:
 
         return cond_dict
 
-    def find_paths(self, **kwargs):
+    def find_paths(self, _allow_empty=False, **kwargs):
 
         return self._find(
             what="paths",
             name_creator=self.create_path_name,
             parser=self._parse_path,
             keys=self.keys_path,
+            _allow_empty=_allow_empty,
             **kwargs,
         )
 
-    def find_files(self, **kwargs):
+    def find_files(self, _allow_empty=False, **kwargs):
 
         return self._find(
             what="files",
             name_creator=self.create_full_name,
             parser=self._parse_full,
             keys=self.keys_file,
+            _allow_empty=_allow_empty,
             **kwargs,
         )
 
-    def _find(self, what, name_creator, parser, keys, **kwargs):
+    def _find(self, what, name_creator, parser, keys, _allow_empty, **kwargs):
 
         # wrap strings in list
         for key, value in kwargs.items():
@@ -113,9 +115,15 @@ class FileFinder:
             if df is not None:
                 list_of_df.append(df)
 
-        df = pd.concat(list_of_df)
-
-        # raises if no files are found - ok?
+        if list_of_df:
+            df = pd.concat(list_of_df)
+            df = df.reset_index(drop=True)
+        elif _allow_empty:
+            return []
+        else:
+            msg = "Found no files matching criteria"
+            raise ValueError(msg)
+            
         fc = FileContainer(df)
 
         len_all = len(fc.df)
@@ -203,7 +211,7 @@ class FileContainer:
         if keys is None:
             keys = list(self.df.columns.drop("filename"))
 
-        return self.df[keys].apply(lambda x: ".".join(x.map(str)), axis=1)
+        return self.df[keys].apply(lambda x: sep.join(x.map(str)), axis=1)
 
     def search(self, **query):
 
