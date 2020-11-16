@@ -71,7 +71,8 @@ class _ProcessCmipData:
         print(varn, exp, kwargs)
 
         files = find_path(varn=varn, exp=exp, **kwargs)
-
+        
+        files = ff.cmip.ensure_unique_grid(files)
         files = ff.cmip.parse_ens(files)
         files = ff.cmip.create_ensnumber(files)
         files = files.search(ensnumber=ensnumber)
