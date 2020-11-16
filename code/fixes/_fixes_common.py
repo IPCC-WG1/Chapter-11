@@ -1,7 +1,3 @@
-import numpy as np
-import xarray as xr
-
-
 def _remove_matching_fN(fNs, *files_to_remove):
 
     for file_to_remove in files_to_remove:
