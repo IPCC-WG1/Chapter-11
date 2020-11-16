@@ -65,7 +65,7 @@ def warming_level_years(
         out_yml += "warming_level_{}:\n".format(warming_level_to_str(warming_level))
 
     for ds, metadata in tas_list:
-        
+
         anomaly = computation.calc_anomaly(
             ds.tas, start=start_clim, end=end_clim, metadata=metadata, how=how
         )
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     warming_levels2 = [0.94, 3.43]
 
     # cmip5 is not changing
-#     write_cmip5(warming_levels1, warming_levels2)
+    #     write_cmip5(warming_levels1, warming_levels2)
 
     write_cmip6(warming_levels1, warming_levels2)
 
