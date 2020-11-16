@@ -26,7 +26,7 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
         return True
 
 
-def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
+def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None):
     """calc anomaly of dataset
 
         Parameters
@@ -66,6 +66,11 @@ def calc_anomaly(ds, start, end, how="absolute", skipna=None, metadata=None):
     yr_min, yr_max = years.min(), years.max()
     if check_time_bounds and not time_in_range(
         int(start), int(end), yr_min, yr_max, metadata=metadata
+    ):
+        return []
+    
+    if at_least_until is not None and not time_in_range(
+        int(at_least_until), int(at_least_until), yr_min, yr_max, metadata=metadata
     ):
         return []
 
@@ -363,6 +368,16 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
     return out_a, out_b
 
 
+def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
+    """align DataArrays by model"""
+
+    res = list()
+    for i, o in enumerate(data):
+        # create a MultiIndex
+        res.append(o.set_index(**by))
+
+    return list(xr.align(*res))
+
 def concat_xarray_with_metadata(
     datalist,
     process=None,
@@ -432,3 +447,35 @@ def concat_xarray_without_metadata(datalist, process=None):
     out = xr.concat(all_ds, "ens", compat="override", coords="minimal")
 
     return out
+
+def process_datalist(func, datalist, pass_meta=False, **kwargs):
+    """loop over a datalist and apply a function
+    
+    Parameters
+    ----------
+    func : callable
+        function to apply
+    datalist : datalist
+        List to apply the function over.
+    **kwargs : extra arguments
+        passed to func
+    """
+    
+    
+    datalist_out = list()
+    
+    for ds, meta in datalist:
+        
+        if pass_meta:
+            ds = func(ds, meta, **kwargs)
+        else:
+            ds = func(ds, **kwargs)
+        
+        if len(ds) == 0:
+            continue
+        
+        datalist_out.append([ds, meta])
+        
+    return datalist_out
+
+
