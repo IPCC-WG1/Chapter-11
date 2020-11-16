@@ -5,7 +5,7 @@ import xarray as xr
 import filefinder as ff
 
 from . import computation
-from .file_utils import _file_exists
+from .file_utils import _file_exists, mkdir
 
 
 class _cmip_conf:
@@ -18,6 +18,7 @@ class _cmip_conf:
 
     @property
     def cmip(self):
+        """cmip version"""
         return self._cmip
 
     @property
@@ -34,6 +35,14 @@ class _cmip_conf:
     def files_fx(self):
         """FileFinder for the fx files (e.g. land fraction)"""
         return self._files_fx
+
+    @property
+    def fixes_files(self):
+        return self._fixes_files
+
+    @property
+    def fixes_data(self):
+        return self._fixes_data
 
     @property
     def figure_folder(self):
@@ -210,21 +219,54 @@ class _cmip_conf:
             **metadata,
         )
 
-    def find_all_files_postprocessed(
+    def find_all_files_orig(
         self, varn, postprocess, exp=None, ensnumber=0, **metadata,
     ):
+        scenarios = self.conf_cmip.scenarios_incl_hist
+        filefinder = self.conf_cmip.files_orig.find_paths
 
-        if exp is None:
-            exp = self.scenarios
-
-        files = self.files_post.find_files(
-            varn=varn, postprocess=postprocess, exp=exp, **metadata
+        self.__find_all_files(
+            scenarios,
+            filefinder,
+            varn=varn,
+            exp=exp,
+            ensnumber=ensnumber,
+            postprocess=postprocess,
+            **metadata,
         )
 
+    def find_all_files_post(
+        self, varn, postprocess, exp=None, ensnumber=0, **metadata,
+    ):
+        scenarios = self.scenarios
+        filefinder = self.files_post.find_files
+
+        self.__find_all_files(
+            scenarios,
+            filefinder,
+            varn=varn,
+            exp=exp,
+            ensnumber=ensnumber,
+            postprocess=postprocess,
+            **metadata,
+        )
+
+    def __find_all_files(
+        self, scenarios, filefinder, varn, exp=None, ensnumber=0, **metadata,
+    ):
+
+        # all tier1 acenarios except hist
+        if exp is None:
+            exp = scenarios
+
+        files = filefinder(varn=varn, exp=exp, **metadata)
+
+        files = ff.cmip.ensure_unique_grid(files)
         files = ff.cmip.parse_ens(files)
         files = ff.cmip.create_ensnumber(files)
+        files = files.search(ensnumber=ensnumber)
 
-        return files.search(ensnumber=ensnumber)
+        return files
 
     def _load_postprocessed_all_maybe_concat(
         self,
@@ -239,7 +281,7 @@ class _cmip_conf:
         **metadata,
     ):
 
-        files = self.find_all_files_postprocessed(
+        files = self.find_all_files_post(
             varn=varn,
             postprocess=postprocess,
             exp=exp,
@@ -293,3 +335,12 @@ class _cmip_conf:
 
         msg = "-- no data found for: {}".format(metadata)
         print(msg)
+
+    def _create_folder_for_output(self, files, postprocess_name):
+
+        __, metadata = files[0]
+
+        folder_out = self.files_post.create_path_name(
+            **metadata, postprocess=postprocess_name
+        )
+        mkdir(folder_out)

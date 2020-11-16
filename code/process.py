@@ -4,9 +4,7 @@ import docopt
 import regionmask
 
 import conf
-import filefinder as ff
 import fixes
-from utils import mkdir
 from utils import xarray_utils as xru
 from utils.transform import (
     CDD,
@@ -34,52 +32,6 @@ ar6_land = regionmask.defined_regions.ar6.land
 # =============================================================================
 
 
-class _ProcessCmipData:
-    """mixin class: general functions for the processing of cmip data"""
-
-    def _create_folder_for_output(self, files, postprocess_name):
-
-        __, metadata = files[0]
-
-        folder_out = self.conf_cmip.files_post.create_path_name(
-            **metadata, postprocess=postprocess_name
-        )
-        mkdir(folder_out)
-
-    def find_input_orig(self, table, varn, exp, **kwargs):
-
-        find_path = self.conf_cmip.files_orig.find_paths
-
-        return self._find_input(find_path, varn=varn, exp=exp, table=table, **kwargs)
-
-    def find_input_post(self, postprocess, varn, exp, **kwargs):
-
-        find_path = self.conf_cmip.files_post.find_files
-
-        return self._find_input(
-            find_path, postprocess=postprocess, varn=varn, exp=exp, **kwargs
-        )
-
-    def _find_input(self, find_path, varn, exp, **kwargs):
-
-        # if no experiment name is given use tier1 list incl historical
-        if exp is None:
-            exp = self.conf_cmip.scenarios_incl_hist
-
-        ensnumber = kwargs.pop("ensnumber", 0)
-
-        print(varn, exp, kwargs)
-
-        files = find_path(varn=varn, exp=exp, **kwargs)
-        
-        files = ff.cmip.ensure_unique_grid(files)
-        files = ff.cmip.parse_ens(files)
-        files = ff.cmip.create_ensnumber(files)
-        files = files.search(ensnumber=ensnumber)
-
-        return files
-
-
 class ProcessCmipDataFromOrig:
     def postprocess_from_orig(
         self, table, varn, postprocess_name, transform_func, exp=None, **kwargs
@@ -87,9 +39,11 @@ class ProcessCmipDataFromOrig:
 
         print(f"=== postprocess_from_orig: {postprocess_name} ===\n")
 
-        files = self.find_input_orig(table=table, varn=varn, exp=exp, **kwargs)
+        files = self.conf_cmip.find_all_files_orig(
+            table=table, varn=varn, exp=exp, **kwargs
+        )
 
-        self._create_folder_for_output(files, postprocess_name)
+        self.conf_cmip._create_folder_for_output(files, postprocess_name)
 
         for folder_in, metadata in files:
 
@@ -245,18 +199,18 @@ class ProcessCmipDataFromOrig:
 
 class ProcessCmipDataFromPost:
     def regrid_from_post(
-        self, varn, postprocess_before, postprocess_name, exp=None, **kwargs
+        self, varn, postprocess_before, postprocess_name, exp="*", **kwargs
     ):
 
         print("=== regrid_from_post ===\n")
 
-        files = self.find_input_post(
+        files = self.conf_cmip.find_all_files_post(
             postprocess=postprocess_before, varn=varn, exp=exp, **kwargs
         )
 
         files.df = files.df.drop("postprocess", axis=1)
 
-        self._create_folder_for_output(files, postprocess_name)
+        self.conf_cmip._create_folder_for_output(files, postprocess_name)
 
         for fN_in, metadata in files:
 
@@ -274,7 +228,7 @@ class ProcessCmipDataFromPost:
         varn,
         postprocess_before,
         postprocess_name,
-        exp=None,
+        exp="*",
         regions=ar6_land,
         land_only=True,
         **kwargs,
@@ -282,13 +236,13 @@ class ProcessCmipDataFromPost:
 
         print("=== region_average_from_post ===\n")
 
-        files = self.find_input_post(
+        files = self.conf_cmip.find_all_files_post(
             postprocess=postprocess_before, varn=varn, exp=exp, **kwargs
         )
 
         files.df = files.df.drop("postprocess", axis=1)
 
-        self._create_folder_for_output(files, postprocess_name)
+        self.conf_cmip._create_folder_for_output(files, postprocess_name)
 
         transform_func = RegionAverage(varn, regions=regions, land_only=land_only)
 
@@ -304,14 +258,12 @@ class ProcessCmipDataFromPost:
             xru.postprocess(fN_out, fN_in, metadata, transform_func=transform_func)
 
 
-class ProcessCmipData(
-    _ProcessCmipData, ProcessCmipDataFromOrig, ProcessCmipDataFromPost
-):
-    def __init__(self, conf_cmip, fixes_data, fixes_files):
+class ProcessCmipData(ProcessCmipDataFromOrig, ProcessCmipDataFromPost):
+    def __init__(self, conf_cmip):
 
         self.conf_cmip = conf_cmip
-        self.fixes_data = fixes_data
-        self.fixes_files = fixes_files
+        self.fixes_data = conf_cmip.fixes_data
+        self.fixes_files = conf_cmip.fixes_files
         self.fixes_common = fixes.fixes_common
 
 
@@ -320,8 +272,8 @@ class ProcessCmipData(
 # =============================================================================
 
 
-process_cmip5_data = ProcessCmipData(conf.cmip5, fixes.cmip5_data, fixes.cmip5_files)
-process_cmip6_data = ProcessCmipData(conf.cmip6, fixes.cmip6_data, fixes.cmip6_files)
+process_cmip5_data = ProcessCmipData(conf.cmip5)
+process_cmip6_data = ProcessCmipData(conf.cmip6)
 
 
 # =============================================================================

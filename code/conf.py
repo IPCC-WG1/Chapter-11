@@ -2,6 +2,7 @@ import os.path as path
 
 import numpy as np
 
+import fixes
 from filefinder import FileFinder
 from utils.cmip_conf import _cmip_conf
 
@@ -57,6 +58,9 @@ class _cmip5_conf(_cmip_conf):
             file_pattern="{varn}_fx_{model}_{exp}_r0i0p0.nc",
         )
 
+        self._fixes_files = fixes.cmip5_files
+        self._fixes_data = fixes.cmip5_data
+
         self._figure_folder = root_folder_figures + "cmip5/cmip5_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip5"
         self.root_folder_figures = root_folder_figures
@@ -99,6 +103,9 @@ class _cmip6_conf(_cmip_conf):
             path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
             file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
         )
+
+        self._fixes_files = fixes.cmip6_files
+        self._fixes_data = fixes.cmip6_data
 
         self._figure_folder = root_folder_figures + "cmip6/cmip6_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip6"
