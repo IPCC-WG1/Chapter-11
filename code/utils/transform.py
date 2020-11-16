@@ -70,16 +70,19 @@ class NoTransform(_ProcessWithXarray):
 class Globmean(_ProcessWithXarray):
     """transformation function to get a global average"""
 
-    def __init__(self, var, dim=("lat", "lon")):
+    def __init__(self, var, weights=None, dim=("lat", "lon")):
 
         self.var = var
+        self.weights = weights
         self.dim = dim
         self._name = "globmean"
 
     def _trans(self, da, attrs):
 
-        wgt = xru.cos_wgt(da)
-        da = da.weighted(wgt).mean(dim=self.dim, keep_attrs=True)
+        # maybe get cosine weights
+        weights = xru.cos_wgt(da) if self.weights is None else self.weights
+
+        da = da.weighted(weights).mean(dim=self.dim, keep_attrs=True)
 
         return da, attrs
 
@@ -367,9 +370,8 @@ class RegionAverage(_ProcessWithXarray):
 
         from . import regions
 
-        if self.weights is None:
-            # get cosine weights
-            weight = xru.cos_wgt(da)
+        # maybe get cosine weights
+        weights = xru.cos_wgt(da) if self.weights is None else self.weights
 
         if self.landmask is None:
             landmask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
@@ -394,6 +396,6 @@ class RegionAverage(_ProcessWithXarray):
 
         mask_3D = xr.concat([global_mask_3D, regional_mask_3D], dim="region")
 
-        da = da.weighted(mask_3D * weight).mean(("lat", "lon"))
+        da = da.weighted(mask_3D * weights).mean(("lat", "lon"))
 
         return da, attrs
