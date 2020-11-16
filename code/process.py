@@ -68,6 +68,9 @@ class _ProcessCmipData:
 
         ensnumber = kwargs.pop("ensnumber", 0)
 
+        
+        print(varn, exp, kwargs)
+        
         files = find_path(varn=varn, exp=exp, **kwargs)
 
         files = ff.cmip.parse_ens(files)
@@ -89,6 +92,8 @@ class ProcessCmipDataFromOrig:
         self._create_folder_for_output(files, postprocess_name)
 
         for folder_in, metadata in files:
+
+            metadata["postprocess_name"] = postprocess_name
 
             fN_out = self.conf_cmip.files_post.create_full_name(
                 **metadata, postprocess=postprocess_name
@@ -169,7 +174,7 @@ class ProcessCmipDataFromOrig:
         )
 
     def rx30day_from_orig(
-        self, table="day", varn="pr", postprocess_name="Rx5day", exp=None, **kwargs
+        self, table="day", varn="pr", postprocess_name="Rx30day", exp=None, **kwargs
     ):
 
         transform_func = RollingResampleAnnual(
@@ -255,6 +260,8 @@ class ProcessCmipDataFromPost:
 
         for fN_in, metadata in files:
 
+            metadata["postprocess_name"] = postprocess_name
+
             fN_out = self.conf_cmip.files_post.create_full_name(
                 **metadata, postprocess=postprocess_name
             )
@@ -269,6 +276,7 @@ class ProcessCmipDataFromPost:
         postprocess_name,
         exp=None,
         regions=ar6_land,
+        land_only=True,
         **kwargs,
     ):
 
@@ -279,12 +287,14 @@ class ProcessCmipDataFromPost:
         )
 
         files.df = files.df.drop("postprocess", axis=1)
-
+        
         self._create_folder_for_output(files, postprocess_name)
 
-        transform_func = RegionAverage(varn, regions=regions)
+        transform_func = RegionAverage(varn, regions=regions, land_only=land_only)
 
         for fN_in, metadata in files:
+
+            metadata["postprocess_name"] = postprocess_name
 
             fN_out = self.conf_cmip.files_post.create_full_name(
                 **metadata, postprocess=postprocess_name
@@ -358,6 +368,27 @@ def tas_annmean():
         exp="*",
     )
 
+    
+def tas_monthly():
+
+    process_cmip6_data.resample_monthly_from_orig(
+        table="Amon", varn="tas", postprocess_name="monthly", how="mean", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="tas",
+        postprocess_before="monthly",
+        postprocess_name="monthly_regrid",
+        exp=None,
+    )
+
+#     process_cmip6_data.region_average_from_post(
+#         varn="tas",
+#         postprocess_before="monthly",
+#         postprocess_name="monthly_reg_ave_ar6",
+#         exp="*",
+#     )
+    
 
 def pr_annmean():
 
@@ -373,6 +404,28 @@ def pr_annmean():
     )
 
 
+def pr_monthly():
+
+    process_cmip6_data.resample_monthly_from_orig(
+        table="Amon", varn="pr", postprocess_name="monthly", how="mean", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="monthly",
+        postprocess_name="monthly_regrid",
+        exp=None,
+    )
+
+#     process_cmip6_data.region_average_from_post(
+#         varn="pr",
+#         postprocess_before="monthly",
+#         postprocess_name="monthly_reg_ave_ar6",
+#         exp="*",
+#     )
+    
+    
+    
 def tas_reg_ave():
     pass
 
@@ -472,7 +525,22 @@ def txx():
         exp="*",
         # ensnumber=None,
     )
+    
+    
+def txx_monthly():
 
+    # monthly maximum temperature
+    process_cmip6_data.resample_monthly_from_orig(
+        table="day", varn="tasmax", postprocess_name="txx_monthly", how="max", exp=None
+    )
+    
+    process_cmip6_data.regrid_from_post(
+        varn="tasmax",
+        postprocess_before="txx_monthly",
+        postprocess_name="txx_monthly_regrid",
+        exp="*",
+        # ensnumber=None,
+    )
 
 # # =============================================================================
 # # calculate > 35° C
@@ -624,6 +692,21 @@ def tnn():
     )
 
 
+def tnn_monthly():
+
+    # monthly maximum temperature
+    process_cmip6_data.resample_monthly_from_orig(
+        table="day", varn="tasmin", postprocess_name="tnn_monthly", how="min", exp=None
+    )
+    
+    process_cmip6_data.regrid_from_post(
+        varn="tasmin",
+        postprocess_before="tnn_monthly",
+        postprocess_name="tnn_monthly_regrid",
+        exp="*",
+        # ensnumber=None,
+    )
+
 # =============================================================================
 # calculate rx1day
 # =============================================================================
@@ -680,6 +763,19 @@ def rx1day():
     )
 
 
+def rx1day_monthly():
+    
+    process_cmip6_data.resample_monthly_from_orig(
+        table="day", varn="pr", postprocess_name="rx1day_monthly", how="max", exp=None
+    )
+
+    process_cmip6_data.regrid_from_post(
+        varn="pr",
+        postprocess_before="rx1day_monthly",
+        postprocess_name="rx1day_monthly_regrid",
+        exp="*",
+    )
+    
 # =============================================================================
 # calculate rx5day
 # =============================================================================
@@ -927,6 +1023,52 @@ def mrsos_annmean():
         exp="*",
     )
 
+    
+def region_average_arctic_mid_lat():
+    # for SPM Sonia & Ed
+    from utils import regions
+    
+    mid_lat_arctic_region = regions.mid_lat_arctic_region
+    
+    process_cmip6_data.region_average_from_post(
+        varn="tasmax",
+        postprocess_before="txx",
+        postprocess_name="txx_reg_ave_mid_lat_arctic",
+        exp="*",
+        regions=mid_lat_arctic_region,
+        land_only=False,
+    )
+    
+    process_cmip6_data.region_average_from_post(
+        varn="tasmax",
+        postprocess_before="txx_monthly",
+        postprocess_name="txx_monthly_reg_ave_mid_lat_arctic",
+        exp="*",
+        regions=mid_lat_arctic_region,
+        land_only=False,
+    )
+    
+    process_cmip6_data.region_average_from_post(
+        varn="tasmin",
+        postprocess_before="tnn",
+        postprocess_name="tnn_reg_ave_mid_lat_arctic",
+        exp="*",
+        regions=mid_lat_arctic_region,
+        land_only=False,
+    )
+    
+    process_cmip6_data.region_average_from_post(
+        varn="tasmin",
+        postprocess_before="tnn_monthly",
+        postprocess_name="tnn_monthly_reg_ave_mid_lat_arctic",
+        exp="*",
+        regions=mid_lat_arctic_region,
+        land_only=False,
+    )
+    
+    
+    
+    
 
 # =============================================================================
 # main
@@ -949,53 +1091,34 @@ def main(args=None):
 
     postprocess = options["<postprocess>"]
 
-    if postprocess == "tas_globmean":
-        tas_globmean()
-
-    if postprocess == "tas_annmean":
-        tas_annmean()
-
-    if postprocess == "pr_annmean":
-        pr_annmean()
-
-    if postprocess == "tas_reg_ave":
-        tas_reg_ave()
-
-    if postprocess == "txx":
-        txx()
-
-    if postprocess == "tx_days_above":
-        tx_days_above()
-
-    if postprocess == "txp95":
-        txp95()
-
-    if postprocess == "tnn":
-        tnn()
-
-    if postprocess == "rx1day":
-        rx1day()
-
-    if postprocess == "rx5day":
-        rx5day()
-
-    if postprocess == "rx30day":
-        rx30day()
-
-    if postprocess == "cdd":
-        cdd()
-
-    if postprocess == "mrso":
-        mrso()
-
-    if postprocess == "mrso_annmean":
-        mrso_annmean()
-
-    if postprocess == "mrsos":
-        mrsos()
-
-    if postprocess == "mrsos_annmean":
-        mrsos_annmean()
+    functions = {
+        "tas_globmean": tas_globmean,
+        "tas_annmean": tas_annmean,
+        "tas_monthly": tas_monthly,
+        "pr_annmean": pr_annmean,
+        "pr_monthly": pr_monthly,
+        "tas_reg_ave": tas_reg_ave,
+        "txx": txx,
+        "txx_monthly": txx_monthly,
+        "tx_days_above": tx_days_above,
+        "txp95": txp95,
+        "tnn": tnn,
+        "tnn_monthly": tnn_monthly,
+        "rx1day": rx1day,
+        "rx1day_monthly": rx1day_monthly,
+        "rx5day": rx5day,
+        "rx30day": rx30day,
+        "cdd": cdd,
+        "mrso": mrso,
+        "mrso_annmean": mrso_annmean,
+        "mrsos": mrsos,
+        "mrsos_annmean": mrsos_annmean,
+        "region_average_arctic_mid_lat": region_average_arctic_mid_lat,
+    }
+    
+    func = functions[postprocess]
+    
+    func()
 
 
 if __name__ == "__main__":
