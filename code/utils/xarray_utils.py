@@ -6,6 +6,30 @@ import xarray as xr
 from .file_utils import _any_file_does_not_exist
 
 
+def _read_data_for_postprocess(
+    fNs_in_or_creator, metadata, fixes=None, fixes_preprocess=None,
+):
+
+    # get fNs_in
+    if isinstance(fNs_in_or_creator, (list, str)):
+        fNs_in = fNs_in_or_creator
+    else:
+        fNs_in = fNs_in_or_creator(metadata)
+
+    # exit if the model is removed by the fixes
+    if fNs_in is None:
+        return [], []
+
+    # postprocess
+    # try:
+
+    ds = mf_read_netcdfs(
+        fNs_in, metadata=metadata, fixes=fixes, fixes_preprocess=fixes_preprocess,
+    )
+
+    return fNs_in, ds
+
+
 def postprocess(
     fN_out,
     fNs_in_or_creator,
@@ -21,7 +45,6 @@ def postprocess(
 
     var = metadata.get("varn", None)
     var_out = kwargs.pop("var_out", None)
-    dim = kwargs.pop("dim", "time")
 
     if var_out is None:
         var_out = var
@@ -29,40 +52,30 @@ def postprocess(
     # if fN_out does not exits, create it on the fly
     if _any_file_does_not_exist(fN_out):
 
-        # get fNs_in
-        if isinstance(fNs_in_or_creator, (list, str)):
-            fNs_in = fNs_in_or_creator
-        else:
-            fNs_in = fNs_in_or_creator(metadata)
-
-        # exit if the model is removed by the fixes
-        if fNs_in is None:
-            return []
-
-        # postprocess
-        # try:
-        ds = mf_read_netcdfs(
-            fNs_in,
-            dim=dim,
-            metadata=metadata,
-            transform_func=transform_func,
-            fixes=fixes,
-            fixes_preprocess=fixes_preprocess,
-            **kwargs
+        fNs_in, ds = _read_data_for_postprocess(
+            fNs_in_or_creator, metadata, fixes=fixes, fixes_preprocess=fixes_preprocess
         )
+
+        # ds = _maybe_load_additonal_data()
+
         # except Exception as e:
         #     print("ERROR\n\n\n")
         #     print(str(e))
         #     print("ERROR\n\n\n")
         #     return []
 
-        if ds is None:
+        if transform_func is not None:
+            ds = transform_func(ds)
+
+        if len(ds) == 0:
             return []
 
         if isinstance(ds, xr.DataArray):
             ds = ds.to_dataset(name=var_out)
 
         # add source files
+        
+        fNs_in = [fNs_in] if isinstance(fNs_in, str) else fNs_in
         ds.attrs["source_files"] = ", ".join(fNs_in)
 
         # fix for: https://github.com/pydata/xarray/issues/3665
@@ -75,17 +88,12 @@ def postprocess(
         return ds
 
     else:
-        return xr.open_dataset(fN_out, use_cftime=True)
+        pass
+        # return xr.open_dataset(fN_out, use_cftime=True)
 
 
 def mf_read_netcdfs(
-    files,
-    dim,
-    metadata,
-    transform_func=None,
-    fixes=None,
-    fixes_preprocess=None,
-    **kwargs
+    files, metadata, fixes=None, fixes_preprocess=None,
 ):
 
     ds = xr.open_mfdataset(
@@ -95,7 +103,7 @@ def mf_read_netcdfs(
         coords="minimal",
         data_vars="minimal",
         compat="override",
-        parallel=True,
+        parallel=False,
         decode_cf=True,
         use_cftime=True,
         preprocess=fixes_preprocess,
@@ -111,9 +119,6 @@ def mf_read_netcdfs(
 
     if fixes is not None:
         ds = fixes(ds, metadata, None)
-
-    if transform_func is not None:
-        ds = transform_func(ds)
 
     return ds
 
