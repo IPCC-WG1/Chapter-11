@@ -3,6 +3,8 @@ import numpy as np
 import pooch
 import regionmask
 import xarray as xr
+from shapely.geometry import Polygon, MultiPolygon
+
 
 ORDER_REGIONS_IN_TABLE = [
     "SAH",
@@ -51,6 +53,63 @@ ORDER_REGIONS_IN_TABLE = [
     "NCA",
 ]
 
+def retrieve_continents():
+    
+    file = pooch.retrieve(
+        "https://pubs.usgs.gov/of/2006/1187/basemaps/continents/continents.zip",
+        known_hash="af0ba524a62ad31deee92a9700fc572088c2b93a39ba66f320677dd8dacaaaaf",
+        path="../data/regions/",
+    )
+
+    continents_gdf = gp.read_file("zip://" + file)
+
+    return regionmask.from_geopandas(
+        continents_gdf,
+        names="CONTINENT",
+        abbrevs="_from_name",
+        name="continent",
+    )
+
+
+
+def create_mid_lat_arctic_region():
+    # for Ed Hawkins; Seneviratne Sonia Isabelle
+
+    # from the arctic cycle up
+    arctic = Polygon([[-180, 66], [-180, 90], [180, 90], [180, 66]])
+
+    # as discussed with Sonia
+    lat_pole = 55
+    lat_eq = 30
+
+    # Northern and Southern mid-latitudes
+    mid_lat_north = Polygon(
+        [[-180, lat_eq], [-180, lat_pole], [180, lat_pole], [180, lat_eq]]
+    )
+    mid_lat_south = Polygon(
+        [[-180, -lat_eq], [-180, -lat_pole], [180, -lat_pole], [180, -lat_eq]]
+    )
+    mid_lat = MultiPolygon([mid_lat_north, mid_lat_south])
+
+    # they want
+    # - Arctic: with ocean
+    # - Mid latitudes: land only
+    # so I mask the midlatidues
+
+    p_land110 = regionmask.defined_regions.natural_earth.land_110.polygons[0]
+
+    mid_lat_land = mid_lat.intersection(p_land110.buffer(0))
+
+    mid_lat_arctic = regionmask.Regions(
+        [arctic, mid_lat_land],
+        name="mid_lat_arctic",
+        names=["Arctic", "Mid Latitudes"],
+        abbrevs=["Arc", "MidLat"],
+    )
+
+    return mid_lat_arctic
+
+
 
 class REGIONS:
     """container for regions (so they can be loaded lazily)"""
@@ -58,29 +117,25 @@ class REGIONS:
     def __init__(self):
 
         self._continents = None
+        self._mid_lat_arctic_region = None
         self.ORDER_REGIONS_IN_TABLE = ORDER_REGIONS_IN_TABLE
-
+        
     @property
     def continents(self):
 
         if self._continents is None:
-            file = pooch.retrieve(
-                "https://pubs.usgs.gov/of/2006/1187/basemaps/continents/continents.zip",
-                known_hash="af0ba524a62ad31deee92a9700fc572088c2b93a39ba66f320677dd8dacaaaaf",
-                path="../data/regions/",
-            )
-
-            continents_gdf = gp.read_file("zip://" + file)
-
-            self._continents = regionmask.from_geopandas(
-                continents_gdf,
-                names="CONTINENT",
-                abbrevs="_from_name",
-                name="continent",
-            )
+            self._continents = retrieve_continents()
 
         return self._continents
+    
+    
+    @property
+    def mid_lat_arctic_region(self):
+        if self._mid_lat_arctic_region is None:
+            self._mid_lat_arctic_region = create_mid_lat_arctic_region()
+        return self._mid_lat_arctic_region
 
+    
     @staticmethod
     def global_mask_3D(da, landmask=None, numbers=None):
         """create 3D mask: global, ocean, land, land w/o Antarctica
