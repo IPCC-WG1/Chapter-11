@@ -225,7 +225,7 @@ class _cmip_conf:
         scenarios = self.conf_cmip.scenarios_incl_hist
         filefinder = self.conf_cmip.files_orig.find_paths
 
-        self.__find_all_files(
+        return self.__find_all_files(
             scenarios,
             filefinder,
             varn=varn,
@@ -241,7 +241,7 @@ class _cmip_conf:
         scenarios = self.scenarios
         filefinder = self.files_post.find_files
 
-        self.__find_all_files(
+        return self.__find_all_files(
             scenarios,
             filefinder,
             varn=varn,
