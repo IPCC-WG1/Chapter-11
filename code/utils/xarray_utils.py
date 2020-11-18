@@ -85,12 +85,6 @@ def postprocess(
         # save as netcdf
         ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
 
-        return ds
-
-    else:
-        pass
-        # return xr.open_dataset(fN_out, use_cftime=True)
-
 
 def mf_read_netcdfs(
     files, metadata, fixes=None, fixes_preprocess=None,
