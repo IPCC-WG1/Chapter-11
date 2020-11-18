@@ -2,6 +2,7 @@ import warnings
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeatures
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import mplotutils as mpu
 import xarray as xr
@@ -267,6 +268,7 @@ def plot_theilslope(
     add_colorbar=True,
     colorbar_kwargs=None,
     no_data_color="0.8",
+    stippling_label="Significant",
     **kwargs,
 ):
     """plot theil slope and significance"""
@@ -283,7 +285,8 @@ def plot_theilslope(
 
     levels = [0, 0.1, 1]
     # add hatches
-    hatches = ["", "...."]
+    hatch = "...."
+    hatches = ["", hatch]
     theil_sign.plot.contourf(
         transform=ccrs.PlateCarree(),
         levels=levels,
@@ -292,6 +295,12 @@ def plot_theilslope(
         add_colorbar=False,
         ax=ax,
     )
+
+    legend_handle = mpatches.Patch(
+        facecolor="0.9", edgecolor="0.2", lw=0.5, hatch=hatch, label=stippling_label,
+    )
+
+    #     legend_handle = plt.Rectangle((0, 0), 1, 1, fc="0.9", ec="0.1", hatch=hatch, lw=0.25, label=stippling_label,)
 
     cbar = None
     if add_colorbar:
@@ -303,7 +312,7 @@ def plot_theilslope(
     if title is not None:
         ax.set_title(title, size=8)
 
-    return cbar
+    return cbar, legend_handle
 
 
 def delta_after_dunn(
