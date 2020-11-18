@@ -220,18 +220,17 @@ class _cmip_conf:
         )
 
     def find_all_files_orig(
-        self, varn, postprocess, exp=None, ensnumber=0, **metadata,
+        self, varn, exp=None, ensnumber=0, **metadata,
     ):
-        scenarios = self.conf_cmip.scenarios_incl_hist
-        filefinder = self.conf_cmip.files_orig.find_paths
+        scenarios = self.scenarios_incl_hist
+        filefinder = self.files_orig.find_paths
 
-        return self.__find_all_files(
+        return self._find_all_files(
             scenarios,
             filefinder,
             varn=varn,
             exp=exp,
             ensnumber=ensnumber,
-            postprocess=postprocess,
             **metadata,
         )
 
@@ -241,7 +240,7 @@ class _cmip_conf:
         scenarios = self.scenarios
         filefinder = self.files_post.find_files
 
-        return self.__find_all_files(
+        return self._find_all_files(
             scenarios,
             filefinder,
             varn=varn,
@@ -251,7 +250,7 @@ class _cmip_conf:
             **metadata,
         )
 
-    def __find_all_files(
+    def _find_all_files(
         self, scenarios, filefinder, varn, exp=None, ensnumber=0, **metadata,
     ):
 
