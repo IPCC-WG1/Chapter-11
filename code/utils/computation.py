@@ -31,16 +31,16 @@ def calc_anomaly(
 ):
     """calc anomaly of dataset
 
-        Parameters
-        ----------
-        ds : xarray Dataset or DataArray
-            Data that needs to be normalized
-        start : integer
-            Start year of the reference period.
-        end : integer
-            End year of the reference period.
-        how : "absolute" | "relative" | "norm" | "no_anom"
-            Method to calculate the anomaly. Default "absolute".
+    Parameters
+    ----------
+    ds : xarray Dataset or DataArray
+        Data that needs to be normalized
+    start : integer
+        Start year of the reference period.
+    end : integer
+        End year of the reference period.
+    how : "absolute" | "relative" | "norm" | "no_anom"
+        Method to calculate the anomaly. Default "absolute".
     """
 
     check_time_bounds = True
@@ -188,17 +188,17 @@ def at_warming_levels_list(
     select_by=("model", "exp", "ens"),
     factor=None,
 ):
-    """ compute value of index at a several warming levels
+    """compute value of index at a several warming levels
 
-        Parameters
-        ==========
-        tas_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual mean global mean
-            temperature data.
-        index_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual data of the index.
-        warming_levels : iterable of float
-            warming levels at which to assess the index
+    Parameters
+    ==========
+    tas_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual mean global mean
+        temperature data.
+    index_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual data of the index.
+    warming_levels : iterable of float
+        warming levels at which to assess the index
     """
 
     out = list()
@@ -230,17 +230,17 @@ def at_warming_levels_dict(
     select_by=("model", "exp", "ens"),
     factor=None,
 ):
-    """ compute value of index at a several warming levels
+    """compute value of index at a several warming levels
 
-        Parameters
-        ==========
-        tas_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual mean global mean
-            temperature data.
-        index_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual data of the index.
-        warming_levels : iterable of float
-            warming levels at which to assess the index
+    Parameters
+    ==========
+    tas_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual mean global mean
+        temperature data.
+    index_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual data of the index.
+    warming_levels : iterable of float
+        warming levels at which to assess the index
     """
 
     out = dict()
@@ -271,19 +271,19 @@ def at_warming_level(
     reduce="mean",
     select_by=("model", "exp", "ens"),
 ):
-    """ compute value of index at a certain warming level
+    """compute value of index at a certain warming level
 
-        Parameters
-        ==========
-        tas_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual mean global mean
-            temperature data.
-        index_list : list of (ds, metadata) pairs
-            List of (ds, metadata) pairs containing annual data of the index.
-        warming_level : float
-            warming level at which to assess the index
-        select_by : iterable of str
-            List attributes on which to select from index_list.
+    Parameters
+    ==========
+    tas_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual mean global mean
+        temperature data.
+    index_list : list of (ds, metadata) pairs
+        List of (ds, metadata) pairs containing annual data of the index.
+    warming_level : float
+        warming level at which to assess the index
+    select_by : iterable of str
+        List attributes on which to select from index_list.
     """
 
     out = list()
@@ -373,12 +373,17 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
 def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
     """align DataArrays by model"""
 
+    return align_modellist(data, join="inner", by=by)
+
+
+def align_modellist(data, join="inner", by=dict(ens=("model", "ensname", "exp"))):
+
     res = list()
     for i, o in enumerate(data):
         # create a MultiIndex
         res.append(o.set_index(**by))
 
-    return list(xr.align(*res))
+    return list(xr.align(*res, join=join))
 
 
 def concat_xarray_with_metadata(
@@ -389,9 +394,9 @@ def concat_xarray_with_metadata(
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
 
-        Input
-        -----
-        data : nested dict
+    Input
+    -----
+    data : nested dict
 
 
     """
@@ -430,9 +435,9 @@ def concat_xarray_with_metadata(
 def concat_xarray_without_metadata(datalist, process=None):
     """create xr Dataset with 'ens' and 'model' as multiindex
 
-        Input
-        -----
-        data : nested dict
+    Input
+    -----
+    data : nested dict
 
 
     """
