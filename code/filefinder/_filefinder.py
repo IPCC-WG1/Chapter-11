@@ -42,14 +42,17 @@ class FileFinder:
         # self._all_files = None
 
     def create_path_name(self, **kwargs):
+        """build path from keys"""
 
         return self.path_pattern.format(**kwargs)
 
     def create_file_name(self, qualifier=None, **kwargs):
+        """build file name from keys"""
 
         return self.file_pattern.format(**kwargs)
 
     def create_full_name(self, **kwargs):
+        """build path and file name from keys"""
 
         path_name = self.create_path_name(**kwargs)
         file_name = self.create_file_name(**kwargs)
@@ -60,7 +63,7 @@ class FileFinder:
 
         kwargs_keys = set(kwargs.keys())
 
-        missing_keys = keys - kwargs_keys
+        # missing_keys = keys - kwargs_keys
         superfluous_keys = kwargs_keys - keys
 
         # if missing_keys:
