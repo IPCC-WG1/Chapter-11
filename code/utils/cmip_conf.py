@@ -6,6 +6,8 @@ import filefinder as ff
 
 from . import computation
 from .file_utils import _file_exists, mkdir
+from .fx_files import _get_fx_data
+from .xarray_utils import mf_read_netcdfs
 
 
 class _cmip_conf:
@@ -43,6 +45,10 @@ class _cmip_conf:
     @property
     def fixes_data(self):
         return self._fixes_data
+
+    @property
+    def fixes_common(self):
+        return self._fixes_common
 
     @property
     def figure_folder(self):
@@ -106,9 +112,43 @@ class _cmip_conf:
 
         return path.join(*folders, prefix + name)
 
+    def load_orig(self, **metadata):
+
+        folder_in = self.files_orig.create_path_name(**metadata)
+
+        if "*" in folder_in:
+            raise ValueError("'metadata' cannot contain wildcards")
+
+        # maybe fix filename and glob files
+        fNs_in = self.fixes_files(folder_in + "*")(metadata)
+
+        # exit if the model is removed by the fixes
+        if fNs_in is None:
+            return []
+
+        ds = mf_read_netcdfs(
+            fNs_in,
+            metadata=metadata,
+            fixes=self.fixes_data,
+            fixes_preprocess=self.fixes_common,
+        )
+
+        return ds
+
+    _get_fx_data = _get_fx_data
+
+    def load_fx(self, varn, meta, table="*", disallow_alternate=False):
+
+        __, meta_fx = self._get_fx_data(
+            varn, meta, table=table, disallow_alternate=disallow_alternate
+        )
+
+        if meta_fx:
+            return self.load_orig(**meta_fx)[varn]
+        return None
+
     def load_postprocessed(self, **metadata):
-        """ load postprocessed data for a single scenario
-        """
+        """load postprocessed data for a single scenario"""
 
         fN = self.files_post.create_full_name(**metadata)
 
@@ -162,8 +202,17 @@ class _cmip_conf:
         # cut to the projection period
         proj = proj.sel(time=self.proj_period)
 
+        try:
+            #             ds = xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
+            ds = xr.combine_by_coords(
+                [hist, proj], join="exact", combine_attrs="override"
+            )
+        except (TypeError, ValueError) as e:
+            print(metadata)
+            raise e
+
         # combine
-        return xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
+        return ds
 
     def load_postprocessed_all(
         self,
@@ -220,8 +269,13 @@ class _cmip_conf:
         )
 
     def find_all_files_orig(
-        self, varn, exp=None, ensnumber=0, **metadata,
+        self,
+        varn,
+        exp=None,
+        ensnumber=0,
+        **metadata,
     ):
+        # all tier1 acenarios inclusive hist
         scenarios = self.scenarios_incl_hist
         filefinder = self.files_orig.find_paths
 
@@ -235,8 +289,14 @@ class _cmip_conf:
         )
 
     def find_all_files_post(
-        self, varn, postprocess, exp=None, ensnumber=0, **metadata,
+        self,
+        varn,
+        postprocess,
+        exp=None,
+        ensnumber=0,
+        **metadata,
     ):
+        # all tier1 acenarios exclusive hist
         scenarios = self.scenarios
         filefinder = self.files_post.find_files
 
@@ -251,10 +311,15 @@ class _cmip_conf:
         )
 
     def _find_all_files(
-        self, scenarios, filefinder, varn, exp=None, ensnumber=0, **metadata,
+        self,
+        scenarios,
+        filefinder,
+        varn,
+        exp=None,
+        ensnumber=0,
+        **metadata,
     ):
 
-        # all tier1 acenarios except hist
         if exp is None:
             exp = scenarios
 
@@ -291,9 +356,8 @@ class _cmip_conf:
         output = list()
 
         for fN, metadata in files:
-            # print(fN, metadata)
             ds = func(**metadata)
-
+            # print(metadata)
             if ds and anomaly:
                 ds = computation.calc_anomaly(
                     ds,

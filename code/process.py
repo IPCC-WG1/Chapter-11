@@ -58,11 +58,9 @@ class ProcessCmipDataFromOrig:
 
             xru.postprocess(
                 fN_out,
-                fNs_in_or_creator=self.fixes_files(folder_in),
                 metadata=metadata,
+                data_reader=self.conf_cmip.load_orig,
                 transform_func=transform_func,
-                fixes=self.fixes_data,
-                fixes_preprocess=self.fixes_common,
             )
 
     def global_mean_from_orig(
@@ -249,13 +247,17 @@ class ProcessCmipDataFromPost:
         for fN_in, metadata in files:
 
             metadata["postprocess_name"] = postprocess_name
+            metadata["postprocess"] = postprocess_name
 
-            fN_out = self.conf_cmip.files_post.create_full_name(
-                **metadata, postprocess=postprocess_name
-            )
+            fN_out = self.conf_cmip.files_post.create_full_name(**metadata)
 
             print(metadata)
-            xru.postprocess(fN_out, fN_in, metadata, transform_func=transform_func)
+            xru.postprocess(
+                fN_out,
+                metadata,
+                data_reader=self.conf_cmip.load_postprocessed,
+                transform_func=transform_func,
+            )
 
 
 class ProcessCmipData(ProcessCmipDataFromOrig, ProcessCmipDataFromPost):
@@ -980,6 +982,19 @@ def mrsos_annmean():
     )
 
 
+def seaice_any_annual():
+
+    process_cmip6_data.resample_annual_from_orig(
+        table="SImon", varn="siconc", postprocess_name="any_annual", how="any", exp=None
+    )
+
+    # regrid
+    # =============================================================================
+
+    # region average
+    # =============================================================================
+
+
 def region_average_arctic_mid_lat():
     # for SPM Sonia & Ed
     from utils import regions
@@ -1066,6 +1081,7 @@ def main(args=None):
         "mrso_annmean": mrso_annmean,
         "mrsos": mrsos,
         "mrsos_annmean": mrsos_annmean,
+        "seaice_any_annual": seaice_any_annual,
         "region_average_arctic_mid_lat": region_average_arctic_mid_lat,
     }
 

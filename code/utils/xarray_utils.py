@@ -6,42 +6,8 @@ import xarray as xr
 from .file_utils import _any_file_does_not_exist
 
 
-def _read_data_for_postprocess(
-    fNs_in_or_creator, metadata, fixes=None, fixes_preprocess=None,
-):
-
-    # get fNs_in
-    if isinstance(fNs_in_or_creator, (list, str)):
-        fNs_in = fNs_in_or_creator
-    else:
-        fNs_in = fNs_in_or_creator(metadata)
-
-    # exit if the model is removed by the fixes
-    if fNs_in is None:
-        return [], []
-
-    # postprocess
-    # try:
-
-    ds = mf_read_netcdfs(
-        fNs_in, metadata=metadata, fixes=fixes, fixes_preprocess=fixes_preprocess,
-    )
-
-    return fNs_in, ds
-
-
-def postprocess(
-    fN_out,
-    fNs_in_or_creator,
-    metadata,
-    transform_func=None,
-    fixes=None,
-    fixes_preprocess=None,
-    **kwargs
-):
-    """ postprocessing-on-the-fly and loading function
-
-    """
+def postprocess(fN_out, metadata, data_reader, transform_func=None, **kwargs):
+    """postprocessing-on-the-fly and loading function"""
 
     var = metadata.get("varn", None)
     var_out = kwargs.pop("var_out", None)
@@ -52,12 +18,9 @@ def postprocess(
     # if fN_out does not exits, create it on the fly
     if _any_file_does_not_exist(fN_out):
 
-        fNs_in, ds = _read_data_for_postprocess(
-            fNs_in_or_creator, metadata, fixes=fixes, fixes_preprocess=fixes_preprocess
-        )
-
-        # ds = _maybe_load_additonal_data()
-
+        print("Before data read", end="")
+        ds = data_reader(**metadata)
+        print(" ... done")
         # except Exception as e:
         #     print("ERROR\n\n\n")
         #     print(str(e))
@@ -65,7 +28,9 @@ def postprocess(
         #     return []
 
         if transform_func is not None:
+            print("Before transform", end="")
             ds = transform_func(ds)
+            print(" ... done")
 
         if len(ds) == 0:
             return []
@@ -73,25 +38,25 @@ def postprocess(
         if isinstance(ds, xr.DataArray):
             ds = ds.to_dataset(name=var_out)
 
-        # add source files
-
-        fNs_in = [fNs_in] if isinstance(fNs_in, str) else fNs_in
-        ds.attrs["source_files"] = ", ".join(fNs_in)
-
         # fix for: https://github.com/pydata/xarray/issues/3665
         if "time" in ds:
             ds.time.encoding.pop("_FillValue", None)
 
         # save as netcdf
+        print("Before saving", end="")
         ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
+        print(" ... done")
 
 
 def mf_read_netcdfs(
-    files, metadata, fixes=None, fixes_preprocess=None,
+    fNs_in,
+    metadata,
+    fixes=None,
+    fixes_preprocess=None,
 ):
 
     ds = xr.open_mfdataset(
-        files,
+        fNs_in,
         concat_dim="time",
         combine="by_coords",
         coords="minimal",
@@ -112,7 +77,12 @@ def mf_read_netcdfs(
     # ds = xr.decode_cf(ds, use_cftime=True)
 
     if fixes is not None:
-        ds = fixes(ds, metadata, None)
+        ds = fixes(ds, metadata)
+
+        # add source files
+
+    fNs_in = [fNs_in] if isinstance(fNs_in, str) else fNs_in
+    ds.attrs["source_files"] = ", ".join(fNs_in)
 
     return ds
 
