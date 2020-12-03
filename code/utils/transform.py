@@ -70,10 +70,11 @@ class NoTransform(_ProcessWithXarray):
 class Globmean(_ProcessWithXarray):
     """transformation function to get a global average"""
 
-    def __init__(self, var, weights=None, dim=("lat", "lon")):
+    def __init__(self, var, weights=None, mask=None, dim=("lat", "lon")):
 
         self.var = var
         self.weights = weights
+        self.mask = mask
         self.dim = dim
         self._name = "globmean"
 
@@ -81,6 +82,9 @@ class Globmean(_ProcessWithXarray):
 
         # maybe get cosine weights
         weights = xru.cos_wgt(da) if self.weights is None else self.weights
+
+        if self.mask is not None:
+            da = da.where(self.mask)
 
         da = da.weighted(weights).mean(dim=self.dim, keep_attrs=True)
 
@@ -136,7 +140,7 @@ class Resample(_ProcessWithXarray):
         self.indexer = indexer
         self.var = var
         self.how = how
-        self._name = "resample_annual_" + how
+        self._name = "resample_" + how
         self.kwargs = kwargs
 
     def _trans(self, da, attrs):
@@ -165,20 +169,6 @@ class ResampleAnnual(Resample):
         self.kwargs = kwargs
 
 
-#     def _trans(self, da, attrs):
-
-#         resampler = da.resample(time="A")
-
-#         func = _get_func(resampler, self.how)
-
-#         if self.how == "quantile":
-#             da = da.load()
-
-#         da = func(dim="time", **self.kwargs)
-
-#         return da, attrs
-
-
 class ResampleMonthly(Resample):
     """transformation function to resample by month"""
 
@@ -189,19 +179,6 @@ class ResampleMonthly(Resample):
         self.how = how
         self._name = "resample_monthly_" + how
         self.kwargs = kwargs
-
-
-#     def _trans(self, da, attrs):
-
-#         resampler = da.resample(time="M")
-#         func = _get_func(resampler, self.how)
-
-#         if self.how == "quantile":
-#             da = da.load()
-
-#         da = func(dim="time", **self.kwargs)
-
-#         return da, attrs
 
 
 class ResampleSeasonal(Resample):
@@ -248,6 +225,7 @@ class RollingResampleAnnual(_ProcessWithXarray):
         self.window = window
         self.how_rolling = how_rolling
         self.how = how
+        self.skipna = skipna
         self._name = f"rolling_{how_rolling}_{window}_resample_annual_{how}"
         self.kwargs = kwargs
 
@@ -332,19 +310,19 @@ class RegionAverage(_ProcessWithXarray):
 
     def __init__(self, var, regions, landmask=None, land_only=True, weights=None):
         """
-        Parameters
-        ----------
-        var : string
-            Name of the variable to treat
-        regions : regionmask.Regions
-           regions to take the average over.
-        landmask : DataArray, optional
-            landmaks to use, land points must be ``True``. If none uses
-            regionmask.defined_regions.natural_earth.land_110.
-       land_only : bool, optional
-           Whether to mask out ocean points before calculating regional
-           means.
-    """
+         Parameters
+         ----------
+         var : string
+             Name of the variable to treat
+         regions : regionmask.Regions
+            regions to take the average over.
+         landmask : DataArray, optional
+             landmaks to use, land points must be ``True``. If none uses
+             regionmask.defined_regions.natural_earth.land_110.
+        land_only : bool, optional
+            Whether to mask out ocean points before calculating regional
+            means.
+        """
 
         self.var = var
         self.regions = regions
