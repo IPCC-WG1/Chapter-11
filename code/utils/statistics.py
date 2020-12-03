@@ -107,24 +107,24 @@ def mannwhitney_ufunc(da1, da2, dim="time", alpha=0.05):
 def theil_ufunc(da, dim="time", alpha=0.1):
     """theil sen slope for xarray
 
-        Wraps sp.stats.theilslopes in xr.apply_ufunc
+    Wraps sp.stats.theilslopes in xr.apply_ufunc
 
-        Parameters
-        ==========
-        da : xr.DataArray
-            DataArray to calculate the theil sen slope over
-        dim : list of str, optional
-            Dimensions to reduce the array over. Default: "time"
-        alpha : float, optional
-            Significance level in [0, 0.5].
+    Parameters
+    ==========
+    da : xr.DataArray
+        DataArray to calculate the theil sen slope over
+    dim : list of str, optional
+        Dimensions to reduce the array over. Default: "time"
+    alpha : float, optional
+        Significance level in [0, 0.5].
 
-        Returns
-        =======
-        slope : xr.DataArray
-            Median slope of the array
-        significance : xr.DataArray
-            Array indicating significance. True if significant,
-            False otherwise
+    Returns
+    =======
+    slope : xr.DataArray
+        Median slope of the array
+    significance : xr.DataArray
+        Array indicating significance. True if significant,
+        False otherwise
     """
 
     def theil_(pt, alpha):

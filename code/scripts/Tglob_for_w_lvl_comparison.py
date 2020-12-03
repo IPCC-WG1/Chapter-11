@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # load Tglob
     c6_tas = conf.cmip6.load_postprocessed_all_concat(
-        varn="tas", postprocess="global_mean", model=models, anomaly="no_anom",
+        varn="tas", postprocess="global_mean", model=models, anomaly="no_anom"
     )
 
     # save the data

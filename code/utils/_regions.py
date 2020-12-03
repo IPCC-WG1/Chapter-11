@@ -64,7 +64,7 @@ def retrieve_continents():
     continents_gdf = gp.read_file("zip://" + file)
 
     return regionmask.from_geopandas(
-        continents_gdf, names="CONTINENT", abbrevs="_from_name", name="continent",
+        continents_gdf, names="CONTINENT", abbrevs="_from_name", name="continent"
     )
 
 
@@ -133,22 +133,22 @@ class REGIONS:
     def global_mask_3D(da, landmask=None, numbers=None):
         """create 3D mask: global, ocean, land, land w/o Antarctica
 
-            Parameters
-            ----------
-            da : xr.DataArray or Dataset
-                longitude and latitude must be called "lat" and "lon"
-            landmask : xr.DataArray
-                2D DataArray with a landmask or land fraction. Data must be
-                in 0..1. If None uses defined_regions.natural_earth.land_110
-                to calculate it.
-            numbers : iterable of int
-                Four numbers assigned to the 4 created regions. If None uses
-                0 through 3.
+        Parameters
+        ----------
+        da : xr.DataArray or Dataset
+            longitude and latitude must be called "lat" and "lon"
+        landmask : xr.DataArray
+            2D DataArray with a landmask or land fraction. Data must be
+            in 0..1. If None uses defined_regions.natural_earth.land_110
+            to calculate it.
+        numbers : iterable of int
+            Four numbers assigned to the 4 created regions. If None uses
+            0 through 3.
 
-            Returns
-            -------
-            3D_mask : xr.DataArray
-                Boolean mask of shape 4 x lax x lon.
+        Returns
+        -------
+        3D_mask : xr.DataArray
+            Boolean mask of shape 4 x lax x lon.
         """
 
         if landmask is None:
