@@ -5,7 +5,7 @@ import os
 
 import cdo
 
-from .file_utils import _any_file_does_not_exist, _file_exists
+from ..file_utils import _any_file_does_not_exist, _file_exists
 
 # import subprocess
 # import numpy as np

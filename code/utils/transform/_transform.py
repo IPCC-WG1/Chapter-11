@@ -1,57 +1,9 @@
 import numpy as np
 import regionmask
 import xarray as xr
-from xclim import atmos
 
-from . import xarray_utils as xru
-
-
-class _ProcessWithXarray:
-
-    _name = None
-
-    def __call__(self, ds):
-
-        # handle non-existing data
-        if len(ds) == 0:
-            return []
-        else:
-            # get attrs
-            attrs = ds.attrs
-
-            # read single variable
-            da = ds[self.var]
-
-            # apply the transformation funcion
-            da, attrs = self._trans(da, attrs)
-
-            # back to dataset again
-            ds = da.to_dataset(name=self.var)
-
-            # add the attrs again
-            ds.attrs = attrs
-
-        return ds
-
-    def _trans(self, da, attrs):
-        raise NotImplementedError("Implement _trans in the subclass")
-
-    @property
-    def name(self):
-        if self._name is None:
-            raise NotImplementedError("Please define a name")
-        return self._name
-
-
-def _get_func(object, how):
-    """get a function by name"""
-
-    func = getattr(object, how, None)
-
-    if func is None:
-        raise KeyError(f"how cannot be '{how}'")
-
-    return func
+from .. import xarray_utils as xru
+from .utils import _get_func, _ProcessWithXarray
 
 
 class NoTransform(_ProcessWithXarray):
@@ -87,47 +39,6 @@ class Globmean(_ProcessWithXarray):
             da = da.where(self.mask)
 
         da = da.weighted(weights).mean(dim=self.dim, keep_attrs=True)
-
-        return da, attrs
-
-
-class CDD(_ProcessWithXarray):
-    def __init__(self, var="pr", freq="A"):
-
-        self.var = var
-        self.freq = freq
-        self._name = "CDD"
-
-    def _trans(self, da, attrs):
-
-        # rechunk into a single dask array chunk along time
-        da = da.chunk({"time": -1})
-
-        da = atmos.maximum_consecutive_dry_days(da, freq=self.freq)
-
-        # get rid of the "days" units, else CDD will have dtype = timedelta
-        da.attrs.pop("units")
-
-        return da, attrs
-
-
-class TX_Days_Above(_ProcessWithXarray):
-    def __init__(self, thresh="25.0 degC", var="tasmax", freq="A"):
-
-        self.thresh = thresh
-        self.var = var
-        self.freq = freq
-        self._name = "CDD"
-
-    def _trans(self, da, attrs):
-
-        # rechunk into a single dask array chunk along time
-        da = da.chunk({"time": -1})
-
-        da = atmos.tx_days_above(da, thresh=self.thresh, freq=self.freq)
-
-        # get rid of the "days" units, else CDD will have dtype = timedelta
-        da.attrs.pop("units")
 
         return da, attrs
 
@@ -203,17 +114,6 @@ class ResampleSeasonal(Resample):
             da[{"time": [0, -1]}] = np.NaN
 
         return da, attrs
-
-
-#         resampler = da.resample(time="M")
-#         func = _get_func(resampler, self.how)
-
-#         if self.how == "quantile":
-#             da = da.load()
-
-#         da = func(dim="time", **self.kwargs)
-
-#         return da, attrs
 
 
 class RollingResampleAnnual(_ProcessWithXarray):
@@ -346,7 +246,7 @@ class RegionAverage(_ProcessWithXarray):
             Object over which the weighted reduction operation is applied.
         """
 
-        from . import regions
+        from .. import regions
 
         # maybe get cosine weights
         weights = xru.cos_wgt(da) if self.weights is None else self.weights
