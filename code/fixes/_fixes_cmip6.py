@@ -2,13 +2,29 @@ import glob
 
 import numpy as np
 
-from ._fixes_common import _corresponds_to, _remove_matching_fN, fixes_common
+from ._fixes_common import (
+    _corresponds_to,
+    _remove_matching_fN,
+    _remove_non_matching_fN,
+    convert_time_to,
+    convert_time_to_proleptic_gregorian,
+    fixes_common,
+)
 
 
 def cmip6_files(folder_in):
     def _inner(metadata):
 
         # fix before glob
+
+        # remove AWI ocean data: has an unstructured grid
+        # that I cannot currently handle
+        if _corresponds_to(
+            metadata,
+            table=["Oday", "Ofx", "Omon", "SIday", "SImon"],
+            model=["AWI-CM-1-1-MR", "AWI-ESM-1-1-LR"],
+        ):
+            return None
 
         # tasmax and tasmin are wrong for cesm
         if _corresponds_to(
@@ -112,12 +128,32 @@ def cmip6_files(folder_in):
             return None
 
         # discontinuity between historical and ssp
-        if _corresponds_to(metadata, table="Lmon", varn="mrsos", model="FGOALS-g3",):
+        if _corresponds_to(
+            metadata,
+            table="Lmon",
+            varn="mrsos",
+            model="FGOALS-g3",
+        ):
             return None
 
         # time axis not monotonic
         if _corresponds_to(
-            metadata, table="day", exp="ssp245", varn="tasmax", model="KIOST-ESM",
+            metadata,
+            table="day",
+            exp="ssp245",
+            varn="tasmax",
+            model="KIOST-ESM",
+        ):
+            return None
+
+        # all zeros in mrso in Dec 2035 (reported)
+        if _corresponds_to(
+            metadata,
+            table="Lmon",
+            exp="ssp126",
+            varn="mrso",
+            model="CIESM",
+            ens="r1i1p1f1",
         ):
             return None
 
@@ -167,12 +203,36 @@ def cmip6_files(folder_in):
         ):
             fNs_in = _remove_matching_fN(fNs_in, "_gr_18500101-20140330.nc")
 
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="Omon",
+            varn="tos",
+            model="CIESM",
+            ens="r1i1p1f1",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in, "tos_Omon_CIESM_historical_r1i1p1f1_gn_200101-201412.nc"
+            )
+
+        if _corresponds_to(
+            metadata,
+            exp="ssp126",
+            table="Omon",
+            varn="tos",
+            model="IITM-ESM",
+            ens="r1i1p1f1",
+        ):
+            fNs_in = _remove_non_matching_fN(
+                fNs_in, "tos_Omon_IITM-ESM_ssp126_r1i1p1f1_gn_201501-209912.nc"
+            )
+
         return fNs_in
 
     return _inner
 
 
-def cmip6_data(ds, metadata, next_path):
+def cmip6_data(ds, metadata):
 
     if _corresponds_to(metadata, model="MCM-UA-1-0"):
         if "latitude" in ds.dims and "longitude" in ds.dims:
@@ -190,5 +250,25 @@ def cmip6_data(ds, metadata, next_path):
     ):
         ds.load()  # need to load
         ds["tasmax"][dict(time=0)] = np.NaN
+
+    if _corresponds_to(
+        metadata,
+        exp="historical",
+        table=["Oday", "Ofx", "Omon", "SIday", "SImon"],
+        model="EC-Earth3-Veg",
+        ens=["r1i1p1f1", "r5i1p1f1"],
+    ):
+        if "time" in ds.coords:
+            ds = convert_time_to_proleptic_gregorian(ds)
+
+    if _corresponds_to(
+        metadata,
+        varn="siconc",
+        table="SImon",
+        model="NESM3",
+        ens="r1i1p1f1",
+    ):
+        if "time" in ds.coords:
+            ds = convert_time_to(ds, "noleap")
 
     return ds
