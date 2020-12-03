@@ -8,7 +8,8 @@ import xarray as xr
 # we would get 13 warnings otherwise
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
-BASE_PATH = "../../data/HadEX3/raw"
+VERSION = "v3.0.2"
+BASE_PATH = f"../../data/HadEX3/{VERSION}/raw"
 
 
 def convert_hadex3_landmask():
@@ -43,7 +44,10 @@ def convert_hadex3_landmask():
             longitude_bounds=ds.longitude_bounds,
             latitude_bounds=ds.latitude_bounds,
         ),
-        coords=dict(latitude=ds.latitude, longitude=ds.longitude,),
+        coords=dict(
+            latitude=ds.latitude,
+            longitude=ds.longitude,
+        ),
     )
 
     # add & update global attributes

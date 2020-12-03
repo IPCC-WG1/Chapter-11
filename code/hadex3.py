@@ -13,6 +13,8 @@ from utils.statistics import theil_ufunc
 # we would get 13 warnings when reading HadEX3 data
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
+CURRENT_VERSION = "3.0.2"
+
 
 class HadEx3_cls:
     """docstring for HadEx3_cls."""
@@ -20,12 +22,12 @@ class HadEx3_cls:
     def __init__(self):
 
         self._files_raw = ff.FileFinder(
-            path_pattern="../data/HadEX3/raw/",
+            path_pattern="../data/HadEX3/v{version}/raw/",
             file_pattern="HadEX3_{varn}_{year_from}-{year_to}_ADW_{climatology}_1.25x1.875deg.nc",
         )
 
         self._files_post = ff.FileFinder(
-            path_pattern="../data/HadEX3/{postprocess}/",
+            path_pattern="../data/HadEX3/v{version}/{postprocess}/",
             file_pattern="{postprocess}_HadEX3_{varn}_ADW_{climatology}.{ending}",
         )
 
@@ -83,7 +85,9 @@ class HadEx3_cls:
     def __repr__(self):
         return "<HadEx3 class>"
 
-    def _read_file(self, varn, climatology="61-90", variable="Ann"):
+    def _read_file(
+        self, varn, climatology="61-90", variable="Ann", version=CURRENT_VERSION
+    ):
         """read one file and return with metadata
 
         Parameters
@@ -103,7 +107,7 @@ class HadEx3_cls:
         """
 
         fc = self.all_files_raw
-        fN, meta = fc.search(varn=varn, climatology=climatology)[0]
+        fN, meta = fc.search(varn=varn, climatology=climatology, version=version)[0]
 
         ds = xr.open_dataset(fN, decode_cf=False)
 
@@ -120,7 +124,9 @@ class HadEx3_cls:
 
         return da, meta
 
-    def read_file(self, varn, climatology="61-90", variable="Ann"):
+    def read_file(
+        self, varn, climatology="61-90", variable="Ann", version=CURRENT_VERSION
+    ):
         """read one file and return without metadata
 
         Parameters
@@ -138,11 +144,15 @@ class HadEx3_cls:
         da : xr.DataArray
         """
 
-        ds, meta = self._read_file(varn, climatology=climatology, variable=variable)
+        ds, meta = self._read_file(
+            varn, climatology=climatology, variable=variable, version=version
+        )
 
         return ds
 
-    def read_files(self, varns, climatology="61-90", variable="Ann"):
+    def read_files(
+        self, varns, climatology="61-90", variable="Ann", version=CURRENT_VERSION
+    ):
         """read several files
 
         Parameters
@@ -166,18 +176,18 @@ class HadEx3_cls:
 
         for varn in varns:
             ds, meta = self._read_file(
-                varn=varn, climatology=climatology, variable=variable
+                varn=varn, climatology=climatology, variable=variable, version=version
             )
 
             out.append([ds, meta])
 
         return out
 
-    def read_landmask(self):
+    def read_landmask(self, version=CURRENT_VERSION):
         """read the HadEx3 landmask"""
 
         landmask, meta = self._read_file(
-            varn="landmask", climatology=None, variable="landmask"
+            varn="landmask", climatology=None, variable="landmask", version=version
         )
 
         return landmask
@@ -205,9 +215,9 @@ def find_valid_gridpoints_dunn(
 ):
     """find valid grid points after Dunn et al., Figure 2a
 
-        1.) time 1950...2018
-        2.) last valid data must at least be in 2009
-        3.) 66% of valid gridpoints
+    1.) time 1950...2018
+    2.) last valid data must at least be in 2009
+    3.) 66% of valid gridpoints
     """
 
     # select timeframe
@@ -248,9 +258,9 @@ def theil_after_dunn(
 ):
     """calculate theil-sen slope with the same conditions as in the dunn et al paper
 
-        period: 1950...2018
-        data needs to go at least until 2009
-        at least 66% of valid data
+    period: 1950...2018
+    data needs to go at least until 2009
+    at least 66% of valid data
     """
 
     da_valid = find_valid_gridpoints_dunn(
@@ -297,7 +307,11 @@ def plot_theilslope(
     )
 
     legend_handle = mpatches.Patch(
-        facecolor="0.9", edgecolor="0.2", lw=0.5, hatch=hatch, label=stippling_label,
+        facecolor="0.9",
+        edgecolor="0.2",
+        lw=0.5,
+        hatch=hatch,
+        label=stippling_label,
     )
 
     #     legend_handle = plt.Rectangle((0, 0), 1, 1, fc="0.9", ec="0.1", hatch=hatch, lw=0.25, label=stippling_label,)
@@ -318,8 +332,7 @@ def plot_theilslope(
 def delta_after_dunn(
     da, last_timestep=2009, alpha=0.05, time=slice(1950, 2018), minimum_valid=0.66
 ):
-    """calculate delta
-    """
+    """calculate delta"""
 
     da_valid = find_valid_gridpoints_dunn(
         da, time=time, last_timestep=last_timestep, minimum_valid=minimum_valid
