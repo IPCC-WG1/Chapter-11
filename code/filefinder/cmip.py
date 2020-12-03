@@ -79,8 +79,7 @@ def _make_unique_grids(filelist, mi):
 
 
 def ensure_unique_grid(filelist):
-    """ensure there is only one grid per simulation
-    """
+    """ensure there is only one grid per simulation"""
 
     # each simulation must be unique in the combination of these keys
     keys = ["exp", "table", "varn", "model", "ens"]

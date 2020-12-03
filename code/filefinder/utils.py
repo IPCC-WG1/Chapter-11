@@ -5,10 +5,10 @@ import re
 def _find_keys(pattern):
     """find keys in a format string
 
-        find all keys enclosed by curly brackets
+    find all keys enclosed by curly brackets
 
-        _find_keys("/path/{var_name}/{year}")
-        >>> set("var_name", "year")
+    _find_keys("/path/{var_name}/{year}")
+    >>> set("var_name", "year")
 
     """
     keys = set(re.findall(r"\{([A-Za-z0-9_]+)\}", pattern))
@@ -37,7 +37,7 @@ def natural_keys(text):
 
 
 def product_dict(**kwargs):
-    """ generate list of dictionaries with all possible combinations
+    """generate list of dictionaries with all possible combinations
 
     https://stackoverflow.com/a/5228294/3010700
 

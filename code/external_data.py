@@ -4,8 +4,7 @@ import filefinder as ff
 
 
 def load_exc35(varn="TX"):
-    """ load TX/ WBGTs data from Clemens Schwingshackl
-    """
+    """load TX/ WBGTs data from Clemens Schwingshackl"""
 
     x = ff.FileFinder(
         path_pattern="../data/Exc35C_TX_WBGTs_BC_Schwingshackl/",
