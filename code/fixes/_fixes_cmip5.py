@@ -348,7 +348,7 @@ def cmip5_files(folder_in):
     return _inner
 
 
-def cmip5_data(ds, metadata, next_path):
+def cmip5_data(ds, metadata):
 
     ds = fixes_common(ds)
 
