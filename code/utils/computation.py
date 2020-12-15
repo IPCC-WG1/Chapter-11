@@ -402,11 +402,9 @@ def concat_xarray_with_metadata(
     """
 
     all_ds = list()
-    retain_dict = dict()
 
-    retain_dict["ensi"] = ("ensi", list())
-    for r in retain:
-        retain_dict[r] = (r, list())
+    retain += ("ensi",)
+    retain_dict = {r: list() for r in retain}
 
     for i, (ds, metadata) in enumerate(datalist):
 
@@ -424,7 +422,7 @@ def concat_xarray_with_metadata(
     # assign coordinates
     out = out.assign_coords(**retain_dict)
 
-    index = {"mod_ens": retain + ("ensi",)}
+    index = {"mod_ens": retain}
 
     # create multiindex
     out = out.set_index(**index)
