@@ -43,7 +43,7 @@ def postprocess(fN_out, metadata, data_reader, transform_func=None, **kwargs):
             ds.time.encoding.pop("_FillValue", None)
 
         # save as netcdf
-        print("Before saving", end="")
+        print("Before saving", end="", flush=True)
         ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
         print(" ... done")
 
