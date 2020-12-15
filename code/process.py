@@ -8,6 +8,7 @@ import fixes
 from utils import xarray_utils as xru
 from utils.transform import (
     CDD,
+    IAV,
     Globmean,
     NoTransform,
     RegionAverage,
@@ -17,14 +18,21 @@ from utils.transform import (
     SelectGridpoint,
     SelectRegion,
     TX_Days_Above,
+    regrid_cdo,
 )
-from utils.transform_cdo import regrid_cdo
 
 logger = logging.getLogger(__name__)
 
 # from dask.distributed import Client
 # client = Client()  # set up local cluster
 # print(client)
+
+
+from dask.distributed import Client, LocalCluster
+
+# cluster = LocalCluster(n_workers=1, threads_per_worker=1)
+
+
 ar6_land = regionmask.defined_regions.ar6.land
 
 # =============================================================================
@@ -197,7 +205,13 @@ class ProcessCmipDataFromOrig:
 
 class ProcessCmipDataFromPost:
     def regrid_from_post(
-        self, varn, postprocess_before, postprocess_name, exp="*", **kwargs
+        self,
+        varn,
+        postprocess_before,
+        postprocess_name,
+        exp="*",
+        method="con2",
+        **kwargs,
     ):
 
         print("=== regrid_from_post ===\n")
@@ -219,7 +233,7 @@ class ProcessCmipDataFromPost:
             )
 
             print(metadata)
-            regrid_cdo(fN_in, fN_out, "g025")
+            regrid_cdo(fN_in, fN_out, "g025", method=method)
 
     def region_average_from_post(
         self,
@@ -247,9 +261,53 @@ class ProcessCmipDataFromPost:
         for fN_in, metadata in files:
 
             metadata["postprocess_name"] = postprocess_name
-            metadata["postprocess"] = postprocess_name
+            metadata["postprocess"] = postprocess_before
 
             fN_out = self.conf_cmip.files_post.create_full_name(**metadata)
+
+            print(metadata)
+            xru.postprocess(
+                fN_out,
+                metadata,
+                data_reader=self.conf_cmip.load_postprocessed,
+                transform_func=transform_func,
+            )
+
+    def iav_from_post(
+        self,
+        varn,
+        postprocess_before,
+        postprocess_name,
+        exp="piControl",
+        period=20,
+        min_length=500,
+        cut_start=100,
+        deg=2,
+        **kwargs,
+    ):
+
+        print("=== iav_average_from_post ===\n")
+
+        files = self.conf_cmip.find_all_files_post(
+            postprocess=postprocess_before, varn=varn, exp=exp, **kwargs
+        )
+
+        files.df = files.df.drop("postprocess", axis=1)
+
+        self.conf_cmip._create_folder_for_output(files, postprocess_name)
+
+        transform_func = IAV(
+            varn, period=period, min_length=min_length, cut_start=cut_start, deg=deg
+        )
+
+        for fN_in, metadata in files:
+
+            fN_out = self.conf_cmip.files_post.create_full_name(
+                postprocess=postprocess_name, **metadata
+            )
+
+            metadata["postprocess_name"] = postprocess_name
+            metadata["postprocess"] = postprocess_before
 
             print(metadata)
             xru.postprocess(
@@ -308,11 +366,34 @@ def tas_annmean():
         table="Amon", varn="tas", postprocess_name="annmean", how="mean", exp=None
     )
 
+    process_cmip6_data.resample_annual_from_orig(
+        table="Amon",
+        varn="tas",
+        postprocess_name="annmean",
+        how="mean",
+        exp="piControl",
+    )
+
     process_cmip6_data.regrid_from_post(
         varn="tas",
         postprocess_before="annmean",
         postprocess_name="annmean_regrid",
-        exp=None,
+        exp="*",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="tas",
+        postprocess_before="annmean_regrid",
+        postprocess_name="annmean_regrid_IAV20",
+        exp="piControl",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="tas",
+        postprocess_before="annmean_regrid",
+        postprocess_name="annmean_regrid_IAV1",
+        exp="piControl",
+        period=1,
     )
 
     process_cmip6_data.region_average_from_post(
@@ -351,12 +432,39 @@ def pr_annmean():
         table="Amon", varn="pr", postprocess_name="annmean", how="mean", exp=None
     )
 
+    process_cmip6_data.resample_annual_from_orig(
+        table="Amon", varn="pr", postprocess_name="annmean", how="mean", exp="piControl"
+    )
+    # regrid
+    # ======
+
     process_cmip6_data.regrid_from_post(
         varn="pr",
         postprocess_before="annmean",
         postprocess_name="annmean_regrid",
-        exp=None,
+        exp="*",
     )
+
+    # IAV
+    # ===
+
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="annmean_regrid",
+        postprocess_name="annmean_regrid_IAV20",
+        exp="piControl",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="annmean_regrid",
+        postprocess_name="annmean_regrid_IAV1",
+        exp="piControl",
+        period=1,
+    )
+
+    # region average
+    # ==============
 
 
 def pr_monthly():
@@ -380,36 +488,6 @@ def pr_monthly():
 #         exp="*",
 #     )
 
-
-def tas_reg_ave():
-    pass
-
-
-#     process_cmip6_data.no_transform_from_orig(
-#         table="Amon",
-#         varn="tas",
-#         postprocess_name="monthly",
-#         exp=["historical", "ssp585"],
-#         # ensnumber=None,
-#     )
-
-# process_cmip5_data.region_average_from_orig(
-#     table="Amon",
-#     varn="tas",
-#     postprocess_name="reg_ave_ar6",
-#     exp=conf.cmip5.scenarios_all_incl_hist,
-#     ensnumber=0,
-# )
-
-#     process_cmip6_data.region_average_from_orig(
-#         table="Amon",
-#         varn="tas",
-#         postprocess_name="reg_ave_ar6",
-#         exp=conf.cmip6.scenarios_all_incl_hist,
-#         ensnumber=0,
-#     )
-
-
 # # =============================================================================
 # # calculate txx
 # # =============================================================================
@@ -417,43 +495,16 @@ def tas_reg_ave():
 
 def txx():
 
-    # process_cmip5_data.resample_annual_from_orig(
-    #     table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
-    # )
-
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp=None
     )
-
-    # process_cmip6_data.resample_annual_from_orig(
-    #     table="day",
-    #     varn="tasmax",
-    #     postprocess_name="txx",
-    #     how="max",
-    #     exp=None,
-    #     model="CanESM5",
-    #     ensnumber=None,
-    # )
-
-    # monthly maximum temperature
-    # process_cmip6_data.resample_monthly_from_orig(
-    #     table="day", varn="tasmax", postprocess_name="txx_monthly", how="max", exp=None
-    # )
-
-    # process_cmip5_data.resample_annual_from_orig(
-    #     table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
-    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="tasmax", postprocess_name="txx", how="max", exp="piControl"
     )
 
-    # # regrid txx
-    # # =============================================================================
-
-    # process_cmip5_data.regrid_from_post(
-    #     varn="tasmax", postprocess_before="txx", postprocess_name="txx_regrid", exp="*"
-    # )
+    # regrid
+    # ======
 
     process_cmip6_data.regrid_from_post(
         varn="tasmax",
@@ -463,22 +514,32 @@ def txx():
         # ensnumber=None,
     )
 
-    # # region average txx
-    # # =============================================================================
+    # IAV
+    # ===
 
-    # process_cmip5_data.region_average_from_post(
-    #     varn="tasmax",
-    #     postprocess_before="txx",
-    #     postprocess_name="txx_reg_ave_ar6",
-    #     exp="*",
-    # )
+    process_cmip6_data.iav_from_post(
+        varn="tasmax",
+        postprocess_before="txx_regrid",
+        postprocess_name="txx_regrid_IAV20",
+        exp="piControl",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="tasmax",
+        postprocess_before="txx_regrid",
+        postprocess_name="txx_regrid_IAV1",
+        exp="piControl",
+        period=1,
+    )
+
+    # region average
+    # ==============
 
     process_cmip6_data.region_average_from_post(
         varn="tasmax",
         postprocess_before="txx",
         postprocess_name="txx_reg_ave_ar6",
         exp="*",
-        # ensnumber=None,
     )
 
 
@@ -671,31 +732,17 @@ def tnn_monthly():
 
 def rx1day():
 
-    # process_cmip5_data.resample_annual_from_orig(
-    #     table="day", varn="pr", postprocess_name="rx1day", how="max", exp=None
-    # )
-
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="pr", postprocess_name="rx1day", how="max", exp=None
     )
-
-    # process_cmip5_data.resample_annual_from_orig(
-    #     table="day", varn="pr", postprocess_name="rx1day", how="max", exp="piControl"
-    # )
 
     process_cmip6_data.resample_annual_from_orig(
         table="day", varn="pr", postprocess_name="rx1day", how="max", exp="piControl"
     )
 
-    # regrid rx1day
-    # =============================================================================
+    # regrid
+    # ======
 
-    # process_cmip5_data.regrid_from_post(
-    #     varn="pr",
-    #     postprocess_before="rx1day",
-    #     postprocess_name="rx1day_regrid",
-    #     exp="*",
-    # )
     process_cmip6_data.regrid_from_post(
         varn="pr",
         postprocess_before="rx1day",
@@ -703,15 +750,27 @@ def rx1day():
         exp="*",
     )
 
-    # region average rx1day
-    # =============================================================================
+    # IAV
+    # ===
 
-    # process_cmip5_data.region_average_from_post(
-    #     varn="pr",
-    #     postprocess_before="rx1day",
-    #     postprocess_name="rx1day_reg_ave_ar6",
-    #     exp="*",
-    # )
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="rx1day_regrid",
+        postprocess_name="rx1day_regrid_IAV20",
+        exp="piControl",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="rx1day_regrid",
+        postprocess_name="rx1day_regrid_IAV1",
+        exp="piControl",
+        period=1,
+    )
+
+    # region average
+    # ==============
+
     process_cmip6_data.region_average_from_post(
         varn="pr",
         postprocess_before="rx1day",
@@ -748,12 +807,38 @@ def rx5day():
     process_cmip6_data.rx5day_from_orig(
         table="day", varn="pr", postprocess_name="rx5day", exp="piControl"
     )
+
+    # regrid
+    # ======
+
     process_cmip6_data.regrid_from_post(
         varn="pr",
         postprocess_before="rx5day",
         postprocess_name="rx5day_regrid",
         exp="*",
     )
+
+    # IAV
+    # ===
+
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="rx5day_regrid",
+        postprocess_name="rx5day_regrid_IAV20",
+        exp="piControl",
+    )
+
+    process_cmip6_data.iav_from_post(
+        varn="pr",
+        postprocess_before="rx5day_regrid",
+        postprocess_name="rx5day_regrid_IAV1",
+        exp="piControl",
+        period=1,
+    )
+
+    # region average
+    # ==============
+
     process_cmip6_data.region_average_from_post(
         varn="pr",
         postprocess_before="rx5day",
@@ -1054,6 +1139,9 @@ def main(args=None):
       process.py txx
     """
 
+    client = Client()
+    print(client)
+
     # parse cmd line arguments
     options = docopt.docopt(main.__doc__, version=None)
 
@@ -1065,7 +1153,6 @@ def main(args=None):
         "tas_monthly": tas_monthly,
         "pr_annmean": pr_annmean,
         "pr_monthly": pr_monthly,
-        "tas_reg_ave": tas_reg_ave,
         "txx": txx,
         "txx_monthly": txx_monthly,
         "tx_days_above": tx_days_above,
