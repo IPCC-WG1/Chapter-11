@@ -1,8 +1,11 @@
+import xarray as xr
+
+
 class _ProcessWithXarray:
 
     _name = None
 
-    def __call__(self, ds):
+    def __call__(self, ds, **kwargs):
 
         # handle non-existing data
         if len(ds) == 0:
@@ -15,7 +18,10 @@ class _ProcessWithXarray:
             da = ds[self.var]
 
             # apply the transformation funcion
-            da, attrs = self._trans(da, attrs)
+            da, attrs = self._trans(da, attrs, **kwargs)
+
+            if len(da) == 0:
+                return []
 
             # back to dataset again
             ds = da.to_dataset(name=self.var)
@@ -44,3 +50,12 @@ def _get_func(object, how):
         raise KeyError(f"how cannot be '{how}'")
 
     return func
+
+
+def alignable(*objects):
+
+    try:
+        xr.align(*objects, join="exact", copy=False)
+        return True
+    except ValueError:
+        return False
