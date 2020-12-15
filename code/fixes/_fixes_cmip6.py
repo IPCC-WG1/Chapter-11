@@ -271,4 +271,24 @@ def cmip6_data(ds, metadata):
         if "time" in ds.coords:
             ds = convert_time_to(ds, "noleap")
 
+    # not reading without load...
+    if _corresponds_to(
+            metadata,
+            table="day",
+            varn=["pr", "tasmax"],
+            model="EC-Earth3-Veg-LR",
+            ens="r1i1p1f1",
+        ):
+        ds.load()
+        
+#     if _corresponds_to(
+#             metadata,
+#             table="Amon",
+#             varn=["pr", "tas"],
+#             model="EC-Earth3-Veg-LR",
+#             ens="r1i1p1f1",
+#         ):
+#         ds.load()
+
     return ds
+    
