@@ -54,8 +54,8 @@ class _cmip5_conf(_cmip_conf):
         )
 
         self._files_fx = FileFinder(
-            path_pattern="/net/atmos/data/cmip5/{exp}/fx/{varn}/{model}/r0i0p0/",
-            file_pattern="{varn}_fx_{model}_{exp}_r0i0p0.nc",
+            path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}/",
+            file_pattern="{varn}_{table}_{model}_{exp}_{ens}.nc",
         )
 
         self._fixes_files = fixes.cmip5_files
