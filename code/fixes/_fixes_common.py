@@ -62,6 +62,18 @@ def unify_coord_names(ds):
     return ds
 
 
+def data_vars_as_coords(ds):
+    """at least on model had coordinates as data_vars"""
+    
+    candidates = ["lat", "lon", "lon_bounds", "lat_bounds"]
+    
+    for candidate in candidates:
+        if candidate in ds.data_vars:
+            ds = ds.set_coords(candidate)
+
+    return ds
+
+
 def convert_time_to_proleptic_gregorian(ds, dim="time"):
 
     time = ds.indexes["time"]
@@ -111,6 +123,7 @@ def fixes_common(ds):
     if "height" in ds.variables:
         del ds["height"]
 
+    ds = data_vars_as_coords(ds)
     ds = unify_coord_names(ds)
 
     # delete latitude bounds (#g1)
