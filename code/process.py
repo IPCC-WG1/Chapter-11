@@ -269,7 +269,7 @@ class ProcessCmipDataFromPost:
             xru.postprocess(
                 fN_out,
                 metadata,
-                data_reader=self.conf_cmip.load_postprocessed,
+                data_reader=self.conf_cmip.load_post,
                 transform_func=transform_func,
             )
 
@@ -313,7 +313,7 @@ class ProcessCmipDataFromPost:
             xru.postprocess(
                 fN_out,
                 metadata,
-                data_reader=self.conf_cmip.load_postprocessed,
+                data_reader=self.conf_cmip.load_post,
                 transform_func=transform_func,
             )
 
@@ -977,6 +977,7 @@ def mrso_annmean():
         postprocess_before="sm_annmean",
         postprocess_name="sm_annmean_regrid",
         exp="*",
+        method="con",
     )
 
     # region average sm
