@@ -187,6 +187,7 @@ def at_warming_levels_list(
     reduce="mean",
     select_by=("model", "exp", "ens"),
     factor=None,
+    skipna=None,
 ):
     """compute value of index at a several warming levels
 
@@ -211,6 +212,7 @@ def at_warming_levels_list(
             add_meta=add_meta,
             reduce=reduce,
             select_by=select_by,
+            skipna=skipna,
         )
 
         if factor is not None:
@@ -229,6 +231,7 @@ def at_warming_levels_dict(
     reduce="mean",
     select_by=("model", "exp", "ens"),
     factor=None,
+    skipna=None
 ):
     """compute value of index at a several warming levels
 
@@ -253,6 +256,7 @@ def at_warming_levels_dict(
             add_meta=add_meta,
             reduce=reduce,
             select_by=select_by,
+            skipna=skipna
         )
 
         if factor is not None:
@@ -270,6 +274,7 @@ def at_warming_level(
     add_meta=True,
     reduce="mean",
     select_by=("model", "exp", "ens"),
+    skipna=None,
 ):
     """compute value of index at a certain warming level
 
@@ -321,7 +326,7 @@ def at_warming_level(
 
                 if reduce is not None:
                     # calculate mean
-                    idx = getattr(idx, reduce)("year")
+                    idx = getattr(idx, reduce)("year", skipna=skipna)
                 else:
                     # drop year to enable concatenating
                     idx = idx.drop_vars("year")
