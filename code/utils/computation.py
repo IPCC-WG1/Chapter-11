@@ -231,7 +231,7 @@ def at_warming_levels_dict(
     reduce="mean",
     select_by=("model", "exp", "ens"),
     factor=None,
-    skipna=None
+    skipna=None,
 ):
     """compute value of index at a several warming levels
 
@@ -256,7 +256,7 @@ def at_warming_levels_dict(
             add_meta=add_meta,
             reduce=reduce,
             select_by=select_by,
-            skipna=skipna
+            skipna=skipna,
         )
 
         if factor is not None:

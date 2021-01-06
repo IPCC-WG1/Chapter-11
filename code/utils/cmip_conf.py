@@ -13,6 +13,7 @@ from .xarray_utils import mf_read_netcdfs
 
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
+
 class _cmip_conf:
     """common configuration for cmip5 and cmip6"""
 
@@ -410,9 +411,11 @@ class _cmip_conf:
         )
         mkdir(folder_out)
 
-    def list_grid_resolutions_orig(self, varn="tas", exp="historical", ensnumber=0, table="Amon"):
+    def list_grid_resolutions_orig(
+        self, varn="tas", exp="historical", ensnumber=0, table="Amon"
+    ):
         """print resolution of individual models"""
-        
+
         fc = self.find_all_files_orig(
             varn=varn, exp=exp, ensnumber=ensnumber, table=table
         )
