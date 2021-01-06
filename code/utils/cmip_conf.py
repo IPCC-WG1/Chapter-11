@@ -1,5 +1,7 @@
 import os.path as path
+import warnings
 
+import numpy as np
 import xarray as xr
 
 import filefinder as ff
@@ -9,6 +11,7 @@ from .file_utils import _file_exists, mkdir
 from .fx_files import _get_fx_data
 from .xarray_utils import mf_read_netcdfs
 
+warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
 class _cmip_conf:
     """common configuration for cmip5 and cmip6"""
@@ -147,7 +150,7 @@ class _cmip_conf:
             return self.load_orig(**meta_fx)[varn]
         return None
 
-    def load_postprocessed(self, **metadata):
+    def load_post(self, **metadata):
         """load postprocessed data for a single scenario"""
 
         fN = self.files_post.create_full_name(**metadata)
@@ -166,7 +169,7 @@ class _cmip_conf:
 
         return xr.decode_cf(ds, use_cftime=True)
 
-    def load_postprocessed_concat(self, **metadata):
+    def load_post_concat(self, **metadata):
         """combine historical simulation and projection
 
         Parameters
@@ -175,17 +178,17 @@ class _cmip_conf:
             Metadata idenrtifiying the simulation to load.
 
         ..note:: ``exp="historical"`` raises a ValueError
-        use load_postprocessed(..., exp="historical") instead
+        use load_post(..., exp="historical") instead
 
         """
 
         exp = metadata.pop("exp")
 
         if exp == "historical":
-            raise ValueError("Use 'load_postprocessed' to load historical exp")
+            raise ValueError("Use 'load_post' to load historical exp")
 
         # load historical
-        hist = self.load_postprocessed(exp="historical", **metadata)
+        hist = self.load_post(exp="historical", **metadata)
         if not len(hist):
             self._not_found(exp="historical", **metadata)
             return []
@@ -194,7 +197,7 @@ class _cmip_conf:
         hist = hist.sel(time=self.hist_period)
 
         # load projection
-        proj = self.load_postprocessed(exp=exp, **metadata)
+        proj = self.load_post(exp=exp, **metadata)
         if not len(proj):
             self._not_found(exp=exp, **metadata)
             return []
@@ -203,7 +206,6 @@ class _cmip_conf:
         proj = proj.sel(time=self.proj_period)
 
         try:
-            #             ds = xr.concat([hist, proj], dim="time", compat="override", coords="minimal")
             ds = xr.combine_by_coords(
                 [hist, proj], join="exact", combine_attrs="override"
             )
@@ -214,22 +216,22 @@ class _cmip_conf:
         # combine
         return ds
 
-    def load_postprocessed_all(
+    def load_post_all(
         self,
         varn,
         postprocess,
         exp=None,
         anomaly="absolute",
-        at_least_until=2099,
+        at_least_until=None,
         year_mean=True,
         ensnumber=0,
         **metadata,
     ):
         """load postprocessed data for all models for a given scenario"""
 
-        func = self.load_postprocessed
+        func = self.load_post
 
-        return self._load_postprocessed_all_maybe_concat(
+        return self._load_post_all_maybe_concat(
             varn=varn,
             postprocess=postprocess,
             exp=exp,
@@ -241,7 +243,7 @@ class _cmip_conf:
             **metadata,
         )
 
-    def load_postprocessed_all_concat(
+    def load_post_all_concat(
         self,
         varn,
         postprocess,
@@ -254,9 +256,9 @@ class _cmip_conf:
     ):
         """load postprocessed data for all models concat for historical and scenario"""
 
-        func = self.load_postprocessed_concat
+        func = self.load_post_concat
 
-        return self._load_postprocessed_all_maybe_concat(
+        return self._load_post_all_maybe_concat(
             varn=varn,
             postprocess=postprocess,
             exp=exp,
@@ -332,7 +334,7 @@ class _cmip_conf:
 
         return files
 
-    def _load_postprocessed_all_maybe_concat(
+    def _load_post_all_maybe_concat(
         self,
         varn,
         postprocess,
@@ -407,3 +409,33 @@ class _cmip_conf:
             **metadata, postprocess=postprocess_name
         )
         mkdir(folder_out)
+
+    def list_grid_resolutions_orig(self, varn="tas", exp="historical", ensnumber=0, table="Amon"):
+        """print resolution of individual models"""
+        
+        fc = self.find_all_files_orig(
+            varn=varn, exp=exp, ensnumber=ensnumber, table=table
+        )
+
+        for fN, meta in fc:
+
+            ds = conf.cmip6.load_orig(**meta)
+
+            if len(ds) == 0:
+                continue
+
+            lat = np.round(ds.lat.diff("lat").values, 2)
+            lon = np.round(ds.lon.diff("lon").values, 2)
+
+            if np.allclose(lon[0], lon, atol=0.1):
+                lon = f"{lon[0].item():0.2f}"
+            else:
+                lon = " var"
+
+            if np.allclose(lat[0], lat, atol=0.1):
+                lat = f"{lat[0].item():0.2f}"
+            else:
+                lat = " var"
+
+            model = meta["model"] + ":"
+            print(f"{model:<20} lat: {lat}, lon: {lon}")

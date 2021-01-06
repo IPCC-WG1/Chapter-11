@@ -38,7 +38,7 @@ if __name__ == "__main__":
     models = ["FGOALS-g3", "NESM3"]
 
     # load Tglob
-    c6_tas = conf.cmip6.load_postprocessed_all_concat(
+    c6_tas = conf.cmip6.load_post_all_concat(
         varn="tas", postprocess="global_mean", model=models, anomaly="no_anom"
     )
 

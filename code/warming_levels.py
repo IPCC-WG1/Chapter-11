@@ -248,7 +248,7 @@ def write_warming_level_to_file(
 def write_cmip5(warming_levels1, warming_levels2):
 
     # load data
-    c5_tas = conf.cmip5.load_postprocessed_all_concat(
+    c5_tas = conf.cmip5.load_post_all_concat(
         varn="tas",
         postprocess="global_mean",
         anomaly="no_check_no_anom",
@@ -290,7 +290,7 @@ def write_cmip6(warming_levels1, warming_levels2, all_ens=False):
     if all_ens:
         ensnumber = None
 
-    c6_tas = conf.cmip6.load_postprocessed_all_concat(
+    c6_tas = conf.cmip6.load_post_all_concat(
         varn="tas",
         postprocess="global_mean",
         ensnumber=ensnumber,
