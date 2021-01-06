@@ -205,6 +205,78 @@ class SelectRegion(_ProcessWithXarray):
         return da, attrs
 
 
+class ConsecutiveMonthsClim(_ProcessWithXarray):
+    def __init__(self, var, how, *, clim=slice("1850", "1900"), dim="time"):
+        """calc min/ max of
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable on the Dataset
+        quantile : float
+            Quantile in range 0..1, default: 0.1
+        clim : slice(str, str)
+            Climatology period, default: slice("1850", "1900")
+        """
+
+        if how not in ["min", "max"]:
+            raise ValueError(f"how must be one of 'min', 'max', found {how}")
+
+        self.var = var
+        self.how = how
+        # TODO: make this an option - need to adjust the loop below
+        self.n_months = 3
+        self.clim = clim
+        self.dim = dim
+        self._name = f"ConsecutiveMonths_{clim.start}-{clim.stop}_{how}_{self.n_months}"
+
+    def _trans(self, da, attrs):
+
+        da = da.sel(**{self.dim: self.clim})
+
+        if len(da[self.dim]) == 0:
+            return [], attrs
+
+        n_months = self.n_months
+
+        # calculate the monthly climatology
+        monthly = da.groupby(self.dim + ".month").mean(skipna=False)
+
+        # TODO: use padded rolling once availabel
+        # monthly.rolling(center=True, month=n_months, pad_mode="wrap").mean(skipna=False)
+
+        # pad
+        padded = monthly.pad(month=n_months, mode="wrap")
+        # calculate the rolling mean
+        rolled = padded.rolling(center=True, month=n_months).mean(skipna=False)
+        # remove the padding again
+        sliced = rolled.isel(month=slice(n_months, -n_months))
+
+        # coordinate
+        central_month = getattr(sliced, f"idx{self.how}")("month")
+        all_nan = central_month.isnull()
+        # the index
+        central_month_arg = (central_month.fillna(0) - 1).astype(int)
+
+        # create a mask
+        month_mask = xr.zeros_like(monthly, bool)
+
+        # set true;
+        for i in range(-1, 2):
+            # the "% 12" normalizes the index 12 -> 0; 13 -> 1; -1 -> 11
+            month_mask[{"month": (central_month_arg + i) % 12}] = True
+
+        # remove all nan gridpoints
+        month_mask = month_mask.where(~all_nan, False)
+
+        central_month.name = "central_month"
+        month_mask.name = "month_mask"
+
+        ds = xr.merge([central_month, month_mask])
+
+        return ds, attrs
+
+
 class RegionAverage(_ProcessWithXarray):
     """calculate regional average"""
 

@@ -17,6 +17,7 @@ CDO = cdo.Cdo()
 METHOD_STR = {
     "bil": "Bilenear interpolation",
     "con2": "Second order conservative remapping",
+    "con": "Conservative remapping",
     "dis": "Distance-weighted average remapping",
 }
 
@@ -43,6 +44,10 @@ def delete_corrupt_files(filename):
 def _regrid_cdo(fN_in, fN_out, target_grid, method):
     if method == "bil":
         CDO.remapbil(
+            f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
+        )
+    elif method == "con":
+        CDO.remapcon(
             f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
         )
     elif method == "con2":

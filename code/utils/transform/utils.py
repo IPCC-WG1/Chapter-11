@@ -23,8 +23,11 @@ class _ProcessWithXarray:
             if len(da) == 0:
                 return []
 
-            # back to dataset again
-            ds = da.to_dataset(name=self.var)
+            if isinstance(da, xr.DataArray):
+                # back to dataset again
+                ds = da.to_dataset(name=self.var)
+            else:
+                ds = da
 
             # add the attrs again
             ds.attrs = attrs
@@ -41,10 +44,10 @@ class _ProcessWithXarray:
         return self._name
 
 
-def _get_func(object, how):
+def _get_func(obj, how):
     """get a function by name"""
 
-    func = getattr(object, how, None)
+    func = getattr(obj, how, None)
 
     if func is None:
         raise KeyError(f"how cannot be '{how}'")
