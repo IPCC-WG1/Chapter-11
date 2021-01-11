@@ -404,8 +404,9 @@ class _cmip_conf:
 
     def _create_folder_for_output(self, files, postprocess_name):
 
-        __, metadata = files[0]
-
+        metadata = files[0][1].copy()
+        
+        metadata.pop("postprocess", None)
         folder_out = self.files_post.create_path_name(
             **metadata, postprocess=postprocess_name
         )
