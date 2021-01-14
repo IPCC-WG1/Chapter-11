@@ -1,7 +1,8 @@
 import numpy as np
 import xarray as xr
 
-from .utils import _ProcessWithXarray, alignable
+from .. import xarray_utils as xru
+from .utils import _ProcessWithXarray
 
 
 class SM_dry_days_clim_Zhang(_ProcessWithXarray):
@@ -14,8 +15,10 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
             Name of the variable on the Dataset
         quantile : float
             Quantile in range 0..1, default: 0.1
-        clim : slice(str, str)
-            Climatology period, default: slice("1850", "1900")
+        beg : int, default: 1850
+            Start of climatology period.
+        end : int, default: 1900
+            End of climatology period.
 
         References
         ----------
@@ -25,7 +28,7 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
         ----
         Only little of the code is specific to calculate the
         SMdd threshold - most could be re-used for other Zhang-like
-        threshold estimates
+        threshold estimates. However, it is super slow...
         """
 
         if beg >= end:
@@ -69,7 +72,9 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
             # combine them
             da_subset = xr.concat([a, b], dim=dim)
 
+            # calculate the monthly quantile
             da_subset = da_subset.groupby(f"{dim}.month")
+            # using skipna=False is *much* faster
             thresh_res = da_subset.quantile(0.1, dim=dim, skipna=False)
 
             # assign the monthly threshold to every day of a month
@@ -138,7 +143,7 @@ class SM_dry_days(_ProcessWithXarray):
 
     def _trans(self, da, attrs, threshold):
 
-        if not alignable(da, threshold):
+        if not xru.alignable(da, threshold):
             raise ValueError("not alignable")
 
         da = da.groupby(f"{self.dim}.month")

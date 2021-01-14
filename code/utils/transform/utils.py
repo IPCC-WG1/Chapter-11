@@ -53,12 +53,3 @@ def _get_func(obj, how):
         raise KeyError(f"how cannot be '{how}'")
 
     return func
-
-
-def alignable(*objects):
-
-    try:
-        xr.align(*objects, join="exact", copy=False)
-        return True
-    except ValueError:
-        return False

@@ -36,6 +36,7 @@ class Globmean(_ProcessWithXarray):
         weights = xru.cos_wgt(da) if self.weights is None else self.weights
 
         if self.mask is not None:
+            xru.assert_alignable(self.mask, da, message="mask has different coordinates!")
             da = da.where(self.mask)
 
         da = da.weighted(weights).mean(dim=self.dim, keep_attrs=True)
@@ -242,7 +243,7 @@ class ConsecutiveMonthsClim(_ProcessWithXarray):
         # calculate the monthly climatology
         monthly = da.groupby(self.dim + ".month").mean(skipna=False)
 
-        # TODO: use padded rolling once availabel
+        # TODO: use padded rolling once available
         # monthly.rolling(center=True, month=n_months, pad_mode="wrap").mean(skipna=False)
 
         # pad
@@ -252,7 +253,7 @@ class ConsecutiveMonthsClim(_ProcessWithXarray):
         # remove the padding again
         sliced = rolled.isel(month=slice(n_months, -n_months))
 
-        # coordinate
+        # find coordinates (e.g. idxmax)
         central_month = getattr(sliced, f"idx{self.how}")("month")
         all_nan = central_month.isnull()
         # the index
@@ -326,6 +327,11 @@ class RegionAverage(_ProcessWithXarray):
         if self.landmask is None:
             landmask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
             landmask = landmask.squeeze(drop=True)
+        else:
+            landmask = self.landmask
+            xru.assert_alignable(
+                landmask, da, message="landmask has different coordinates!"
+            )
 
         if landmask.max() > 1.0 or landmask.min() < 0.0:
             msg = "landmask must be in the range 0..1. Found values {}..{}"
