@@ -405,7 +405,7 @@ class _cmip_conf:
     def _create_folder_for_output(self, files, postprocess_name):
 
         metadata = files[0][1].copy()
-        
+
         metadata.pop("postprocess", None)
         folder_out = self.files_post.create_path_name(
             **metadata, postprocess=postprocess_name
@@ -423,7 +423,7 @@ class _cmip_conf:
 
         for fN, meta in fc:
 
-            ds = conf.cmip6.load_orig(**meta)
+            ds = self.load_orig(**meta)
 
             if len(ds) == 0:
                 continue
