@@ -1,5 +1,6 @@
 import time
 
+from .. import xarray_utils as xru
 from ..file_utils import _any_file_does_not_exist
 
 
@@ -70,7 +71,7 @@ class Processor:
     def _yield_transform(self, **kwargs):
 
         print("")
-        print(f"Processing: {str(self)}")
+        print(f"Processing {str(self)}")
         print(f"- files_kwargs: {self._files_kwargs}")
         print("")
 
@@ -109,8 +110,23 @@ class Processor:
             raise ValueError("Forgot to return ds?")
 
         if len(ds) != 0:
-
             ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
+
+    def get_weights(self, fx_weights, meta, ds):
+        if fx_weights and len(ds):
+            weights = self.conf_cmip.load_fx(fx_weights, meta)
+            weights = ensure_valid_weights(ds, weights)
+
+            # no valid weights found (neither fx nor 1D lat)
+            # should only happen for few ocean files
+            if weights is None:
+                weights = []
+            else:
+                weights = weights.fillna(0.0)
+        else:
+            weights = None
+
+        return weights
 
     def _transform(self, **meta):
         raise NotImplementedError("")
@@ -142,3 +158,16 @@ class ProcessorFromPost(Processor):
     def find_all_files(self):
 
         self.all_files = self.conf_cmip.find_all_files_post(**self._files_kwargs)
+
+
+def ensure_valid_weights(ds, weights):
+
+    # check if weights and ds can be aligned
+    if weights is not None:
+        weights = weights if xru.alignable(ds, weights) else None
+
+    # "latitude" means there are 2D coords
+    if weights is None and "latitude" not in ds.coords:
+        weights = xru.cos_wgt(ds)
+
+    return weights

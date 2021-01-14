@@ -3,10 +3,18 @@ from .common import ProcessorFromOrig
 
 
 class GlobalMeanFromOrig(ProcessorFromOrig):
+    def transform(self, fx_weights=None):
+        self.fx_weights = fx_weights
+        super().transform()
+
     def _transform(self, **meta):
 
         ds = self.conf_cmip.load_orig(**meta)
-        return transform.Globmean(meta["varn"])(ds)
+
+        weights = self.get_weights(self.fx_weights, meta, ds)
+        if weights is None or not len(weights):
+            return []
+        return transform.Globmean(meta["varn"], weights=weights)(ds.load())
 
 
 class NoTransformFromOrig(ProcessorFromOrig):
@@ -58,7 +66,6 @@ class CDDFromOrig(ProcessorFromOrig):
 
 
 class RxNdayFromOrig(ProcessorFromOrig):
-
     def transform(self, window):
 
         self.window = window
