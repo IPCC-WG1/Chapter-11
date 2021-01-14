@@ -1,6 +1,9 @@
 import conf
 from utils import computation
 
+# save out different processing steps for the warming levels
+# for comparison with the ATLAS
+
 
 def prepare_and_write_tglob(ds, metadata, conf_cmip):
 
