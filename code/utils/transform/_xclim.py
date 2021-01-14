@@ -4,10 +4,12 @@ from .utils import _ProcessWithXarray
 
 
 class CDD(_ProcessWithXarray):
-    def __init__(self, var="pr", freq="A"):
+    def __init__(self, var="pr", freq="A", mask=None):
 
         self.var = var
         self.freq = freq
+        self.mask = mask
+
         self._name = "CDD"
 
     def _trans(self, da, attrs):
@@ -24,11 +26,13 @@ class CDD(_ProcessWithXarray):
 
 
 class TX_Days_Above(_ProcessWithXarray):
-    def __init__(self, thresh="25.0 degC", var="tasmax", freq="A"):
+    def __init__(self, thresh="25.0 degC", var="tasmax", freq="A", mask=None):
 
         self.thresh = thresh
         self.var = var
         self.freq = freq
+        self.mask = mask
+
         self._name = "CDD"
 
     def _trans(self, da, attrs):

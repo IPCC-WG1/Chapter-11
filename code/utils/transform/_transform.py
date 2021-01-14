@@ -9,7 +9,7 @@ from .utils import _get_func, _ProcessWithXarray
 class NoTransform(_ProcessWithXarray):
     """transformation which does nothing"""
 
-    def __init__(self, var):
+    def __init__(self, var, mask=None):
 
         self.var = var
         self._name = "no_transform"
@@ -28,16 +28,13 @@ class Globmean(_ProcessWithXarray):
         self.weights = weights
         self.mask = mask
         self.dim = dim
+
         self._name = "globmean"
 
     def _trans(self, da, attrs):
 
         # maybe get cosine weights
         weights = xru.cos_wgt(da) if self.weights is None else self.weights
-
-        if self.mask is not None:
-            xru.assert_alignable(self.mask, da, message="mask has different coordinates!")
-            da = da.where(self.mask)
 
         da = da.weighted(weights).mean(dim=self.dim, keep_attrs=True)
 
@@ -47,13 +44,15 @@ class Globmean(_ProcessWithXarray):
 class Resample(_ProcessWithXarray):
     """transformation function to resample by year"""
 
-    def __init__(self, indexer, var, how, **kwargs):
+    def __init__(self, indexer, var, how, mask=None, **kwargs):
 
         self.indexer = indexer
         self.var = var
         self.how = how
-        self._name = "resample_" + how
+        self.mask = mask
         self.kwargs = kwargs
+
+        self._name = "resample_" + how
 
     def _trans(self, da, attrs):
 
@@ -72,38 +71,44 @@ class Resample(_ProcessWithXarray):
 class ResampleAnnual(Resample):
     """transformation function to resample by year"""
 
-    def __init__(self, var, how, **kwargs):
+    def __init__(self, var, how, mask=None, **kwargs):
 
         self.indexer = {"time": "A"}
         self.var = var
         self.how = how
-        self._name = "resample_annual_" + how
+        self.mask = mask
         self.kwargs = kwargs
+
+        self._name = "resample_annual_" + how
 
 
 class ResampleMonthly(Resample):
     """transformation function to resample by month"""
 
-    def __init__(self, var, how, **kwargs):
+    def __init__(self, var, how, mask=None, **kwargs):
 
         self.indexer = {"time": "M"}
         self.var = var
         self.how = how
-        self._name = "resample_monthly_" + how
+        self.mask = mask
         self.kwargs = kwargs
+
+        self._name = "resample_monthly_" + how
 
 
 class ResampleSeasonal(Resample):
     """transformation function to resample by month"""
 
-    def __init__(self, var, how, invalidate_beg_end, **kwargs):
+    def __init__(self, var, how, invalidate_beg_end, mask=None, **kwargs):
 
         self.indexer = {"time": "Q-FEB"}
         self.var = var
         self.how = how
-        self._name = "resample_seasonal_" + how
         self.invalidate_beg_end = invalidate_beg_end
+        self.mask = mask
         self.kwargs = kwargs
+
+        self._name = "resample_seasonal_" + how
 
     def _trans(self, da, attrs):
 
@@ -120,13 +125,17 @@ class ResampleSeasonal(Resample):
 class RollingResampleAnnual(_ProcessWithXarray):
     """transformation function to resample by year"""
 
-    def __init__(self, var, window, how_rolling, how, skipna=False, **kwargs):
+    def __init__(
+        self, var, window, how_rolling, how, skipna=False, mask=None, **kwargs
+    ):
 
         self.var = var
         self.window = window
         self.how_rolling = how_rolling
         self.how = how
         self.skipna = skipna
+        self.mask = mask
+
         self._name = f"rolling_{how_rolling}_{window}_resample_annual_{how}"
         self.kwargs = kwargs
 
@@ -151,10 +160,12 @@ class RollingResampleAnnual(_ProcessWithXarray):
 class GroupbyAnnual(_ProcessWithXarray):
     """transformation function to GroupBy year"""
 
-    def __init__(self, var, how):
+    def __init__(self, var, how, mask=None):
 
         self.var = var
         self.how = how
+        self.mask = mask
+
         self._name = "groupby_annual_" + how
 
     def _trans(self, da, attrs):
@@ -170,10 +181,12 @@ class GroupbyAnnual(_ProcessWithXarray):
 class SelectGridpoint(_ProcessWithXarray):
     """transformation function to select a gridpoint"""
 
-    def __init__(self, var, **coords):
+    def __init__(self, var, mask=None, **coords):
 
         self.var = var
         self.coords = coords
+        self.mask = mask
+
         name = "__".join([f"{key}_{value}" for key, value in coords.items()])
         self._name = "sel_" + name
 
@@ -188,10 +201,12 @@ class SelectGridpoint(_ProcessWithXarray):
 class SelectRegion(_ProcessWithXarray):
     """transformation function to subset a square region"""
 
-    def __init__(self, var, **coords):
+    def __init__(self, var, mask=None, **coords):
 
         self.var = var
         self.coords = coords
+        self.mask = mask
+
         name = "__".join(
             [f"{key}_{value.start}_{value.stop}" for key, value in coords.items()]
         )
@@ -207,7 +222,7 @@ class SelectRegion(_ProcessWithXarray):
 
 
 class ConsecutiveMonthsClim(_ProcessWithXarray):
-    def __init__(self, var, how, *, clim=slice("1850", "1900"), dim="time"):
+    def __init__(self, var, how, *, clim=slice("1850", "1900"), dim="time", mask=None):
         """calc min/ max of
 
         Parameters
@@ -230,6 +245,7 @@ class ConsecutiveMonthsClim(_ProcessWithXarray):
         self.clim = clim
         self.dim = dim
         self._name = f"ConsecutiveMonths_{clim.start}-{clim.stop}_{how}_{self.n_months}"
+        self.mask = mask
 
     def _trans(self, da, attrs):
 
@@ -290,7 +306,7 @@ class RegionAverage(_ProcessWithXarray):
          regions : regionmask.Regions
             regions to take the average over.
          landmask : DataArray, optional
-             landmaks to use, land points must be ``True``. If none uses
+             landmask to use, land points must be ``True``. If none uses
              regionmask.defined_regions.natural_earth.land_110.
         land_only : bool, optional
             Whether to mask out ocean points before calculating regional
@@ -302,6 +318,9 @@ class RegionAverage(_ProcessWithXarray):
         self.landmask = landmask
         self.land_only = land_only
         self.weights = weights
+
+        # hard-code mask to None -> use landmask instead
+        self.mask = None
 
         if not isinstance(regions, regionmask.Regions):
             raise ValueError("'regions' must be a regionmask.Regions instance")

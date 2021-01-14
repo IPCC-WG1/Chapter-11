@@ -6,7 +6,7 @@ from .utils import _ProcessWithXarray
 
 
 class SM_dry_days_clim_Zhang(_ProcessWithXarray):
-    def __init__(self, var, quantile=0.1, beg=1850, end=1900, dim="time"):
+    def __init__(self, var, quantile=0.1, beg=1850, end=1900, dim="time", mask=None):
         """calc climatology of SM dry days after Zhang 2005
 
         Parameters
@@ -39,6 +39,8 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
         self.beg = beg
         self.end = end
         self.dim = dim
+        self.mask = mask
+
         self._name = f"SM_dry_days_clim_c{beg}-{end}_q{quantile}"
 
     def _trans(self, da, attrs):
@@ -89,7 +91,9 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
 
 
 class SM_dry_days_clim(_ProcessWithXarray):
-    def __init__(self, var, quantile=0.1, clim=slice("1850", "1900"), dim="time"):
+    def __init__(
+        self, var, quantile=0.1, clim=slice("1850", "1900"), dim="time", mask=None
+    ):
         """calc climatology of SM dry days
 
         Parameters
@@ -106,6 +110,8 @@ class SM_dry_days_clim(_ProcessWithXarray):
         self.quantile = quantile
         self.clim = clim
         self.dim = dim
+        self.mask = mask
+
         self._name = f"SM_dry_days_clim_c{clim.start}-{clim.stop}_q{quantile}"
 
     def _trans(self, da, attrs):
@@ -124,7 +130,7 @@ class SM_dry_days_clim(_ProcessWithXarray):
 
 
 class SM_dry_days(_ProcessWithXarray):
-    def __init__(self, var, dim="time"):
+    def __init__(self, var, dim="time", mask=None):
         """calc climatology of SM dry days
 
         Parameters
@@ -139,6 +145,8 @@ class SM_dry_days(_ProcessWithXarray):
 
         self.var = var
         self.dim = dim
+        self.mask = mask
+
         self._name = "SM_dry_days"
 
     def _trans(self, da, attrs, threshold):

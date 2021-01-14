@@ -8,7 +8,14 @@ from .utils import _ProcessWithXarray
 
 class IAV(_ProcessWithXarray):
     def __init__(
-        self, var, period=20, min_length=500, cut_start=100, deg=2, dim="time"
+        self,
+        var,
+        period=20,
+        min_length=500,
+        cut_start=100,
+        deg=2,
+        dim="time",
+        mask=None,
     ):
         """calc internal variability - AR5 method
 
@@ -35,6 +42,8 @@ class IAV(_ProcessWithXarray):
         self.cut_start = cut_start
         self.deg = deg
         self.dim = dim
+        self.mask = mask
+
         self._name = f"IAV_p{period}_m{min_length}_c{cut_start}_d{deg}"
 
     def _trans(self, da, attrs):

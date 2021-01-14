@@ -1,5 +1,7 @@
 import xarray as xr
 
+from .. import xarray_utils as xru
+
 
 class _ProcessWithXarray:
 
@@ -17,6 +19,8 @@ class _ProcessWithXarray:
             # read single variable
             da = ds[self.var]
 
+            da = self._maybe_mask(da)
+
             # apply the transformation funcion
             da, attrs = self._trans(da, attrs, **kwargs)
 
@@ -33,6 +37,16 @@ class _ProcessWithXarray:
             ds.attrs = attrs
 
         return ds
+
+    def _maybe_mask(self, da):
+
+        if self.mask is not None:
+
+            xru.assert_alignable(
+                self.mask, da, message="mask has different coordinates!"
+            )
+            # mask sets True -> NA
+            return da.where(~self.mask)
 
     def _trans(self, da, attrs):
         raise NotImplementedError("Implement _trans in the subclass")
