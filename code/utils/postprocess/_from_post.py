@@ -32,8 +32,8 @@ class RegionAverageFromPost(ProcessorFromPost):
     def _transform(self, **meta):
 
         ds = self.conf_cmip.load_post(**meta)
-        
-        weights = self.get_weights(self.fx_weights, meta, ds)
+
+        weights = self.get_lat_weights(self.fx_weights, meta, ds)
         if weights is None or not len(weights):
             return []
 
