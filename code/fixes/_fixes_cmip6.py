@@ -84,6 +84,28 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # missing data
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="Amon",
+            varn="tas",
+            model="EC-Earth3-Veg",
+            ens=["r10i1p1f1"],
+        ):
+            return None
+
+        # missing data -(will probably be fixed)
+        if _corresponds_to(
+            metadata,
+            exp="historical",
+            table="Amon",
+            varn="tas",
+            model="GISS-E2-1-G",
+            ens=["r7i1p3f1"],
+        ):
+            return None
+
         if _corresponds_to(
             metadata,
             table="day",
@@ -281,13 +303,23 @@ def cmip6_data(ds, metadata):
     ):
         ds.load()
 
-    #     if _corresponds_to(
-    #             metadata,
-    #             table="Amon",
-    #             varn=["pr", "tas"],
-    #             model="EC-Earth3-Veg-LR",
-    #             ens="r1i1p1f1",
-    #         ):
-    #         ds.load()
+    # overwrite ice with NaN
+    if _corresponds_to(
+        metadata,
+        varn=["mrso", "mrsos"],
+        model=["EC-Earth3", "EC-Earth3-AerChem", "EC-Earth3-Veg", "EC-Earth3-Veg-LR"],
+    ):
+        ds = ds.load()
+        # mask gridpoints with constant values
+        mask = (ds.isel(time=0) == ds).all("time")
+        ds = ds.where(~mask)
+
+    # overwrite 0 with NaN
+    # there is a small danger SM is really 0 at a gridpoint
+    if _corresponds_to(
+        metadata,
+        varn=["mrso", "mrsos"],
+    ):
+        ds = ds.where(ds != 0)
 
     return ds
