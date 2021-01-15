@@ -54,11 +54,30 @@ def cmip5_files(folder_in):
         # at least one year of data is missing
         if _corresponds_to(
             metadata,
+            exp="rcp85",
+            table="Amon",
+            varn="tas",
+            model="EC-EARTH",
+            ens=["r7i1p1", "r14i1p1"],
+        ):
+            return None
+
+        # at least one year of data is missing
+        if _corresponds_to(
+            metadata,
             exp="historical",
             table="day",
             varn="pr",
             model="CESM1-CAM5",
             ens="r1i1p1",
+        ):
+            return None
+
+        # wrong units attribute (units = "days since 0001-01")
+        if _corresponds_to(
+            metadata,
+            varn="tos",
+            model="FGOALS-g2",
         ):
             return None
 
@@ -341,6 +360,28 @@ def cmip5_files(folder_in):
                 "tasmin_day_EC-EARTH_historical_r1i1p1_19800101-19891231.nc",
                 "tasmin_day_EC-EARTH_historical_r1i1p1_19900101-19991231.nc",
                 "tasmin_day_EC-EARTH_historical_r1i1p1_20000101-20051231.nc",
+            )
+
+        if _corresponds_to(
+            metadata,
+            exp="rcp45",
+            table="Amon",
+            varn="tas",
+            model="EC-EARTH",
+            ens="r13i1p1",
+        ):
+            fNs_in = _remove_non_matching_fN(
+                fNs_in,
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_200601-200912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_201001-201912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_202001-202912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_203001-203912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_204001-204912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_205001-205912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_206001-206912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_207001-207912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_208001-208912.nc",
+                "tas_Amon_EC-EARTH_rcp45_r13i1p1_209001-209912.nc",
             )
 
         return fNs_in
