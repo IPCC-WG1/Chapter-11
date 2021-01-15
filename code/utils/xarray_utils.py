@@ -20,7 +20,7 @@ def mf_read_netcdfs(
         decode_cf=True,
         use_cftime=True,
         preprocess=fixes_preprocess,
-    )
+    ).persist()
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
     varn = metadata["varn"]
@@ -57,6 +57,7 @@ def cos_wgt(ds, lat="lat"):
 
 # =============================================================================
 
+
 def check_time_year_simple(ds, dim="time"):
     # check that all years are present
 
@@ -64,12 +65,13 @@ def check_time_year_simple(ds, dim="time"):
         year = ds[dim].dt.year
         first_year = year.min().item()
         last_year = year.max().item()
-        
+
         n_years_expected = last_year - first_year + 1
         n_years_actual = len(np.unique(year))
-        
+
         if not n_years_expected == n_years_actual:
             raise ValueError("Missing years!")
+
 
 # =============================================================================
 
@@ -87,3 +89,14 @@ def assert_alignable(*objects, message=""):
 
     if not alignable(*objects):
         raise ValueError(message)
+
+
+def maybe_reindex(da, target):
+
+    if alignable(da, target):
+        return da
+
+    if np.allclose(da.lat, target.lat) and np.allclose(da.lon, target.lon):
+        return da.reindex_like(target, method="nearest")
+
+    return None
