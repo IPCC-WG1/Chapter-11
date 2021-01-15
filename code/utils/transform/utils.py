@@ -19,7 +19,7 @@ class _ProcessWithXarray:
             # read single variable
             da = ds[self.var]
 
-            da = self._maybe_mask(da)
+            da = self._maybe_mask_out(da)
 
             # apply the transformation funcion
             da, attrs = self._trans(da, attrs, **kwargs)
@@ -38,7 +38,7 @@ class _ProcessWithXarray:
 
         return ds
 
-    def _maybe_mask(self, da):
+    def _maybe_mask_out(self, da):
 
         if self.mask is not None:
 
