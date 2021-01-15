@@ -1,5 +1,7 @@
 import time
 
+import regionmask
+
 from .. import xarray_utils as xru
 from ..file_utils import _any_file_does_not_exist
 
@@ -112,21 +114,56 @@ class Processor:
         if len(ds) != 0:
             ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
 
-    def get_weights(self, fx_weights, meta, ds):
+    def get_lat_weights(self, fx_weights, meta, ds):
         if fx_weights and len(ds):
-            weights = self.conf_cmip.load_fx(fx_weights, meta)
-            weights = ensure_valid_weights(ds, weights)
+            weights = self.conf_cmip.get_weights(fx_weights, meta, ds)
 
-            # no valid weights found (neither fx nor 1D lat)
-            # should only happen for few ocean files
-            if weights is None:
-                weights = []
-            else:
-                weights = weights.fillna(0.0)
-        else:
-            weights = None
+            # "latitude" means there are 2D coords
+            if weights is None and "latitude" not in ds.coords:
+                weights = xru.cos_wgt(ds)
 
-        return weights
+            return weights
+
+    def get_land_mask(self, meta, da=None):
+
+        mask = self.conf_cmip.load_mask("sftlf", meta, da)
+
+        if mask is None:
+            mask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
+            mask = mask.squeeze(drop=True)
+
+        return mask
+
+    def get_ocean_mask(self, meta, da=None):
+
+        return ~self.get_land_mask(meta, da=da)
+
+    def get_landice_mask(self, meta, da=None):
+
+        return self.conf_cmip.load_mask("sftgif", meta, da)
+
+    def get_masks(self, masks, meta, da=None):
+
+        if issubclass(type(da), list):
+            return
+
+        if isinstance(masks, str):
+            masks = [masks]
+        elif masks is None:
+            masks = []
+
+        # initialize as no mask
+        mask = False
+
+        for m in masks:
+            other = getattr(self, f"get_{m}_mask")(meta, da)
+            if other is not None:
+                mask = mask | other
+
+        if mask is False:
+            mask = None
+
+        return mask
 
     def _transform(self, **meta):
         raise NotImplementedError("")
@@ -158,16 +195,3 @@ class ProcessorFromPost(Processor):
     def find_all_files(self):
 
         self.all_files = self.conf_cmip.find_all_files_post(**self._files_kwargs)
-
-
-def ensure_valid_weights(ds, weights):
-
-    # check if weights and ds can be aligned
-    if weights is not None:
-        weights = weights if xru.alignable(ds, weights) else None
-
-    # "latitude" means there are 2D coords
-    if weights is None and "latitude" not in ds.coords:
-        weights = xru.cos_wgt(ds)
-
-    return weights
