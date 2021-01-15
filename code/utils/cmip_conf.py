@@ -8,7 +8,7 @@ import filefinder as ff
 
 from . import computation
 from .file_utils import _file_exists, mkdir
-from .fx_files import _get_fx_data
+from .fx_files import _get_fx_data, _load_mask_or_weights
 from .xarray_utils import mf_read_netcdfs
 
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
@@ -150,6 +150,28 @@ class _cmip_conf:
         if meta_fx:
             return self.load_orig(**meta_fx)[varn]
         return None
+
+    _load_mask_or_weights = _load_mask_or_weights
+
+    def load_mask(self, varn, meta, da=None):
+
+        mask = self._load_mask_or_weights(varn, meta, da=da)
+        
+        # we want all gridpoints
+        if mask is not None:
+            mask = mask != 0
+        
+        return mask
+
+    def load_weights(self, varn, meta, da=None):
+
+        weights = self._load_mask_or_weights(varn, meta, da=da)
+
+        # return weights in 0..1
+        if weights is not None:
+            weights = weights / 100
+
+        return weights
 
     def load_post(self, **metadata):
         """load postprocessed data for a single scenario"""
