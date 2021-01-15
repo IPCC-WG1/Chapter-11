@@ -506,6 +506,7 @@ def mrso():
     p_ = NoTransform(conf.cmip6, table="Lmon", varn="mrso", postprocess_name="sm")
     p_.no_transform_from_orig(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
+
     # p_.region_average_from_post(fx_weights="areacella")
 
 
@@ -513,9 +514,13 @@ def mrso_annmean():
 
     p_ = ResampleAnnual(conf.cmip6, "Lmon", "mrso", "mean", "sm_annmean")
     p_.annual_from_orig(mask_out=["ocean", "landice"])
-    p_.annual_from_orig_pi_control()
+    p_.annual_from_orig_pi_control(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
+    # for Jérôme Servonnat/ Carley Iles
+    p_.regrid_from_post(method="con", target_grid="g010a")
+
     p_.iav20_from_post()
+    # TODO: correct weights!
     # p_.region_average_from_post(fx_weights="areacella")
 
 
@@ -536,7 +541,7 @@ def mrsos_annmean():
 
     p_ = ResampleAnnual(conf.cmip6, "Lmon", "mrsos", "mean", "sm_annmean")
     p_.annual_from_orig(mask_out=["ocean", "landice"])
-    p_.annual_from_orig_pi_control()
+    p_.annual_from_orig_pi_control(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
     p_.iav20_from_post()
     # p_.region_average_from_post(fx_weights="areacella")
