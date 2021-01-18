@@ -1,5 +1,8 @@
+import numpy as np
+import xclim
 from xclim import atmos
 
+from .. import xarray_utils as xru
 from .utils import _ProcessWithXarray
 
 
@@ -46,3 +49,42 @@ class TX_Days_Above(_ProcessWithXarray):
         da.attrs.pop("units")
 
         return da, attrs
+
+
+class VPD(_ProcessWithXarray):
+    def __init__(self, rh, mask=None):
+        """calculate Vapour Pressure Deficit (VPD)
+
+        Parameters
+        ----------
+        rh : xr.DataArray
+            Relative humidity data
+        mask : xr.DataArray, default None
+            Mask to mask out data
+
+        """
+
+        self.rh = rh
+        self.mask = mask
+
+        self._name = "VPD"
+
+    def _trans(self, da, attrs):
+
+        rh = self.rh
+
+        # allow values > 100 because there are...
+        rh = xru.check_range(rh, min_allowed=0.0, max_larger=50)
+        # constrain to 100: VPD shoould not be smaller than 0
+        rh = np.fmin(rh, 100)
+
+        rh = xru.maybe_reindex(rh, da)
+
+        if rh is None:
+            return [], attrs
+
+        vp_sat = xclim.indices.saturation_vapor_pressure(da)
+
+        vpd = vp_sat * (1 - rh / 100)
+
+        return vpd, attrs

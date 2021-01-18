@@ -52,7 +52,7 @@ class RegridFromPostMixin:
 
 
 class RegionAverageFromPostMixin:
-    def region_average_from_post(self, fx_weights, region=ar6_land, region_name="ar6"):
+    def region_average_from_post(self, lat_weights, region=ar6_land, region_name="ar6"):
 
         with postprocess.RegionAverageFromPost(self.conf_cmip) as p:
             p.postprocess_name = f"{self.postprocess_name}_reg_ave_{region_name}"
@@ -62,7 +62,7 @@ class RegionAverageFromPostMixin:
                 exp="*",
                 postprocess=self.postprocess_name,
             )
-            p.transform(regions=ar6_land, fx_weights=fx_weights)
+            p.transform(regions=ar6_land, lat_weights=lat_weights)
 
 
 class ResampleSeasonalFromPostMixin:
@@ -238,6 +238,26 @@ class ResampleAnnualQuantileFromOrig(RegridFromPostMixin, RegionAverageFromPostM
         self.resample_annual_quantile_from_orig(exp="piControl", mask_out=mask_out)
 
 
+# SMdd
+
+
+class SMDryDaysZhangFromOrig(RegridFromPostMixin, RegionAverageFromPostMixin):
+    def __init__(self, conf_cmip, varn):
+
+        self.conf_cmip = conf_cmip
+        self.table = "day"
+        self.varn = varn
+        self.quantile = 0.1
+        self.postprocess_name = "SMdd_q10"
+
+    def sm_dry_days_clim_from_orig(self, mask_out=None):
+
+        with postprocess.SMDryDaysClimZhangFromOrig(self.conf_cmip) as p:
+            p.postprocess_name = self.postprocess_name + "_clim"
+            p.set_files_kwargs(table=self.table, varn=self.varn, exp="historical")
+            p.transform(quantile=self.quantile, mask_out=mask_out)
+
+
 # =============================================================================
 # tas
 # =============================================================================
@@ -253,7 +273,7 @@ def tas_globmean():
             exp=conf.cmip5.scenarios_all_incl_hist,
             ensnumber=None,
         )
-        p.transform(fx_weights="areacella")
+        p.transform(lat_weights="areacella")
 
     with postprocess.GlobalMeanFromOrig(conf.cmip6) as p:
         p.postprocess_name = "global_mean"
@@ -263,7 +283,7 @@ def tas_globmean():
             exp=conf.cmip6.scenarios_all_incl_hist,
             ensnumber=None,
         )
-        p.transform(fx_weights="areacella")
+        p.transform(lat_weights="areacella")
 
 
 def tos_globmean():
@@ -274,7 +294,7 @@ def tos_globmean():
             table="Omon",
             varn="tos",
         )
-        p.transform(fx_weights="areacello")
+        p.transform(lat_weights="areacello")
 
     with postprocess.GlobalMeanFromOrig(conf.cmip5) as p:
         p.postprocess_name = "global_mean"
@@ -282,7 +302,7 @@ def tos_globmean():
             table="Omon",
             varn="tos",
         )
-        p.transform(fx_weights="areacello")
+        p.transform(lat_weights="areacello")
 
     with postprocess.TosGlobmeanMaskIceAnyFromOrig(conf.cmip5) as p:
         p.postprocess_name = "global_mean_masked_ice_any"
@@ -290,7 +310,7 @@ def tos_globmean():
             table="Omon",
             varn="tos",
         )
-        p.transform(fx_weights="areacello")
+        p.transform(lat_weights="areacello")
 
     with postprocess.TosGlobmeanMaskIceAnyFromOrig(conf.cmip6) as p:
         p.postprocess_name = "global_mean_masked_ice_any"
@@ -298,7 +318,7 @@ def tos_globmean():
             table="Omon",
             varn="tos",
         )
-        p.transform(fx_weights="areacello")
+        p.transform(lat_weights="areacello")
 
 
 def tas_annmean():
@@ -308,7 +328,7 @@ def tas_annmean():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 def tas_monthly():
@@ -316,7 +336,7 @@ def tas_monthly():
     p_ = ResampleMonthly(conf.cmip6, "Amon", "tas", "mean", "monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
     p_.resample_seasonal_from_post(
         "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
     )
@@ -334,7 +354,7 @@ def pr_annmean():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 def pr_monthly():
@@ -342,7 +362,7 @@ def pr_monthly():
     p_ = ResampleMonthly(conf.cmip6, "Amon", "pr", "mean", "monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
     p_.resample_seasonal_from_post(
         "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
     )
@@ -360,7 +380,7 @@ def txx():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 def txx_monthly():
@@ -368,7 +388,7 @@ def txx_monthly():
     p_ = ResampleMonthly(conf.cmip6, "day", "tasmax", "max", "txx_monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
     p_.resample_seasonal_from_post(
         "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
     )
@@ -402,7 +422,7 @@ def txp95():
     p_.resample_annual_quantile_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 # # =============================================================================
@@ -417,7 +437,7 @@ def tnn():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 def tnn_monthly():
@@ -425,7 +445,7 @@ def tnn_monthly():
     p_ = ResampleMonthly(conf.cmip6, "day", "tasmin", "min", "tnn_monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
 
 
 # =============================================================================
@@ -440,7 +460,7 @@ def rx1day():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 def rx1day_monthly():
@@ -448,7 +468,7 @@ def rx1day_monthly():
     p_ = ResampleMonthly(conf.cmip6, "day", "pr", "max", "rx1day_monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
 
 
 # =============================================================================
@@ -463,7 +483,7 @@ def rx5day():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 # =============================================================================
@@ -478,7 +498,7 @@ def rx30day():
     p_.annual_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 # =============================================================================
@@ -493,7 +513,7 @@ def cdd():
     # p_.cdd_from_orig_pi_control()
     p_.regrid_from_post()
     # p_.iav20_from_post()
-    p_.region_average_from_post(fx_weights="areacella")
+    p_.region_average_from_post(lat_weights="areacella")
 
 
 # =============================================================================
@@ -507,7 +527,7 @@ def mrso():
     p_.no_transform_from_orig(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
 
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
 
 
 def mrso_annmean():
@@ -521,7 +541,13 @@ def mrso_annmean():
 
     p_.iav20_from_post()
     # TODO: correct weights!
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
+
+
+def mrso_smdd():
+
+    p_ = SMDryDaysZhangFromOrig(conf.cmip6, "mrso")
+    p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice"])
 
 
 # =============================================================================
@@ -534,7 +560,7 @@ def mrsos():
     p_ = NoTransform(conf.cmip6, table="Lmon", varn="mrsos", postprocess_name="sm")
     p_.no_transform_from_orig(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
 
 
 def mrsos_annmean():
@@ -544,7 +570,7 @@ def mrsos_annmean():
     p_.annual_from_orig_pi_control(mask_out=["ocean", "landice"])
     p_.regrid_from_post(method="con")
     p_.iav20_from_post()
-    # p_.region_average_from_post(fx_weights="areacella")
+    # p_.region_average_from_post(lat_weights="areacella")
 
 
 def seaice_any_annual():
@@ -631,6 +657,7 @@ def main(args=None):
         "cdd": cdd,
         "mrso": mrso,
         "mrso_annmean": mrso_annmean,
+        "mrso_smdd": mrso_smdd,
         "mrsos": mrsos,
         "mrsos_annmean": mrsos_annmean,
         "seaice_any_annual": seaice_any_annual,
