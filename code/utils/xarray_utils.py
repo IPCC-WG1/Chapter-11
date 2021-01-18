@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import xarray as xr
 
@@ -7,7 +9,11 @@ def mf_read_netcdfs(
     metadata,
     fixes=None,
     fixes_preprocess=None,
+    check_time=True,
 ):
+
+    # inatialize fixes_preprocess
+    fixes_preprocess = fixes_preprocess(metadata, fNs_in)
 
     ds = xr.open_mfdataset(
         fNs_in,
@@ -31,9 +37,12 @@ def mf_read_netcdfs(
     # ds = xr.decode_cf(ds, use_cftime=True)
 
     if fixes is not None:
-        ds = fixes(ds, metadata)
+        ds, time_check = fixes(ds, metadata)
 
-    check_time_year_simple(ds)
+    if time_check and check_time and "time" in ds.coords:
+        if not all_years(ds, errors="warn"):
+            return []
+        assert_all_timesteps(ds)
 
     # float32 is not good enough...
     if ds[varn].dtype == np.float32:
@@ -58,7 +67,7 @@ def cos_wgt(ds, lat="lat"):
 # =============================================================================
 
 
-def check_time_year_simple(ds, dim="time"):
+def all_years(ds, dim="time", errors="raise"):
     # check that all years are present
 
     if dim in ds.coords:
@@ -70,7 +79,48 @@ def check_time_year_simple(ds, dim="time"):
         n_years_actual = len(np.unique(year))
 
         if not n_years_expected == n_years_actual:
-            raise ValueError("Missing years!")
+            if errors == "raise":
+                raise ValueError("Missing years!")
+            elif errors == "warn":
+                warnings.warn("Missing years! - Skipping the file.")
+                return False
+            else:
+                raise ValueError("Wrong argument")
+        return True
+
+
+def assert_all_timesteps(ds, dim="time"):
+
+    if dim in ds.coords:
+
+        time = ds[dim]
+        dt = time.diff(dim)
+        delta_days = dt.dt.days
+        dd0 = delta_days[0]
+
+        # daily data
+        if dd0 == 1:
+
+            if (delta_days != 1).any():
+                raise ValueError("Missing days in daily data")
+
+        # monthly data
+        elif (dd0 >= 28) and (dd0 <= 31):
+
+            months_per_year = time.groupby("time.year").count()
+
+            # be less strict with the first and last year
+            if (months_per_year[1:-1] != 12).any():
+                raise ValueError("Missing months")
+
+            if months_per_year[0] != 12:
+                warnings.warn("Incomplete first year")
+
+            if months_per_year[-1] != 12:
+                warnings.warn("Incomplete last year")
+
+        else:
+            raise ValueError("Unknwon time step")
 
 
 # =============================================================================
@@ -100,3 +150,41 @@ def maybe_reindex(da, target):
         return da.reindex_like(target, method="nearest")
 
     return None
+
+
+def check_range(
+    da,
+    min_allowed=None,
+    max_allowed=None,
+    min_smaller=None,
+    max_larger=None,
+    maybe_fix=True,
+):
+
+    if not isinstance(da, xr.DataArray):
+        raise TypeError(f"must be a DataArray, found {type(da)}")
+
+    mx = da.max().compute().item()
+    mn = da.min().compute().item()
+
+    if (min_smaller is not None) and (mn >= min_smaller):
+        raise ValueError(f"Expected smallest value <= {min_smaller}, found: {mn}")
+
+    if (max_larger is not None) and (mx <= max_larger):
+        raise ValueError(f"Expected largest value >= {max_larger}, found: {mx}")
+
+    if (max_allowed is not None) and (mx > max_allowed):
+        # fix values that are close
+        if np.allclose(mx, max_allowed):
+            da = np.fmin(max_allowed, da)
+        else:
+            raise ValueError(f"Expected no values larger {max_allowed}, found: {mx}")
+
+    if (min_allowed is not None) and (mn < min_allowed):
+        # fix values that are close
+        if maybe_fix and np.allclose(mn, min_allowed):
+            da = np.fmax(min_allowed, da)
+        else:
+            raise ValueError(f"Expected no values smaller {min_allowed}, found: {mn}")
+
+    return da
