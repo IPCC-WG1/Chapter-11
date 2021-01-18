@@ -1,5 +1,3 @@
-import numpy as np
-
 from . import xarray_utils as xru
 
 
@@ -54,19 +52,12 @@ def _load_mask_or_weights(self, varn, meta, da=None):
 
         mask = mask.load().fillna(0.0)
 
-        # we expect the mask to be in 0..100
-        # note: will later be converted to 0..1
-        if not mask.max() > 1:
-            raise ValueError("wrong values in mask/ weights")
-        
-        if mask.min() < 0:
-            # fix values that are almost 0
-            if np.allclose(mask.min(), 0):
-                mask = np.fmax(0, mask)
-            else:
-                raise ValueError("wrong values in mask/ weights")
-        
-
+        mask = xru.check_range(
+            mask,
+            min_allowed=0.0,
+            max_allowed=100.0,
+            max_larger=1.1,  # make sure it's percentage (0..100) and not fraction (0..1)
+        )
 
         if da is not None:
             mask = xru.maybe_reindex(mask, da)
