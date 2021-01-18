@@ -462,7 +462,7 @@ def cmip5_preprocess(metadata, fNs_in):
 
     if _corresponds_to(
         metadata,
-        exp=["rcp26", "rcp60"],
+        exp=["rcp26", "rcp60", "rcp85"],
         table="Amon",
         varn="tas",
         model="NorESM1-ME",
