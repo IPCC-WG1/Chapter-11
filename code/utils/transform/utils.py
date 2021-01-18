@@ -46,7 +46,9 @@ class _ProcessWithXarray:
                 self.mask, da, message="mask has different coordinates!"
             )
             # mask sets True -> NA
-            return da.where(~self.mask)
+            da = da.where(~self.mask)
+
+        return da
 
     def _trans(self, da, attrs):
         raise NotImplementedError("Implement _trans in the subclass")
