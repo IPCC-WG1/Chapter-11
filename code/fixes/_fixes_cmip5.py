@@ -1,5 +1,7 @@
 import glob
 
+import xarray as xr
+
 from ._fixes_common import (
     _corresponds_to,
     _remove_matching_fN,
@@ -78,6 +80,17 @@ def cmip5_files(folder_in):
             metadata,
             varn="tos",
             model="FGOALS-g2",
+        ):
+            return None
+
+        # missing month
+        if _corresponds_to(
+            metadata,
+            varn="tas",
+            model="CESM1-CAM5-1-FV2",
+            exp=["rcp45", "rcp85"],
+            table="Amon",
+            ens="r1i1p1",
         ):
             return None
 
@@ -384,6 +397,24 @@ def cmip5_files(folder_in):
                 "tas_Amon_EC-EARTH_rcp45_r13i1p1_209001-209912.nc",
             )
 
+        # the two *.nc files have slightly different lat coords
+        # as the second starts after 2100 I just remove it
+        if _corresponds_to(
+            metadata,
+            exp=["rcp26", "rcp45", "rcp60", "rcp85"],
+            table="Amon",
+            varn="tas",
+            model="CCSM4",
+            ens="r1i1p1",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in,
+                "tas_Amon_CCSM4_rcp26_r1i1p1_210101-230012.nc",
+                "tas_Amon_CCSM4_rcp45_r1i1p1_210101-229912.nc",
+                "tas_Amon_CCSM4_rcp60_r1i1p1_210101-230012.nc",
+                "tas_Amon_CCSM4_rcp85_r1i1p1_210101-230012.nc",
+            )
+
         return fNs_in
 
     return _inner
@@ -391,7 +422,7 @@ def cmip5_files(folder_in):
 
 def cmip5_data(ds, metadata):
 
-    ds = fixes_common(ds)
+    check_time = True
 
     # the year 1941 is wrong
     if _corresponds_to(
@@ -404,4 +435,52 @@ def cmip5_data(ds, metadata):
     ):
         ds = ds.where(ds > -1000)
 
-    return ds
+    # Dec 2099 is duplicated
+    if _corresponds_to(
+        metadata,
+        exp="rcp85",
+        table="Amon",
+        varn="tas",
+        model="HadGEM2-ES",
+        ens="r1i1p1",
+    ):
+
+        assert len(ds.sel(time="2099").time) == 13
+
+        # cut in 2 & remove the superflous month
+        ds1 = ds.sel(time=slice(None, "2099")).isel(time=slice(None, -1))
+        ds2 = ds.sel(time=slice("2100", None))
+        # put together again
+        ds = xr.combine_by_coords([ds1, ds2])
+
+    return ds, check_time
+
+
+def cmip5_preprocess(metadata, fNs_in):
+
+    reindex_like = False
+
+    if _corresponds_to(
+        metadata,
+        exp=["rcp26", "rcp60"],
+        table="Amon",
+        varn="tas",
+        model="NorESM1-ME",
+        ens="r1i1p1",
+    ):
+
+        reindex_like = True
+        target = xr.open_dataset(fNs_in[0], drop_variables=["tas", "time"])[
+            ["lat", "lon"]
+        ]
+
+    def _inner(ds):
+
+        if reindex_like:
+            ds = ds.reindex_like(target, method="nearest")
+
+        ds = fixes_common(ds)
+
+        return ds
+
+    return _inner

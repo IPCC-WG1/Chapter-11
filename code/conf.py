@@ -60,7 +60,7 @@ class _cmip5_conf(_cmip_conf):
 
         self._fixes_files = fixes.cmip5_files
         self._fixes_data = fixes.cmip5_data
-        self._fixes_common = fixes.fixes_common
+        self._fixes_preprocess = fixes.cmip5_preprocess
 
         self._figure_folder = root_folder_figures + "cmip5/cmip5_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip5"
@@ -107,7 +107,7 @@ class _cmip6_conf(_cmip_conf):
 
         self._fixes_files = fixes.cmip6_files
         self._fixes_data = fixes.cmip6_data
-        self._fixes_common = fixes.fixes_common
+        self._fixes_preprocess = fixes.cmip6_preprocess
 
         self._figure_folder = root_folder_figures + "cmip6/cmip6_"
         self._warming_levels_folder = root_folder_warming_levels + "cmip6"

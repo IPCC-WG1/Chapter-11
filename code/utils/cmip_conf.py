@@ -51,8 +51,8 @@ class _cmip_conf:
         return self._fixes_data
 
     @property
-    def fixes_common(self):
-        return self._fixes_common
+    def fixes_preprocess(self):
+        return self._fixes_preprocess
 
     @property
     def figure_folder(self):
@@ -116,7 +116,7 @@ class _cmip_conf:
 
         return path.join(*folders, prefix + name)
 
-    def load_orig(self, **metadata):
+    def load_orig(self, check_time=True, **metadata):
 
         folder_in = self.files_orig.create_path_name(**metadata)
 
@@ -134,7 +134,8 @@ class _cmip_conf:
             fNs_in,
             metadata=metadata,
             fixes=self.fixes_data,
-            fixes_preprocess=self.fixes_common,
+            fixes_preprocess=self.fixes_preprocess,
+            check_time=check_time,
         )
 
         return ds
@@ -156,11 +157,11 @@ class _cmip_conf:
     def load_mask(self, varn, meta, da=None):
 
         mask = self._load_mask_or_weights(varn, meta, da=da)
-        
+
         # we want all gridpoints
         if mask is not None:
             mask = mask != 0
-        
+
         return mask
 
     def load_weights(self, varn, meta, da=None):

@@ -179,6 +179,28 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # overlapping files & not sure how to fix them
+        if _corresponds_to(
+            metadata,
+            table="Lmon",
+            exp="piControl",
+            varn=["mrso", "mrsos"],
+            model="SAM0-UNICON",
+            ens="r1i1p1f1",
+        ):
+            return None
+
+        # missing years
+        if _corresponds_to(
+            metadata,
+            table="Lmon",
+            exp="historical",
+            varn="mrsos",
+            model="CESM2-WACCM-FV2",
+            ens="r1i1p1f1",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
@@ -256,11 +278,11 @@ def cmip6_files(folder_in):
 
 def cmip6_data(ds, metadata):
 
+    time_check = True
+
     if _corresponds_to(metadata, model="MCM-UA-1-0"):
         if "latitude" in ds.dims and "longitude" in ds.dims:
             ds = ds.rename({"latitude": "lat", "longitude": "lon"})
-
-    ds = fixes_common(ds)
 
     if _corresponds_to(
         metadata,
@@ -322,4 +344,45 @@ def cmip6_data(ds, metadata):
     ):
         ds = ds.where(ds != 0)
 
-    return ds
+    if _corresponds_to(
+        metadata,
+        table="fx",
+        varn="sftlf",
+        model="E3SM-1-0",
+        ens="r1i1p1f1",
+        exp="piControl",
+    ):
+        # land_area_fraction is given as 0..1
+        ds = ds * 100
+
+        if ds.max().sftlf > 100:
+            mx = ds.max().compute()
+            raise ValueError(f"They replaced the land_area_fraction file... {mx}")
+
+    if _corresponds_to(
+        metadata,
+        table="Lmon",
+        varn="mrsos",
+        model="CESM2-WACCM-FV2",
+        ens="r1i1p1f1",
+        exp="piControl",
+    ):
+        time_check = False
+
+    return ds, time_check
+
+
+def cmip6_preprocess(metadata, fNs_in):
+
+    reindex_like = False
+
+    def _inner(ds):
+
+        if reindex_like:
+            ds = ds.reindex_like(target, method="nearest")
+
+        ds = fixes_common(ds)
+
+        return ds
+
+    return _inner
