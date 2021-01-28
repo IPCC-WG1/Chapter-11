@@ -114,17 +114,42 @@ class Processor:
         if len(ds) != 0:
             ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
 
-    def get_lat_weights(self, fx_weights, meta, ds):
-        if fx_weights and len(ds):
-            weights = self.conf_cmip.get_weights(fx_weights, meta, ds)
+    def get_area_weights(self, lat_weights, weights, meta, ds):
+        """get area weights: lat weights and weights for land, landice etc."""
 
-            # "latitude" means there are 2D coords
-            if weights is None and "latitude" not in ds.coords:
-                weights = xru.cos_wgt(ds)
+        area_weights = self.get_lat_weights(lat_weights, meta, ds)
+        # lat weights are required
+        if area_weights is None:
+            return []
 
-            return weights
+        weights = self.get_weights(weights, meta, ds)
+        if weights is not None:
+            area_weights = area_weights * weights
+
+        return area_weights
+
+    def get_lat_weights(self, lat_weights, meta, ds):
+
+        # return if ds is empty
+        if not len(ds):
+            return
+
+        weights = None
+        if lat_weights is not None:
+            weights = self.conf_cmip.load_fx(lat_weights, meta)
+
+        if weights is not None:
+            weights = xru.check_range(weights, min_allowed=0)
+            weights = xru.maybe_reindex(weights, ds)
+
+        # "latitude" means there are 2D coords
+        if weights is None and "latitude" not in ds.coords:
+            weights = xru.cos_wgt(ds)
+
+        return weights
 
     def get_land_mask(self, meta, da=None):
+        """load land mask ('sftlf') - uses 'natural_earth.land_110' if none is found"""
 
         mask = self.conf_cmip.load_mask("sftlf", meta, da)
 
@@ -135,15 +160,31 @@ class Processor:
         return mask
 
     def get_ocean_mask(self, meta, da=None):
+        """load ocean mask (inverse of the land mask)"""
 
         return ~self.get_land_mask(meta, da=da)
 
     def get_landice_mask(self, meta, da=None):
+        """load landice mask ('sftgif')"""
 
         return self.conf_cmip.load_mask("sftgif", meta, da)
 
     def get_masks(self, masks, meta, da=None):
+        """get one or several combined masks to mask out
 
+        masks are combined by logical or
+
+        Parameters
+        ----------
+        masks : str, or list of strings, optional
+            Name of the mask(s) to load, if None returns None.
+        meta : meta-dict
+            meta-dict of the simulation to load the mask for
+        da : DataArray
+            Model data, used to reindex the mask to if the grids don't exactly match.
+        """
+
+        # empty da -> no need to load anything
         if issubclass(type(da), list):
             return
 
@@ -164,6 +205,45 @@ class Processor:
             mask = None
 
         return mask
+
+    def get_land_weights(self, meta, da=None):
+
+        mask = self.conf_cmip.load_weights("sftlf", meta, da)
+
+        if mask is None:
+            mask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
+            mask = mask.squeeze(drop=True)
+
+        return mask
+
+    def get_ocean_weights(self, meta, da=None):
+
+        return 1 - self.get_land_weights(meta, da=da)
+
+    def get_landice_weights(self, meta, da=None):
+        return self.conf_cmip.load_weights("sftgif", meta, da)
+
+    def get_land_no_ice_weights(self, meta, da=None):
+
+        land = self.get_land_weights(meta, da=da)
+        landice = self.get_landice_weights(meta, da=da)
+
+        # I am not entirely sure here. This could also be (land - landice). However,
+        # this results in some *negative* landfraction.
+        if landice is not None:
+            land = (land) - ((land) * (landice))
+
+        return land
+
+    def get_weights(self, weights, meta, da=None):
+
+        if weights is None:
+            return None
+
+        if not isinstance(weights, str):
+            raise ValueError(f"'weights' must be a str. Found: {weights}")
+
+        return getattr(self, f"get_{weights}_weights")(meta, da)
 
     def _transform(self, **meta):
         raise NotImplementedError("")
