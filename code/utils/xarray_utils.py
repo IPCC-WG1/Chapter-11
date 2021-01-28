@@ -36,6 +36,8 @@ def mf_read_netcdfs(
 
     # ds = xr.decode_cf(ds, use_cftime=True)
 
+    ds = remove_duplicated_timesteps(ds, dim="time")
+
     if fixes is not None:
         ds, time_check = fixes(ds, metadata)
 
@@ -102,7 +104,21 @@ def assert_all_timesteps(ds, dim="time"):
         if dd0 == 1:
 
             if (delta_days != 1).any():
-                raise ValueError("Missing days in daily data")
+
+                msg = "Problem for daily data:"
+
+                delta_zero = delta_days == 0
+                if delta_zero.any():
+                    sum = delta_zero.sum().item()
+                    msg += f" {sum} duplicated timesteps."
+
+                delta_gt = delta_days > 1
+                if delta_gt.any():
+                    sum = delta_gt.sum().item()
+                    mx = delta_days.max().item()
+                    msg += f" {sum} hole(s) (max delta: {mx})."
+
+                raise ValueError(msg)
 
         # monthly data
         elif (dd0 >= 28) and (dd0 <= 31):
@@ -121,6 +137,38 @@ def assert_all_timesteps(ds, dim="time"):
 
         else:
             raise ValueError("Unknwon time step")
+
+
+def remove_duplicated_timesteps(ds, dim="time"):
+
+    if dim in ds.coords:
+        # find delta time in days
+        time = ds[dim]
+        delta_days = time.diff(dim).dt.days
+
+        if (delta_days == 0).any():
+
+            duplicates = delta_days.sel(time=delta_days == 0).time
+            duplicates = np.unique(duplicates.values)
+
+            n_duplicates = len(duplicates)
+
+            if n_duplicates > 5:
+                raise ValueError(f"Found {n_duplicates} duplicated timesteps")
+
+            warnings.warn(f"Found {n_duplicates} duplicated timestep(s)")
+
+            # loop through all duplicates
+            for duplicate in duplicates:
+
+                sel = time == duplicate
+
+                s = np.where(time == duplicate)[0][0]
+                sel[s] = False
+
+                ds = ds.sel({dim: ~sel})
+
+    return ds
 
 
 # =============================================================================
