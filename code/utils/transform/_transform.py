@@ -306,8 +306,8 @@ class RegionAverage(_ProcessWithXarray):
          regions : regionmask.Regions
             regions to take the average over.
          landmask : DataArray, optional
-             landmask to use, land points must be ``True``. If none uses
-             regionmask.defined_regions.natural_earth.land_110.
+             landmask or landfraction to use, land points must be ``1``. If None
+             uses regionmask.defined_regions.natural_earth.land_110.
         land_only : bool, optional
             Whether to mask out ocean points before calculating regional
             means.
@@ -338,10 +338,23 @@ class RegionAverage(_ProcessWithXarray):
             Object over which the weighted reduction operation is applied.
         """
 
-        from .. import regions
+        weights = self._get_weights(da)
+        mask_3D = self._get_mask3D(da)
 
+        da = da.weighted(mask_3D * weights).mean(("lat", "lon"))
+
+        return da, attrs
+
+    def _get_weights(self, da):
         # maybe get cosine weights
         weights = xru.cos_wgt(da) if self.weights is None else self.weights
+        xru.assert_alignable(weights, da, message="weights have different coordinates!")
+
+        return weights
+
+    def _get_mask3D(self, da):
+
+        from .. import regions
 
         if self.landmask is None:
             landmask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
@@ -371,6 +384,4 @@ class RegionAverage(_ProcessWithXarray):
 
         mask_3D = xr.concat([global_mask_3D, regional_mask_3D], dim="region")
 
-        da = da.weighted(mask_3D * weights).mean(("lat", "lon"))
-
-        return da, attrs
+        return mask_3D

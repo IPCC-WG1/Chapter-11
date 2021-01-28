@@ -20,12 +20,12 @@ class RegridFromPost(ProcessorFromPost):
 
 
 class RegionAverageFromPost(ProcessorFromPost):
-    def transform(self, regions, landmask=None, land_only=True, fx_weights=None):
+    def transform(self, regions, lat_weights=None, weights=None, land_only=True):
 
         self.regions = regions
-        self.landmask = landmask
+        self.lat_weights = lat_weights
+        self.weights = weights
         self.land_only = land_only
-        self.fx_weights = fx_weights
 
         super().transform()
 
@@ -33,16 +33,20 @@ class RegionAverageFromPost(ProcessorFromPost):
 
         ds = self.conf_cmip.load_post(**meta)
 
-        weights = self.get_lat_weights(self.fx_weights, meta, ds)
-        if weights is None or not len(weights):
+        # get latitude weights
+        lat_weights = self.get_lat_weights(self.lat_weights, meta, ds)
+        if not len(lat_weights):
             return []
+
+        # get land fraction
+        landmask = self.get_weights(self.weights, meta, ds)
 
         transform_func = transform.RegionAverage(
             var=meta["varn"],
             regions=self.regions,
-            landmask=self.landmask,
+            landmask=landmask,
             land_only=self.land_only,
-            weights=weights,
+            weights=lat_weights,
         )
 
         return transform_func(ds)
