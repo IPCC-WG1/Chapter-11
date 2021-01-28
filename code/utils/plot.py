@@ -1,10 +1,208 @@
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mplotutils as mpu
+import numpy as np
 import xarray as xr
 
 from . import computation
+
+
+def map_subplots(
+    nrows=1,
+    ncols=1,
+    *,
+    projection=ccrs.Robinson(),
+    squeeze=True,
+    subplot_kw=None,
+    gridspec_kw=None,
+    **fig_kw,
+):
+
+    if subplot_kw is None:
+        subplot_kw = dict()
+
+    subplot_kw["projection"] = projection
+
+    f, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        squeeze=squeeze,
+        subplot_kw=subplot_kw,
+        gridspec_kw=gridspec_kw,
+        **fig_kw,
+    )
+
+    if isinstance(axes, np.ndarray):
+        axes = axes.flatten()
+
+    return f, axes
+
+
+def one_map_flat(
+    da,
+    ax,
+    levels=None,
+    mask_ocean=False,
+    ocean_kws=None,
+    skipna=None,
+    add_coastlines=True,
+    coastline_kws=None,
+    **kwargs,
+):
+    opt = dict(
+        transform=ccrs.PlateCarree(),
+        add_colorbar=False,
+        rasterized=True,
+        extend="both",
+        levels=levels,
+    )
+    # allow to override the defaults
+    opt.update(kwargs)
+
+    if ocean_kws is None:
+        ocean_kws = dict(color="w", zorder=1.1)
+
+    if coastline_kws is None:
+        coastline_kws = dict(color="0.1", lw=1, zorder=1.2)
+
+    if mask_ocean:
+        NEF = cfeature.NaturalEarthFeature
+        OCEAN = NEF("physical", "ocean", "110m")
+
+    h = da.plot(ax=ax, **opt)
+
+    if mask_ocean:
+        ax.add_feature(OCEAN, **ocean_kws)
+
+    if add_coastlines:
+        ax.coastlines(**coastline_kws)
+
+    s = ax.spines["geo"]
+    s.set_lw(0.5)
+    s.set_color("0.5")
+
+    ax.set_global()
+
+    return h
+
+
+def one_map(
+    da,
+    ax,
+    average,
+    dim="mod_ens",
+    levels=None,
+    mask_ocean=False,
+    ocean_kws=None,
+    skipna=None,
+    add_coastlines=True,
+    coastline_kws=None,
+    **kwargs,
+):
+
+    func = getattr(da, average)
+    d = func(dim, skipna=skipna)
+
+    n = len(da[dim])
+    ax.text(1, 1, f"{n}", va="top", ha="right", transform=ax.transAxes, fontsize=9)
+
+    h = one_map_flat(
+        d,
+        ax,
+        levels=levels,
+        mask_ocean=mask_ocean,
+        ocean_kws=ocean_kws,
+        skipna=skipna,
+        add_coastlines=add_coastlines,
+        coastline_kws=coastline_kws,
+        **kwargs,
+    )
+
+    return h
+
+
+def at_warming_level_one(
+    at_warming_c,
+    unit,
+    title,
+    levels,
+    average,
+    mask_ocean=False,
+    colorbar=True,
+    ocean_kws=None,
+    skipna=None,
+    **kwargs,
+):
+
+    if average != "mean":
+        title += f" – {average}"
+
+    f, axes = plt.subplots(1, 3, subplot_kw=dict(projection=ccrs.Robinson()))
+
+    axes = axes.flatten()
+
+    for i in range(3):
+
+        h = one_map(
+            at_warming_c[i],
+            axes[i],
+            average,
+            levels=levels,
+            mask_ocean=mask_ocean,
+            ocean_kws=ocean_kws,
+            skipna=skipna,
+            **kwargs,
+        )
+
+    for ax in axes:
+        ax.coastlines(zorder=4, lw=0.5)
+        ax.set_global()
+
+    if colorbar:
+        cbar = mpu.colorbar(
+            h,
+            axes[0],
+            axes[2],
+            aspect=30,
+            shrink=0.4,
+            orientation="horizontal",
+            pad=0.075,
+        )
+        cbar.set_label(unit, labelpad=1)
+        cbar.ax.tick_params(labelsize=9, length=0)
+
+    axes[0].set_title("At 1.5°C global warming", fontsize=9, pad=4)
+    axes[1].set_title("At 2.0°C global warming", fontsize=9, pad=4)
+    axes[2].set_title("At 4.0°C global warming", fontsize=9, pad=4)
+
+    # axes[0].set_title("Tglob anomaly +1.5 °C", fontsize=9, pad=2)
+    # axes[1].set_title("Tglob anomaly +2.0 °C", fontsize=9, pad=2)
+    # axes[2].set_title("Tglob anomaly +4.0 °C", fontsize=9, pad=2)
+
+    side = 0.025
+    if colorbar:
+        f.suptitle(title, fontsize=11, y=0.975)
+        plt.subplots_adjust(
+            wspace=0.075, left=side, right=1 - side, bottom=0.315, top=0.81
+        )
+
+    else:
+        f.suptitle(title, fontsize=11, y=0.975)
+        plt.subplots_adjust(
+            wspace=0.075, left=side, right=1 - side, bottom=0.09, top=0.77
+        )
+
+    mpu.set_map_layout(axes)
+
+    f.canvas.draw()
+
+    if colorbar:
+        return cbar
+
+
+# UNUSED?
 
 
 def at_warming_level(
