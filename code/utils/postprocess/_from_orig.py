@@ -3,8 +3,9 @@ from .common import ProcessorFromOrig
 
 
 class GlobalMeanFromOrig(ProcessorFromOrig):
-    def transform(self, fx_weights=None, mask_out=None):
-        self.fx_weights = fx_weights
+    def transform(self, lat_weights=None, weights=None, mask_out=None):
+        self.lat_weights = lat_weights
+        self.weights = weights
         self.mask_out = mask_out
 
         super().transform()
@@ -13,15 +14,16 @@ class GlobalMeanFromOrig(ProcessorFromOrig):
 
         ds = self.conf_cmip.load_orig(**meta)
 
-        weights = self.get_lat_weights(self.fx_weights, meta, ds)
-        if weights is None:
+        weights = self.get_area_weights(self.lat_weights, self.weights, meta, ds)
+        if not len(weights):
             return []
+
         mask = self.get_masks(self.mask_out, meta, ds)
         return transform.Globmean(meta["varn"], weights=weights, mask=mask)(ds.load())
 
 
 class NoTransformFromOrig(ProcessorFromOrig):
-    def transform(self, fx_weights=None, mask_out=None):
+    def transform(self, lat_weights=None, mask_out=None):
         self.mask_out = mask_out
 
         super().transform()
@@ -67,15 +69,17 @@ class CDDFromOrig(ProcessorFromOrig):
 
     # set varn="pr" as default?
 
-    def transform(self, freq="A"):
+    def transform(self, freq="A", mask_out=None):
 
         self.freq = freq
+        self.mask_out = mask_out
         super().transform()
 
     def _transform(self, **meta):
 
         ds = self.conf_cmip.load_orig(**meta)
-        return transform.CDD(meta["varn"], freq=self.freq)(ds)
+        mask = self.get_masks(self.mask_out, meta, ds)
+        return transform.CDD(meta["varn"], freq=self.freq, mask=mask)(ds)
 
 
 class RxNdayFromOrig(ProcessorFromOrig):
@@ -169,13 +173,33 @@ class ResampleAnnualQuantileFromOrig(ProcessorFromOrig):
 
 
 class RegionAverageFromOrig(ProcessorFromOrig):
-    def transform(self, regions):
+    def transform(
+        self, regions, lat_weights=None, weights=None, mask_out=None, land_only=True
+    ):
 
         self.regions = regions
+        self.lat_weights = lat_weights
+        self.weights = weights
+        self.mask_out = mask_out
+        self.land_only = land_only
+
         super().transform()
 
     def _transform(self, **meta):
 
         ds = self.conf_cmip.load_orig(**meta)
-        transform_func = transform.RegionAverage(var=meta["varn"], regions=self.regions)
+
+        weights = self.get_area_weights(self.lat_weights, self.weights, meta, ds)
+        if not len(weights):
+            return []
+
+        mask = self.get_masks(self.mask_out, meta, ds)
+
+        transform_func = transform.RegionAverage(
+            var=meta["varn"],
+            regions=self.regions,
+            weights=weights,
+            landmask=mask,
+            land_only=self.land_only,
+        )
         return transform_func(ds)
