@@ -293,7 +293,7 @@ def at_warming_level(
 
     out = list()
     models = list()
-    ensname = list()
+    ens = list()
     exp = list()
 
     # loop through all global mean temperatures
@@ -332,7 +332,7 @@ def at_warming_level(
                     idx = idx.drop_vars("year")
 
                 models.append(metadata["model"])
-                ensname.append(metadata["ens"])
+                ens.append(metadata["ens"])
                 exp.append(metadata["exp"])
 
                 out.append(idx)
@@ -340,13 +340,45 @@ def at_warming_level(
     if not out:
         return []
 
-    out = xr.concat(out, dim="ens", coords="minimal", compat="override")
+    out = xr.concat(out, dim="mod_ens", coords="minimal", compat="override")
 
     if add_meta:
         out = out.assign_coords(
-            model=("ens", models), ensname=("ens", ensname), exp=("ens", exp)
+            model=("mod_ens", models), ens=("mod_ens", ens), exp=("mod_ens", exp)
         )
     return out
+
+
+def time_average(index_list, beg, end, reduce="mean", skipna=None):
+    def _inner(ds, meta, beg, end, reduce, skipna):
+
+        da = ds[meta["varn"]]
+
+        da = da.sel(year=slice(beg, end))
+
+        if reduce is not None:
+            # calculate mean
+            da = getattr(da, reduce)("year", skipna=skipna)
+        else:
+            # drop year to enable concatenating
+            da = da.drop_vars("year")
+
+        return da
+
+    index_list = process_datalist(
+        _inner,
+        index_list,
+        pass_meta=True,
+        beg=beg,
+        end=end,
+        reduce=reduce,
+        skipna=skipna,
+    )
+
+    return concat_xarray_with_metadata(
+        index_list,
+        set_index=False,
+    )
 
 
 def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=True):
@@ -396,6 +428,7 @@ def concat_xarray_with_metadata(
     process=None,
     index={"mod_ens": ("model", "ens")},
     retain=("model", "ens", "ensnumber", "exp"),
+    set_index=False,
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
 
@@ -409,7 +442,7 @@ def concat_xarray_with_metadata(
     all_ds = list()
 
     retain += ("ensi",)
-    retain_dict = {r: list() for r in retain}
+    retain_dict = {r: ("mod_ens", list()) for r in retain}
 
     for i, (ds, metadata) in enumerate(datalist):
 
@@ -419,7 +452,7 @@ def concat_xarray_with_metadata(
         all_ds.append(ds)
 
         retain_dict["ensi"][1].append(i)
-        for r in retain:
+        for r in retain[:-1]:
             retain_dict[r][1].append(metadata[r])
 
     # concate all data
@@ -429,8 +462,9 @@ def concat_xarray_with_metadata(
 
     index = {"mod_ens": retain}
 
-    # create multiindex
-    out = out.set_index(**index)
+    if set_index:
+        # create multiindex
+        out = out.set_index(**index)
 
     return out
 
@@ -478,7 +512,7 @@ def process_datalist(func, datalist, pass_meta=False, **kwargs):
     for ds, meta in datalist:
 
         if pass_meta:
-            ds = func(ds, meta, **kwargs)
+            ds = func(ds, meta=meta, **kwargs)
         else:
             ds = func(ds, **kwargs)
 
