@@ -1,6 +1,7 @@
 import glob
 
 import numpy as np
+import xarray as xr
 
 from ._fixes_common import (
     _corresponds_to,
@@ -121,24 +122,6 @@ def cmip6_files(folder_in):
         ):
             return None
 
-        # only goes until 2055
-        if _corresponds_to(
-            metadata, table="Amon", exp="ssp370", varn="tas", model="BCC-ESM1"
-        ):
-            return None
-
-        # only goes until 2055
-        if _corresponds_to(
-            metadata, table="Amon", exp="ssp370", varn="tas", model="MPI-ESM-1-2-HAM"
-        ):
-            return None
-
-        # the global mean temperature decreases ~8K after 2090
-        # if _corresponds_to(
-        #     metadata, table="Amon", exp="ssp585", varn="tas", model="CIESM",
-        # ):
-        #     return None
-
         # discontinuity between historical and ssp
         if _corresponds_to(
             metadata,
@@ -164,6 +147,16 @@ def cmip6_files(folder_in):
             table="day",
             exp="ssp245",
             varn="tasmax",
+            model="KIOST-ESM",
+        ):
+            return None
+
+        # continents shifted in from 28.02.2018-31.12.2018 (reported)
+        if _corresponds_to(
+            metadata,
+            table="day",
+            exp="ssp585",
+            varn=["tasmax", "tasmin"],
             model="KIOST-ESM",
         ):
             return None
@@ -329,7 +322,35 @@ def cmip6_data(ds, metadata):
     if _corresponds_to(
         metadata,
         varn=["mrso", "mrsos"],
-        model=["EC-Earth3", "EC-Earth3-AerChem", "EC-Earth3-Veg", "EC-Earth3-Veg-LR"],
+        model=[
+            "EC-Earth3",
+            "EC-Earth3-AerChem",
+            "EC-Earth3-Veg",
+            "EC-Earth3-Veg-LR",
+            "EC-Earth3-CC",
+        ],
+    ):
+        ds = ds.load()
+        # mask gridpoints with constant values
+        mask = (ds.isel(time=0) == ds).all("time")
+        ds = ds.where(~mask)
+
+    # overwrite ice with NaN
+    if _corresponds_to(
+        metadata,
+        varn=["mrso", "mrsos"],
+        model=["MIROC6"],
+    ):
+        ds = ds.load()
+        # mask gridpoints with constant values
+        mask = (ds.isel(time=0) == ds).all("time")
+        ds = ds.where(~mask)
+
+    # overwrite ice with NaN
+    if _corresponds_to(
+        metadata,
+        varn=["mrso", "mrsos"],
+        model=["BCC-CSM2-MR"],
     ):
         ds = ds.load()
         # mask gridpoints with constant values
@@ -361,6 +382,21 @@ def cmip6_data(ds, metadata):
 
     if _corresponds_to(
         metadata,
+        table="fx",
+        varn="sftlf",
+        model="FGOALS-f3-L",
+        ens="r1i1p1f1",
+        exp="historical",
+    ):
+        # land_area_fraction is given as 0..1
+        ds = ds * 100
+
+        if ds.max().sftlf > 100:
+            mx = ds.max().compute()
+            raise ValueError(f"They replaced the land_area_fraction file... {mx}")
+
+    if _corresponds_to(
+        metadata,
         table="Lmon",
         varn="mrsos",
         model="CESM2-WACCM-FV2",
@@ -369,12 +405,87 @@ def cmip6_data(ds, metadata):
     ):
         time_check = False
 
+    # 5 missing days
+    if _corresponds_to(
+        metadata,
+        table="day",
+        varn="pr",
+        model="CESM2-WACCM",
+        ens="r1i1p1f1",
+        exp="piControl",
+    ):
+        time_check = False
+
+    # misses 01.01.1950 -> I think this is ok
+    if _corresponds_to(
+        metadata,
+        table="day",
+        varn=["mrso", "tasmax", "tasmin", "pr"],
+        model="SAM0-UNICON",
+        ens="r1i1p1f1",
+        exp="historical",
+    ):
+        time_check = False
+
+    # mrso is a factor 100 smaller than any other model (reported 19.01.2021)
+    if _corresponds_to(
+        metadata,
+        table="Lmon",
+        varn="mrso",
+        model="CIESM",
+    ):
+
+        if ds.mrso.max() > 100:
+            mx = ds.max().compute()
+            raise ValueError(f"File corrected... {mx}")
+
+        # land_area_fraction is given as 0..1
+        ds["mrso"] = ds.mrso * 100
+
+    # mrsos is a factor 100 smaller than any other model (reported 19.01.2021)
+    if _corresponds_to(
+        metadata,
+        table="Lmon",
+        varn="mrsos",
+        model="FGOALS-f3-L",
+    ):
+        if ds.mrsos.max() > 1:
+            mx = ds.max().compute()
+            raise ValueError(f"File corrected... {mx}")
+
+        # land_area_fraction is given as 0..1
+        ds["mrsos"] = ds.mrsos * 100
+
+    # # pr too small by a factor 1000; reported & waiting for confirmation
+    if _corresponds_to(
+        metadata,
+        varn="pr",
+        model="CIESM",
+    ):
+        if ds.pr.max() > 1e-3:
+            mx = ds.max().compute()
+            raise ValueError(f"File corrected... {mx}")
+
+        ds["pr"] = ds.pr * 1000
+
     return ds, time_check
 
 
 def cmip6_preprocess(metadata, fNs_in):
 
     reindex_like = False
+
+    if _corresponds_to(
+        metadata,
+        exp="historical",
+        table="Amon",
+        model="NorCPM1",
+    ):
+
+        reindex_like = True
+        target = xr.open_dataset(fNs_in[0], drop_variables=["tas", "time"])[
+            ["lat", "lon"]
+        ]
 
     def _inner(ds):
 
