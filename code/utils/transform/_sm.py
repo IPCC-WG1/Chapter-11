@@ -26,9 +26,9 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
 
         Note
         ----
-        Only little of the code is specific to calculate the
-        SMdd threshold - most could be re-used for other Zhang-like
-        threshold estimates. However, it is super slow...
+        Only little of the code is specific to calculate the SMdd threshold - most could
+        be re-used for other Zhang-like threshold estimates. However, it is super slow
+        for daily data...
         """
 
         if beg >= end:
@@ -88,6 +88,102 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
                 thresh_full.loc[{dim: sel}] = thresh_res.sel(month=month).values
 
         return thresh_full, attrs
+
+
+class SM_dry_days_Zhang(_ProcessWithXarray):
+    def __init__(self, var, threshold, is_pic, dim="time", freq="A", mask=None):
+        """calc climatology of SM dry days after Zhang 2005
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable on the Dataset
+        threshold : xr.DataArray
+            DataArray containing the threshold derived with
+            SM_dry_days_clim_Zhang
+        is_pic : bool
+            Whether da is a piControl simulation or not. If it is not
+            treats the climatological period different than the other
+            period(s).
+
+        References
+        ----------
+        https://doi.org/10.1175/JCLI3366.1
+        https://link.springer.com/article/10.1007/s00382-007-0340-z
+
+        Note
+        ----
+        Only little of the code is specific to calculate the SMdd threshold - most could
+        be re-used for other Zhang-like threshold estimates. However, it is super slow
+        for daily data...
+        """
+
+        self.var = var
+        self.threshold = threshold
+        self.is_pic = is_pic
+        self.dim = dim
+        self.freq = freq
+        self.mask = mask
+
+        if len(threshold) == 0:
+            self.beg = self.end = "none"
+        else:
+            # calculate the start and end year from the threshold
+            self.years = threshold[dim].dt.year
+            self.beg = self.years.min().item()
+            self.end = self.years.max().item()
+
+        self._name = f"SM_dry_days_c{self.beg}-{self.end}_q"
+
+    def _trans(self, da, attrs):
+
+        # unpack some variables
+        dim = self.dim
+        dim_month = f"{dim}.month"
+        threshold = self.threshold
+
+        if len(da) == 0 or len(threshold) == 0:
+            return [], attrs
+
+        threshold = threshold[self.var]
+
+        def count(da_, thresh, groupby):
+            da_ = da_.groupby(dim_month) if groupby else da_
+            return (da_ < thresh).resample({dim: self.freq}).sum()
+
+        # is a piControl simulation: we can process the whole da at once
+        if self.is_pic:
+            thresh_monthly = threshold.groupby(dim_month).mean()
+            return count(da, thresh_monthly, True), attrs
+
+        # is not a piControl simulation -> need to check if there's time overlap
+        # with the threshold
+
+        # split the dataset into 3 parts
+        before_clim = da.sel({dim: slice(None, str(self.beg - 1))})
+        during_clim = da.sel({dim: slice(str(self.beg), str(self.end))})
+        after_clim = da.sel({dim: slice(str(self.end + 1), None)})
+
+        if len(before_clim[dim]) or len(after_clim[dim]):
+            thresh_monthly = threshold.groupby(dim_month).mean()
+
+        out = list()
+
+        if len(before_clim[dim]):
+            before_clim = count(before_clim, thresh_monthly, True)
+            out.append(before_clim)
+
+        if len(during_clim[dim]):
+            during_clim = count(during_clim, threshold, False)
+            out.append(during_clim)
+
+        if len(after_clim[dim]):
+            after_clim = count(after_clim, thresh_monthly, True)
+            out.append(after_clim)
+
+        out = xr.concat(out, dim=dim)
+
+        return out, attrs
 
 
 class SM_dry_days_clim(_ProcessWithXarray):
