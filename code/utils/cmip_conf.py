@@ -174,6 +174,21 @@ class _cmip_conf:
 
         return weights
 
+    def load_iav(self, iav="IAV20", **meta):
+        """load interannual variability"""
+
+        postprocess = meta.pop("postprocess")
+        meta.pop("exp", None)
+
+        return self.load_post_all(
+            postprocess=f"{postprocess}_{iav}",
+            exp="piControl",
+            anomaly=None,
+            at_least_until=None,
+            year_mean=False,
+            **meta,
+        )
+
     def load_post(self, **metadata):
         """load postprocessed data for a single scenario"""
 
@@ -187,9 +202,10 @@ class _cmip_conf:
 
         # get rid of the "days" units, else CDD will have dtype = timedelta
         varn = metadata["varn"]
-        units = ds[varn].attrs.get("units", None)
-        if units in ["seconds", "days"]:
-            ds[varn].attrs.pop("units")
+        if varn in ds.data_vars:
+            units = ds[varn].attrs.get("units", None)
+            if units in ["seconds", "days"]:
+                ds[varn].attrs.pop("units")
 
         return xr.decode_cf(ds, use_cftime=True)
 
