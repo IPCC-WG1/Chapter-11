@@ -194,6 +194,14 @@ def cmip6_files(folder_in):
         ):
             return None
 
+        # negative SM data
+        if _corresponds_to(
+            metadata,
+            varn=["mrso", "mrsos"],
+            model="IPSL-CM5A2-INCA",
+        ):
+            return None
+
         # =========================================================================
 
         # get the files in the directory
@@ -414,18 +422,35 @@ def cmip6_data(ds, metadata):
         ens="r1i1p1f1",
         exp="piControl",
     ):
-        time_check = False
+        time = ds.time
+        # get the full time vector
+        time = xr.cftime_range(time[0].item(), time[-1].item())
+        ds = ds.reindex(time=time)
 
     # misses 01.01.1950 -> I think this is ok
     if _corresponds_to(
         metadata,
         table="day",
-        varn=["mrso", "tasmax", "tasmin", "pr"],
+        varn=["mrso", "tasmax", "tasmin"],
         model="SAM0-UNICON",
         ens="r1i1p1f1",
         exp="historical",
     ):
         time_check = False
+
+    # cdd cannot handle a missing day
+    if _corresponds_to(
+        metadata,
+        table="day",
+        varn="pr",
+        model="SAM0-UNICON",
+        ens="r1i1p1f1",
+        exp="historical",
+    ):
+        time = ds.time
+        # get the full time vector
+        time = xr.cftime_range(time[0].item(), time[-1].item())
+        ds = ds.reindex(time=time)
 
     # mrso is a factor 100 smaller than any other model (reported 19.01.2021)
     if _corresponds_to(
@@ -467,6 +492,38 @@ def cmip6_data(ds, metadata):
             raise ValueError(f"File corrected... {mx}")
 
         ds["pr"] = ds.pr * 1000
+
+    # wrong encoding for the ocean & values at the North Pole
+    if _corresponds_to(
+        metadata,
+        exp=["historical", "piControl"],
+        table="Lmon",
+        varn="mrsos",
+        model="CAS-ESM2-0",
+        ens="r1i1p1f1",
+    ):
+        da = ds["mrsos"]
+        da = (da).where(da != -9999).where(da.lat < 85)
+        ds["mrsos"] = da
+
+    # data that should not be below 0; SM precip
+    if _corresponds_to(
+        metadata,
+        varn=["pr", "mrso", "mrsos"],
+    ):
+
+        varn = metadata["varn"]
+        min_allowed = 0.0
+        mn = ds[varn].min().compute().item()
+
+        if mn < min_allowed:
+            # fix values that are close
+            if np.allclose(mn, min_allowed):
+                ds[varn] = np.fmax(min_allowed, ds[varn])
+            else:
+                raise ValueError(
+                    f"Expected no values smaller {min_allowed}, found: {mn}"
+                )
 
     return ds, time_check
 
