@@ -26,7 +26,7 @@ def mf_read_netcdfs(
         decode_cf=True,
         use_cftime=True,
         preprocess=fixes_preprocess,
-    ).persist()
+    ).load()
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
     varn = metadata["varn"]
