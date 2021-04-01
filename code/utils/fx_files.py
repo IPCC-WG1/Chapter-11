@@ -52,6 +52,9 @@ def _load_mask_or_weights(self, varn, meta, da=None):
 
         mask = mask.load().fillna(0.0)
 
+        # get rid of the 'type' coordinate, it can cause problems for cdo
+        mask = mask.drop_vars("type", errors="ignore")
+
         mask = xru.check_range(
             mask,
             min_allowed=0.0,
