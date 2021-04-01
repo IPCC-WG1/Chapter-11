@@ -203,3 +203,26 @@ class RegionAverageFromOrig(ProcessorFromOrig):
             land_only=self.land_only,
         )
         return transform_func(ds)
+
+
+class ConsecutiveMonthsClim(ProcessorFromOrig):
+    def transform(self, how, beg, end, dim="time", mask_out=None):
+
+        beg, end = str(beg), str(end)
+
+        self.how = how
+        self.clim = slice(beg, end)
+        self.dim = dim
+        self.mask_out = mask_out
+
+        super().transform()
+
+    def _transform(self, **meta):
+
+        ds = self.conf_cmip.load_orig(**meta)
+        mask = self.get_masks(self.mask_out, meta, ds)
+        transform_func = transform.ConsecutiveMonthsClim(
+            var=meta["varn"], how=self.how, clim=self.clim, dim=self.dim, mask=mask
+        )
+
+        return transform_func(ds)
