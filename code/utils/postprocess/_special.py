@@ -97,6 +97,42 @@ class SMDryDaysClimZhangFromOrig(ProcessorFromOrig):
         return transform_func(ds)
 
 
+class SMDryDaysIntensityZhangFromOrig(ProcessorFromOrig):
+    def transform(
+        self, postprocess_name_clim, is_pic, dim="time", freq="A", mask_out=None
+    ):
+
+        self.postprocess_name_clim = postprocess_name_clim
+        self.is_pic = is_pic
+        self.dim = dim
+        self.freq = freq
+        self.mask_out = mask_out
+
+        super().transform()
+
+    def _transform(self, **meta):
+
+        ds = self.conf_cmip.load_orig(**meta)
+        mask = self.get_masks(self.mask_out, meta, ds)
+
+        meta_thresh = meta.copy()
+        meta_thresh["exp"] = "historical"
+        threshold = self.conf_cmip.load_post(
+            postprocess=self.postprocess_name_clim, **meta_thresh
+        )
+
+        transform_func = transform.SM_dry_days_Intensity_Zhang(
+            var=meta["varn"],
+            threshold=threshold,
+            is_pic=self.is_pic,
+            dim=self.dim,
+            freq=self.freq,
+            mask=mask,
+        )
+
+        return transform_func(ds)
+
+
 class SMDryDaysZhangFromOrig(ProcessorFromOrig):
     def transform(
         self, postprocess_name_clim, is_pic, dim="time", freq="A", mask_out=None
