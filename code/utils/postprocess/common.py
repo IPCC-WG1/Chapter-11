@@ -90,9 +90,11 @@ class Processor:
 
         for i, (file, meta) in enumerate(self.files_to_process):
             now = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
+            fN_out = self.fN_out(**meta)
             print(f"processing {i + 1} of {n_to_process} ({now})")
             print(f"- {meta}")
             print(f"- {file}")
+            print(f"- {fN_out}")
 
             yield file, meta
 
@@ -169,6 +171,24 @@ class Processor:
 
         return self.conf_cmip.load_mask("sftgif", meta, da)
 
+    def get_antarctica_mask(self, meta, da):
+
+        if da is None:
+            raise ValueError("'da' required to mask out Antarctica")
+
+        return da.lat < -60
+
+    def get_regions_mask(self, regions, meta, da):
+
+        if da is None:
+            raise ValueError("'da' required to mask out 'regions'")
+
+        if not isinstance(regions, regionmask.Regions):
+            raise ValueError("'regions' must be a 'regionmask.Regions' instance")
+
+        mask = regions.mask_3D(da)
+        return mask.any("region")
+
     def get_masks(self, masks, meta, da=None):
         """get one or several combined masks to mask out
 
@@ -188,7 +208,7 @@ class Processor:
         if issubclass(type(da), list):
             return
 
-        if isinstance(masks, str):
+        if isinstance(masks, (str, regionmask.Regions)):
             masks = [masks]
         elif masks is None:
             masks = []
@@ -197,7 +217,11 @@ class Processor:
         mask = False
 
         for m in masks:
-            other = getattr(self, f"get_{m}_mask")(meta, da)
+            if isinstance(m, str):
+                other = getattr(self, f"get_{m}_mask")(meta, da)
+            elif isinstance(m, regionmask.Regions):
+                other = self.get_regions_mask(m, meta, da)
+
             if other is not None:
                 mask = mask | other
 
@@ -229,7 +253,7 @@ class Processor:
         landice = self.get_landice_weights(meta, da=da)
 
         # I am not entirely sure here. This could also be (land - landice). However,
-        # this results in some *negative* landfraction.
+        # this results in *negative* land fraction for some models.
         if landice is not None:
             land = (land) - ((land) * (landice))
 
