@@ -12,6 +12,7 @@ class NoTransform(_ProcessWithXarray):
     def __init__(self, var, mask=None):
 
         self.var = var
+        self.mask = mask
         self._name = "no_transform"
 
     def _trans(self, da, attrs):
