@@ -8,6 +8,8 @@ deprecated/*
 tests/*
 tglobscaling/*
 warming_levels/*
+cmip_indices_regional/*
+cmip_temperatures/*
 diagram_EA_method
 for_isort.py
 
