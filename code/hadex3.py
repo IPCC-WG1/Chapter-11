@@ -8,6 +8,7 @@ import mplotutils as mpu
 import xarray as xr
 
 import filefinder as ff
+from utils import plot
 from utils.statistics import theil_ufunc
 
 # we would get 13 warnings when reading HadEX3 data
@@ -244,7 +245,31 @@ def find_valid_gridpoints_dunn(
 
     # require more than minimum_valid timesteps
     valid_fraction = notnull.sum("time") / len(da.time)
-    condition = valid_fraction > minimum_valid
+    condition = valid_fraction >= minimum_valid
+
+    da = da.where(condition)
+
+    _invalidated(atleast_one, condition, what="minimum_valid")
+
+    return da
+
+
+def valid_for_globmean(da, time=slice(1950, 2018), minimum_valid=0.9):
+    # for the global mean Dunn et al. require at least 90% valid years (see Figure 2.)
+
+    # select timeframe
+    da = da.sel(time=time)
+
+    # find valid data
+    isnull = da.isnull()
+    notnull = ~isnull
+
+    # grid cells with at least one datapoint
+    atleast_one = notnull.any("time")
+
+    # require more than minimum_valid timesteps
+    valid_fraction = notnull.sum("time") / len(da.time)
+    condition = valid_fraction >= minimum_valid
 
     da = da.where(condition)
 
@@ -277,51 +302,69 @@ def plot_theilslope(
     title=None,
     add_colorbar=True,
     colorbar_kwargs=None,
-    no_data_color="0.8",
-    stippling_label="Significant",
+    stippling_label="Non-significant",
     **kwargs,
 ):
     """plot theil slope and significance"""
 
+    no_data_color = "0.8"
+    land_kws = dict(fc=no_data_color, ec="none")
+
     if colorbar_kwargs is None:
         colorbar_kwargs = {}
 
-    ax.coastlines()
-    ax.add_feature(cfeatures.LAND, color=no_data_color)
+    # coastline_kws = dict(color="0.1", lw=1, zorder=1.2)
+    # ax.coastlines(**coastline_kws)
+    #
+    # ax.add_feature(cfeatures.LAND, fc=no_data_color, ec="none")
 
-    h = (theil_slope * 10).plot(
-        ax=ax, transform=ccrs.PlateCarree(), add_colorbar=False, **kwargs
-    )
+    # h = ().plot(
+    #     ax=ax, transform=ccrs.PlateCarree(), add_colorbar=False, **kwargs
+    # )
 
-    levels = [0, 0.1, 1]
-    # add hatches
-    hatch = "...."
-    hatches = ["", hatch]
-    theil_sign.plot.contourf(
-        transform=ccrs.PlateCarree(),
-        levels=levels,
-        hatches=hatches,
-        colors="none",
-        add_colorbar=False,
+    h = plot.one_map_flat(
+        theil_slope * 10,
         ax=ax,
+        mask_ocean=True,
+        ocean_kws=None,
+        add_coastlines=True,
+        coastline_kws=None,
+        add_land=True,
+        land_kws=land_kws,
+        **kwargs,
     )
 
-    legend_handle = mpatches.Patch(
-        facecolor="0.9",
-        edgecolor="0.2",
+    lh1 = plot.text_legend(ax, "Color", "Significant", size=7)
+
+    lh2 = plot.hatch_map(
+        ax,
+        theil_sign,
+        "cccc",
+        label=stippling_label,
+        invert=True,
+        linewidth=0.1,
+        color="0.1",
+    )
+
+    lh2 = mpatches.Patch(
+        facecolor="none",
+        ec="0.1",
         lw=0.5,
-        hatch=hatch,
+        hatch="ccc",
         label=stippling_label,
     )
 
-    #     legend_handle = plt.Rectangle((0, 0), 1, 1, fc="0.9", ec="0.1", hatch=hatch, lw=0.25, label=stippling_label,)
+    lh3 = mpatches.Patch(fc=no_data_color, ec="0.2", label="No data", lw=0.5)
+    # legend_handle = [lh1, (lh2, lh3), lh3], [lh1.get_label(), lh2.get_label(), lh3.get_label()]
 
-    cbar = None
+    legend_handle = [lh1, lh2, lh3]
+
+    cbar = h
     if add_colorbar:
         cbar = mpu.colorbar(h, ax, orientation="horizontal", **colorbar_kwargs)
         cbar.ax.tick_params(labelsize=9)
 
-    ax.set_global()
+    # ax.set_global()
 
     if title is not None:
         ax.set_title(title, size=8)
