@@ -19,6 +19,7 @@ METHOD_STR = {
     "con2": "Second order conservative remapping",
     "con": "Conservative remapping",
     "dis": "Distance-weighted average remapping",
+    "laf": "Largest area fraction remapping",
 }
 
 
@@ -42,24 +43,9 @@ def delete_corrupt_files(filename):
 
 
 def _regrid_cdo(fN_in, fN_out, target_grid, method):
-    if method == "bil":
-        CDO.remapbil(
-            f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
-        )
-    elif method == "con":
-        CDO.remapcon(
-            f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
-        )
-    elif method == "con2":
-        CDO.remapcon2(
-            f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
-        )
-    elif method == "dis":
-        CDO.remapdis(
-            f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out
-        )
-    else:
-        raise NotImplementedError
+
+    func = getattr(CDO, f"remap{method}")
+    func(f"../grids/{target_grid}.txt", options="-b F64", input=fN_in, output=fN_out)
 
 
 def regrid_cdo(
