@@ -90,7 +90,7 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
         return thresh_full, attrs
 
 
-class SM_dry_days_Zhang(_ProcessWithXarray):
+class _SM_dry_days_Zhang_(_ProcessWithXarray):
     def __init__(self, var, threshold, is_pic, dim="time", freq="A", mask=None):
         """calc climatology of SM dry days after Zhang 2005
 
@@ -140,6 +140,7 @@ class SM_dry_days_Zhang(_ProcessWithXarray):
         # unpack some variables
         dim = self.dim
         dim_month = f"{dim}.month"
+        self.dim_month = dim_month
         threshold = self.threshold
 
         if len(da) == 0 or len(threshold) == 0:
@@ -147,14 +148,10 @@ class SM_dry_days_Zhang(_ProcessWithXarray):
 
         threshold = threshold[self.var]
 
-        def count(da_, thresh, groupby):
-            da_ = da_.groupby(dim_month) if groupby else da_
-            return (da_ < thresh).resample({dim: self.freq}).sum()
-
         # is a piControl simulation: we can process the whole da at once
         if self.is_pic:
             thresh_monthly = threshold.groupby(dim_month).mean()
-            return count(da, thresh_monthly, True), attrs
+            return self.statistic(da, thresh_monthly, True), attrs
 
         # is not a piControl simulation -> need to check if there's time overlap
         # with the threshold
@@ -170,20 +167,35 @@ class SM_dry_days_Zhang(_ProcessWithXarray):
         out = list()
 
         if len(before_clim[dim]):
-            before_clim = count(before_clim, thresh_monthly, True)
+            before_clim = self.statistic(before_clim, thresh_monthly, True)
             out.append(before_clim)
 
         if len(during_clim[dim]):
-            during_clim = count(during_clim, threshold, False)
+            during_clim = self.statistic(during_clim, threshold, False)
             out.append(during_clim)
 
         if len(after_clim[dim]):
-            after_clim = count(after_clim, thresh_monthly, True)
+            after_clim = self.statistic(after_clim, thresh_monthly, True)
             out.append(after_clim)
 
         out = xr.concat(out, dim=dim)
 
         return out, attrs
+
+
+class SM_dry_days_Zhang(_SM_dry_days_Zhang_):
+    def statistic(self, da_, thresh, groupby):
+        da_ = da_.groupby(self.dim_month) if groupby else da_
+        return (da_ < thresh).resample({self.dim: self.freq}).sum()
+
+
+class SM_dry_days_Intensity_Zhang(_SM_dry_days_Zhang_):
+    def statistic(self, da_, thresh, groupby):
+        da_ = da_.groupby(self.dim_month) if groupby else da_
+        # remove the threshold and calculate the mean over everything that is < 0
+        da_ = da_ - thresh
+        da_ = da_.where(da_ < 0)
+        return da_.resample({self.dim: self.freq}).mean(skipna=True)
 
 
 class SM_dry_days_clim(_ProcessWithXarray):
