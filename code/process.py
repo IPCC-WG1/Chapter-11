@@ -29,6 +29,9 @@ ar6_land = regionmask.defined_regions.ar6.land
 # postprocess.RegionAverageFromPost(self.conf_cmip)
 # postprocess.IAVFromPost(self.conf_cmip)
 
+# =============================================================================
+
+GREENLAND = regionmask.defined_regions.natural_earth.countries_110[["Greenland"]]
 
 # =============================================================================
 # helper classes
@@ -72,7 +75,7 @@ class ResampleSeasonalFromPostMixin:
         self, how, invalidate_beg_end, from_concat, after_regrid
     ):
 
-        name_cat = "cat_" if from_concat else ""
+        name_cat = "cat" if from_concat else ""
         name_regrid = "_regrid" if after_regrid else ""
         postprocess_name = f"{self.postprocess_name}{name_regrid}"
 
@@ -81,9 +84,11 @@ class ResampleSeasonalFromPostMixin:
         # exclude "historical"
         if exp == "*" and from_concat:
             exp = self.conf_cmip.scenarios_all
+        elif from_concat and "historical" in exp:
+            exp.remove("historical")
 
         with postprocess.ResampleSeasonal(self.conf_cmip) as p:
-            p.postprocess_name = f"seas_{how}_{name_cat}{postprocess_name}"
+            p.postprocess_name = f"{postprocess_name}_seas_{how}_{name_cat}"
             p.set_files_kwargs(
                 table=self.table,
                 varn=self.varn,
@@ -152,7 +157,9 @@ class ResampleMonthly(
             p.transform(how=self.how)
 
 
-class NoTransform(RegridFromPostMixin, RegionAverageFromPostMixin):
+class NoTransform(
+    RegridFromPostMixin, RegionAverageFromPostMixin, ResampleSeasonalFromPostMixin
+):
     def __init__(self, conf_cmip, table, varn, postprocess_name):
 
         self.conf_cmip = conf_cmip
@@ -167,7 +174,7 @@ class NoTransform(RegridFromPostMixin, RegionAverageFromPostMixin):
             p.transform(mask_out=mask_out)
 
 
-class RxNday(RegridFromPostMixin, RegionAverageFromPostMixin):
+class RxNday(RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin):
     def __init__(self, conf_cmip, window):
 
         self.conf_cmip = conf_cmip
@@ -244,7 +251,23 @@ class ResampleAnnualQuantileFromOrig(RegridFromPostMixin, RegionAverageFromPostM
         self.resample_annual_quantile_from_orig(exp="piControl", mask_out=mask_out)
 
 
-# SMdd
+class ConsecutiveMonthsClimFromOrig(RegridFromPostMixin):
+    def __init__(self, conf_cmip, table, varn, how, postprocess_name):
+
+        self.conf_cmip = conf_cmip
+        self.table = table
+        self.varn = varn
+        self.how = how
+        self.postprocess_name = postprocess_name
+
+    def consecutive_max_min_months(
+        self, beg=1850, end=1900, exp="historical", mask_out=None
+    ):
+
+        with postprocess.ConsecutiveMonthsClim(self.conf_cmip) as p:
+            p.postprocess_name = self.postprocess_name
+            p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
+            p.transform(how=self.how, beg=beg, end=end, dim="time", mask_out=mask_out)
 
 
 class SMDryDaysZhangFromOrig(
@@ -276,6 +299,35 @@ class SMDryDaysZhangFromOrig(
     def sm_dry_days_from_orig_pi_control(self, mask_out=None):
 
         with postprocess.SMDryDaysZhangFromOrig(self.conf_cmip) as p:
+            p.postprocess_name = self.postprocess_name
+            p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
+            p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
+
+
+class SMDryDaysIntensityZhangFromOrig(
+    RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin
+):
+    def __init__(self, conf_cmip, table, varn, postprocess_name):
+
+        self.conf_cmip = conf_cmip
+        self.table = table
+        self.varn = varn
+        self.quantile = 0.1
+        self.postprocess_name = postprocess_name + "_intensity"
+        self.postprocess_name_clim = postprocess_name + "_clim"
+
+    # get the climatology from SMDryDaysZhangFromOrig
+
+    def sm_dry_days_intensity_from_orig(self, exp=None, mask_out=None):
+
+        with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
+            p.postprocess_name = self.postprocess_name
+            p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
+            p.transform(self.postprocess_name_clim, is_pic=False, mask_out=mask_out)
+
+    def sm_dry_days_intensity_from_orig_pi_control(self, mask_out=None):
+
+        with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
             p.postprocess_name = self.postprocess_name
             p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
             p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
@@ -363,6 +415,22 @@ def tas_monthly():
     p_.resample_seasonal_from_post(
         "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
     )
+
+
+def tas_summer_months():
+
+    p_ = ConsecutiveMonthsClimFromOrig(
+        conf.cmip6,
+        table="Amon",
+        varn="tas",
+        how="max",
+        postprocess_name="summer_months",
+    )
+
+    p_.consecutive_max_min_months(beg=1850, end=1900, exp="historical")
+
+    # only for illustration purposes, use largest area fraction remapping
+    p_.regrid_from_post(method="laf")
 
 
 # =============================================================================
@@ -502,8 +570,8 @@ def rx1day_monthly():
 def rx5day():
 
     p_ = RxNday(conf.cmip6, window=5)
-    p_.annual_from_orig()
-    p_.annual_from_orig_pi_control()
+    p_.rxnday_from_orig()
+    p_.rxnday_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_after_regrid_from_post()
     p_.region_average_from_post(lat_weights="areacella", weights="land")
@@ -517,8 +585,8 @@ def rx5day():
 def rx30day():
 
     p_ = RxNday(conf.cmip6, window=30)
-    p_.annual_from_orig()
-    p_.annual_from_orig_pi_control()
+    p_.rxnday_from_orig()
+    p_.rxnday_from_orig_pi_control()
     p_.regrid_from_post()
     p_.iav20_after_regrid_from_post()
     p_.region_average_from_post(lat_weights="areacella", weights="land")
@@ -547,17 +615,35 @@ def cdd():
 def mrso():
 
     p_ = NoTransform(conf.cmip6, table="Lmon", varn="mrso", postprocess_name="sm")
-    p_.no_transform_from_orig(mask_out=["ocean", "landice"])
+    p_.no_transform_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
     p_.regrid_from_post(method="con")
 
+    p_.resample_seasonal_from_post(
+        "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
+    )
     # p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
+
+
+# def mrso_dry_months():
+#
+#     p_ = ConsecutiveMonthsClimFromOrig(
+#         conf.cmip6, table="Lmon", varn="mrso", how="min", postprocess_name="dry_months"
+#     )
+#
+#     p_.consecutive_max_min_months(
+#         beg=1850, end=1900, exp="historical", mask_out=["ocean", "landice", "antarctica", GREENLAND]
+#     )
+#     # only for illustration purposes, use largest area fraction remapping
+#     p_.regrid_from_post(method="laf")
 
 
 def mrso_annmean():
 
     p_ = ResampleAnnual(conf.cmip6, "Lmon", "mrso", "mean", "sm_annmean")
-    p_.annual_from_orig(mask_out=["ocean", "landice"])
-    p_.annual_from_orig_pi_control(mask_out=["ocean", "landice"])
+    p_.annual_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+    p_.annual_from_orig_pi_control(
+        mask_out=["ocean", "landice", "antarctica", GREENLAND]
+    )
     p_.regrid_from_post(method="con")
     # for Jérôme Servonnat/ Carley Iles
     p_.regrid_from_post(method="con", target_grid="g010a")
@@ -566,21 +652,35 @@ def mrso_annmean():
     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
 
 
-def mrso_smdd_day():
+# def mrso_smdd_day():
+#
+#     p_ = SMDryDaysZhangFromOrig(conf.cmip6, "day", "mrso", "SMdd_q10_day")
+#     p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
 
-    p_ = SMDryDaysZhangFromOrig(conf.cmip6, "day", "mrso", "SMdd_q10_day")
-    p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice"])
+
+# def mrso_smdd():
+#
+#     p_ = SMDryDaysZhangFromOrig(conf.cmip6, "Lmon", "mrso", "SMdd_q10")
+#     p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+#     p_.sm_dry_days_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+#     p_.sm_dry_days_from_orig_pi_control(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+#     p_.regrid_from_post(method="con")
+#     p_.iav20_after_regrid_from_post()
+#     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
 
 
-def mrso_smdd():
-
-    p_ = SMDryDaysZhangFromOrig(conf.cmip6, "Lmon", "mrso", "SMdd_q10")
-    p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice"])
-    p_.sm_dry_days_from_orig(mask_out=["ocean", "landice"])
-    p_.sm_dry_days_from_orig_pi_control(mask_out=["ocean", "landice"])
-    p_.regrid_from_post(method="con")
-    p_.iav20_after_regrid_from_post()
-    p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
+# def mrso_smdd_intensity():
+#
+#     # "_intensity" is added to the postprocess name!
+#     p_ = SMDryDaysIntensityZhangFromOrig(conf.cmip6, "Lmon", "mrso", "SMdd_q10")
+#     # get this from mrso_smdd!
+#     # p_.sm_dry_days_clim_from_orig(mask_out=["ocean", "landice"])
+#
+#     p_.sm_dry_days_intensity_from_orig(mask_out=["ocean", "landice"])
+#     p_.sm_dry_days_intensity_from_orig_pi_control(mask_out=["ocean", "landice"])
+#     p_.regrid_from_post(method="con")
+#     p_.iav20_after_regrid_from_post()
+#     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
 
 
 # =============================================================================
@@ -591,7 +691,7 @@ def mrso_smdd():
 def mrsos():
 
     p_ = NoTransform(conf.cmip6, table="Lmon", varn="mrsos", postprocess_name="sm")
-    p_.no_transform_from_orig(mask_out=["ocean", "landice"])
+    p_.no_transform_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
     p_.regrid_from_post(method="con")
     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
 
@@ -599,8 +699,10 @@ def mrsos():
 def mrsos_annmean():
 
     p_ = ResampleAnnual(conf.cmip6, "Lmon", "mrsos", "mean", "sm_annmean")
-    p_.annual_from_orig(mask_out=["ocean", "landice"])
-    p_.annual_from_orig_pi_control(mask_out=["ocean", "landice"])
+    p_.annual_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+    p_.annual_from_orig_pi_control(
+        mask_out=["ocean", "landice", "antarctica", GREENLAND]
+    )
     p_.regrid_from_post(method="con")
     p_.iav20_after_regrid_from_post()
     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
@@ -683,6 +785,7 @@ def main(args=None):
         "tos_globmean": tos_globmean,
         "tas_annmean": tas_annmean,
         "tas_monthly": tas_monthly,
+        "tas_summer_months": tas_summer_months,
         "pr_annmean": pr_annmean,
         "pr_monthly": pr_monthly,
         "txx": txx,
@@ -697,9 +800,11 @@ def main(args=None):
         "rx30day": rx30day,
         "cdd": cdd,
         "mrso": mrso,
+        # "mrso_dry_months": mrso_dry_months,
         "mrso_annmean": mrso_annmean,
-        "mrso_smdd": mrso_smdd,
-        "mrso_smdd_day": mrso_smdd_day,
+        # "mrso_smdd": mrso_smdd,
+        # "mrso_smdd_intensity": mrso_smdd_intensity,
+        # "mrso_smdd_day": mrso_smdd_day,
         "mrsos": mrsos,
         "mrsos_annmean": mrsos_annmean,
         "seaice_any_annual": seaice_any_annual,
