@@ -1,12 +1,239 @@
+import copy
+import logging
+from importlib import reload
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib as mpl
+import matplotlib.hatch
 import matplotlib.pyplot as plt
 import mplotutils as mpu
 import numpy as np
 import xarray as xr
+from matplotlib.path import Path
 
 from . import computation
+
+
+class SmallXHatch(mpl.hatch.Shapes):
+    """
+    Custom hatches defined by a path drawn inside [-0.5, 0.5] square.
+    Identifier 'c'.
+    """
+
+    # create a x
+    p = 0.25
+    verts = [
+        (-p, -p),  # left, bottom
+        (p, p),  # right, top
+        (-p, p),  # left, top
+        (p, -p),  # right, bottom
+        (0.0, 0.0),  # ignored
+    ]
+
+    codes = [
+        Path.MOVETO,
+        Path.LINETO,
+        Path.MOVETO,
+        Path.LINETO,
+        Path.CLOSEPOLY,
+    ]
+
+    path = Path(verts, codes)
+
+    filled = True
+    size = 1
+
+    def __init__(self, hatch, density):
+        self.num_rows = (hatch.count("c")) * density
+        self.shape_vertices = self.path.vertices
+        self.shape_codes = self.path.codes
+        super().__init__(hatch, density)
+
+
+#
+#     def set_vertices_and_codes(self, vertices, codes):
+#         offset = 1.0 / self.num_rows
+#         shape_vertices = self.shape_vertices * offset * self.size
+#         if not self.filled:
+#             inner_vertices = shape_vertices[::-1] * 0.9
+#         shape_codes = self.shape_codes
+#         shape_size = len(shape_vertices)
+#
+#         cursor = 0
+#         for row in range(self.num_rows + 1):
+#             if row % 2 == 0:
+#                 cols = np.linspace(0, 1, self.num_rows + 1)
+#             else:
+#                 cols = (
+#                     np.linspace(offset / 2, 1 - offset / 2, self.num_rows) + offset / 2
+#                 )
+#             row_pos = row * offset
+#             for col_pos in cols:
+#                 vertices[cursor : cursor + shape_size] = shape_vertices + (
+#                     col_pos,
+#                     row_pos,
+#                 )
+#                 codes[cursor : cursor + shape_size] = shape_codes
+#                 cursor += shape_size
+#                 if not self.filled:
+#                     vertices[cursor : cursor + shape_size] = inner_vertices + (
+#                         col_pos,
+#                         row_pos,
+#                     )
+#                     codes[cursor : cursor + shape_size] = shape_codes
+#                     cursor += shape_size
+#
+mpl.hatch._hatch_types.append(SmallXHatch)
+
+
+class TextHandler(mpl.legend_handler.HandlerBase):
+    """custom legend handler for text
+
+    Example
+    -------
+    ax = plt.gca()
+
+    tx1 = ax.text(
+        x=np.nan,
+        y=np.nan,
+        s=r"Color",    # text in the handle
+        size=9,        # font size in the handle
+        label="label", # label
+        # box around the handle
+        bbox=dict(ec="k", fc="0.9", lw=0.5, pad=0),
+    )
+
+    # need to increase the handle size
+    ax.legend(
+        handles=[tx1],
+        handler_map={type(tx1): TextHandler()},
+        fontsize=12,
+        handleheight=1,
+        handlelength=2,
+    )
+
+    """
+
+    def create_artists(
+        self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans
+    ):
+
+        # create a Rectangle with the bbox props
+        # because a Text artist cannot be sized
+        bbox = orig_handle.get_bbox_patch()
+        if bbox is not None:
+
+            p = mpl.patches.Rectangle(
+                xy=(-xdescent, -ydescent), width=width, height=height
+            )
+            p.update_from(bbox)
+            p.set_label(orig_handle.get_label())
+            p.set_transform(trans)
+
+        # add the text to the box
+        h = copy.copy(orig_handle)
+        h.set_position((-xdescent + width / 2.0, -ydescent + height / 2))
+
+        h.set_transform(trans)
+        h.set_ha("center")
+        h.set_va("center")
+        h.set_bbox(None)  # dict(ec="0.1", fc="none"))
+
+        fp = orig_handle.get_font_properties().copy()
+        h.set_font_properties(fp)
+
+        if bbox is None:
+            return [h]
+        return [p, h]
+
+
+def text_legend(ax, s, label, size=8, ec="0.1", fc="none", lw=0.5):
+    """add a text-legend entry
+
+    Parameters
+    ----------
+    ax : Axes
+        Axes to add the legend entry to
+    s : str
+        Text to display in the legend artist.
+    label : str
+        Legend entry
+    size : int
+        Fontsize
+    ec : color, default "0.1"
+        Edgecolor of the bounding box
+    fc : color, default "none"
+        Facecolor of the bounding box
+    lw : float
+        linewidth
+
+    Returns
+    -------
+    legend_handle : legend_handle
+    """
+
+    # the logger prints the warning :-(
+    mpl_logger = logging.getLogger("matplotlib.text")
+    mpl_logger.setLevel(logging.ERROR)
+
+    h = ax.text(
+        x=np.nan,
+        y=np.nan,
+        s=s,
+        size=size,
+        label=label,
+        bbox=dict(ec=ec, fc=fc, lw=lw),
+    )
+
+    return h
+
+
+def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
+
+    legend_handle = mpl.patches.Patch(
+        facecolor="none",
+        ec=color,
+        lw=linewidth,
+        hatch=hatch,
+        label=label,
+    )
+
+    mn = da.min().item()
+    mx = da.max().item()
+
+    if mx > 1 or mn < 0:
+        raise ValueError("Expected da in 0..1, got {mn}..{mx}")
+
+    # contourf has trouble if no gridcell is True
+    if da.sum() == 0:
+        return legend_handle
+
+    # ~ does only work for bool dtype
+    if invert:
+        da = np.abs(da - 1)
+
+    da = mpu.cyclic_dataarray(da)
+
+    # plot "True"
+    levels = [0.95, 1.05]
+    hatches = [hatch, ""]
+
+    mpl.rcParams["hatch.linewidth"] = linewidth
+    mpl.rcParams["hatch.color"] = color
+
+    # with mpl.rc_context({"hatch.linewidth": linewidth, "hatch.color": color}):
+    da.plot.contourf(
+        ax=ax,
+        levels=levels,
+        hatches=hatches,
+        colors="none",
+        extend="neither",
+        transform=ccrs.PlateCarree(),
+        add_colorbar=False,
+    )
+
+    return legend_handle
 
 
 def map_subplots(
@@ -46,9 +273,11 @@ def one_map_flat(
     levels=None,
     mask_ocean=False,
     ocean_kws=None,
-    skipna=None,
     add_coastlines=True,
     coastline_kws=None,
+    add_land=False,
+    land_kws=None,
+    plotfunc="pcolormesh",
     **kwargs,
 ):
     opt = dict(
@@ -61,23 +290,32 @@ def one_map_flat(
     # allow to override the defaults
     opt.update(kwargs)
 
-    if ocean_kws is None:
-        ocean_kws = dict(color="w", zorder=1.1)
+    if land_kws is None:
+        land_kws = dict(fc="0.8", ec="none")
 
     if coastline_kws is None:
-        coastline_kws = dict(color="0.1", lw=1, zorder=1.2)
+        coastline_kws = dict()
+
+    if add_land:
+        ax.add_feature(cfeature.LAND, **land_kws)
+
+    if "contour" in plotfunc:
+        opt.pop("rasterized", None)
+        da = mpu.cyclic_dataarray(da)
+        plotfunc = getattr(da.plot, plotfunc)
+    elif plotfunc == "pcolormesh":
+        plotfunc = getattr(da.plot, plotfunc)
+    else:
+        raise ValueError(f"unkown plotfunc: {plotfunc}")
+
+    h = plotfunc(ax=ax, **opt)
 
     if mask_ocean:
-        NEF = cfeature.NaturalEarthFeature
-        OCEAN = NEF("physical", "ocean", "110m")
-
-    h = da.plot(ax=ax, **opt)
-
-    if mask_ocean:
-        ax.add_feature(OCEAN, **ocean_kws)
+        ocean_kws = {} if ocean_kws is None else ocean_kws
+        _mask_ocean(ax, **ocean_kws)
 
     if add_coastlines:
-        ax.coastlines(**coastline_kws)
+        coastlines(ax, **coastline_kws)
 
     s = ax.spines["geo"]
     s.set_lw(0.5)
@@ -86,6 +324,21 @@ def one_map_flat(
     ax.set_global()
 
     return h
+
+
+def mask_ocean(ax, color="w", zorder=1.1, **kwargs):
+
+    NEF = cfeature.NaturalEarthFeature
+    OCEAN = NEF("physical", "ocean", "110m")
+    ax.add_feature(OCEAN, color=color, zorder=zorder, **kwargs)
+
+
+# to use in one_map_flat so the name does not get shadowed
+_mask_ocean = mask_ocean
+
+
+def coastlines(ax, color="0.1", lw=1, zorder=1.2, **kwargs):
+    ax.coastlines(color=color, lw=lw, zorder=zorder, *kwargs)
 
 
 def one_map(
@@ -99,14 +352,18 @@ def one_map(
     skipna=None,
     add_coastlines=True,
     coastline_kws=None,
+    hatch_simple=None,
+    plotfunc="pcolormesh",
+    add_n_models=True,
     **kwargs,
 ):
 
     func = getattr(da, average)
     d = func(dim, skipna=skipna)
 
-    n = len(da[dim])
-    ax.text(1, 1, f"{n}", va="top", ha="right", transform=ax.transAxes, fontsize=9)
+    if add_n_models:
+        n = len(da[dim])
+        ax.text(1, 1, f"{n}", va="top", ha="right", transform=ax.transAxes, fontsize=9)
 
     h = one_map_flat(
         d,
@@ -114,13 +371,203 @@ def one_map(
         levels=levels,
         mask_ocean=mask_ocean,
         ocean_kws=ocean_kws,
-        skipna=skipna,
         add_coastlines=add_coastlines,
         coastline_kws=coastline_kws,
+        plotfunc=plotfunc,
         **kwargs,
     )
 
-    return h
+    if hatch_simple is not None:
+        from . import iav as iav_utils
+
+        reload(iav_utils)
+        reload(iav_utils)
+        reload(iav_utils)
+
+        consistent_change = iav_utils._get_same_sign(da, hatch_simple, dim=dim)
+        # we don't want to hatch Na
+        all_notnull = da.notnull().all(dim)
+
+        consistent_change = consistent_change.where(all_notnull)
+
+        legend_handle = hatch_map(
+            ax,
+            consistent_change,
+            8 * "/",
+            label="Lack of model agreement",
+            invert=True,
+            linewidth=0.25,
+            color="0.1",
+        )
+        return h, legend_handle
+
+    return h, None
+
+
+def one_map_hatched(
+    da,
+    iav,
+    ax,
+    average,
+    da_abs=None,
+    add_hatch=True,
+    dim="mod_ens",
+    levels=None,
+    mask_ocean=False,
+    ocean_kws=None,
+    skipna=None,
+    add_coastlines=True,
+    coastline_kws=None,
+    plotfunc="pcolormesh",
+    **kwargs,
+):
+
+    from . import iav as iav_utils
+
+    reload(iav_utils)
+    reload(iav_utils)
+    reload(iav_utils)
+
+    data_iav_aligned = iav_utils.align_for_iav(iav, da, da_abs=da_abs)
+
+    h, __ = one_map(
+        data_iav_aligned.da,
+        ax,
+        average,
+        dim=dim,
+        levels=levels,
+        mask_ocean=mask_ocean,
+        ocean_kws=ocean_kws,
+        skipna=skipna,
+        add_coastlines=add_coastlines,
+        coastline_kws=coastline_kws,
+        plotfunc=plotfunc,
+        **kwargs,
+    )
+
+    if add_hatch:
+        da_abs = data_iav_aligned.da_abs
+        da_abs = da_abs if da_abs is not None else data_iav_aligned.da
+
+        legend_handle = iav_utils.add_signif_sign_hatch(
+            ax, da_abs, data_iav_aligned.iav
+        )
+        return h, legend_handle
+
+    return h, None
+
+
+def at_warming_level_one_hatch(
+    at_warming_c,
+    iav,
+    unit,
+    title,
+    levels,
+    average,
+    da_abs=None,
+    add_hatch=True,
+    mask_ocean=False,
+    colorbar=True,
+    ocean_kws=None,
+    skipna=None,
+    add_legend=False,
+    plotfunc="pcolormesh",
+    **kwargs,
+):
+
+    if len(at_warming_c) != 3 or (da_abs is not None and len(da_abs) != 3):
+        raise ValueError("wrong size!")
+
+    if average != "mean":
+        title += f" – {average}"
+
+    f, axes = plt.subplots(1, 3, subplot_kw=dict(projection=ccrs.Robinson()))
+
+    axes = axes.flatten()
+
+    for i in range(3):
+        da_abs_ = None if da_abs is None else da_abs[i]
+        h, legend_handles = one_map_hatched(
+            da=at_warming_c[i],
+            iav=iav,
+            ax=axes[i],
+            average=average,
+            da_abs=da_abs_,
+            levels=levels,
+            mask_ocean=mask_ocean,
+            ocean_kws=ocean_kws,
+            skipna=skipna,
+            add_hatch=add_hatch,
+            plotfunc=plotfunc,
+            **kwargs,
+        )
+
+    for ax in axes:
+        # ax.coastlines(zorder=4, lw=0.5)
+        ax.set_global()
+
+    if colorbar:
+        factor = 0.66 if add_legend else 1
+        ax2 = axes[1] if add_legend else axes[2]
+
+        cbar = mpu.colorbar(
+            h,
+            axes[0],
+            ax2,
+            # aspect=30 * factor,
+            size=0.15,
+            shrink=0.25 * factor,
+            orientation="horizontal",
+            pad=0.1,
+        )
+        cbar.set_label(unit, labelpad=1, size=9)
+        cbar.ax.tick_params(labelsize=9)  # , length=0)
+
+    axes[0].set_title("At 1.5°C global warming", fontsize=9, pad=4)
+    axes[1].set_title("At 2.0°C global warming", fontsize=9, pad=4)
+    axes[2].set_title("At 4.0°C global warming", fontsize=9, pad=4)
+
+    # axes[0].set_title("Tglob anomaly +1.5 °C", fontsize=9, pad=2)
+    # axes[1].set_title("Tglob anomaly +2.0 °C", fontsize=9, pad=2)
+    # axes[2].set_title("Tglob anomaly +4.0 °C", fontsize=9, pad=2)
+
+    if add_legend and (not colorbar or not add_hatch):
+        raise ValueError("Can only add legend when colorbar and add_hatch is True")
+
+    if add_legend:
+
+        axes[2].legend(
+            handles=legend_handles,
+            handlelength=2.4,
+            handleheight=1.3,
+            loc="lower center",
+            bbox_to_anchor=(0.45, -0.6),
+            fontsize=8.5,
+            borderaxespad=0,
+            frameon=True,
+            handler_map={mpl.text.Text: TextHandler()},
+            ncol=1,
+        )
+
+    side = 0.01
+    if colorbar:
+        f.suptitle(title, fontsize=9, y=0.975)
+        plt.subplots_adjust(
+            wspace=0.025, left=side, right=1 - side, bottom=0.31, top=0.81
+        )
+
+    else:
+        f.suptitle(title, fontsize=9, y=0.975)
+        plt.subplots_adjust(
+            wspace=0.025, left=side, right=1 - side, bottom=0.09, top=0.77
+        )
+
+    mpu.set_map_layout(axes, width=18)
+
+    f.canvas.draw()
+
+    if colorbar:
+        return cbar
 
 
 def at_warming_level_one(
@@ -133,6 +580,9 @@ def at_warming_level_one(
     colorbar=True,
     ocean_kws=None,
     skipna=None,
+    hatch_simple=None,
+    add_legend=False,
+    plotfunc="pcolormesh",
     **kwargs,
 ):
 
@@ -145,62 +595,100 @@ def at_warming_level_one(
 
     for i in range(3):
 
-        h = one_map(
-            at_warming_c[i],
-            axes[i],
-            average,
+        h, legend_handle = one_map(
+            da=at_warming_c[i],
+            ax=axes[i],
+            average=average,
             levels=levels,
             mask_ocean=mask_ocean,
             ocean_kws=ocean_kws,
             skipna=skipna,
+            hatch_simple=hatch_simple,
+            plotfunc=plotfunc,
             **kwargs,
         )
 
     for ax in axes:
-        ax.coastlines(zorder=4, lw=0.5)
+        # ax.coastlines(zorder=4, lw=0.5)
         ax.set_global()
 
     if colorbar:
+        factor = 0.66 if add_legend else 1
+        ax2 = axes[1] if add_legend else axes[2]
+
         cbar = mpu.colorbar(
             h,
             axes[0],
-            axes[2],
-            aspect=30,
-            shrink=0.4,
+            ax2,
+            # aspect=30 * factor,
+            size=0.15,
+            shrink=0.25 * factor,
             orientation="horizontal",
-            pad=0.075,
+            pad=0.1,
         )
-        cbar.set_label(unit, labelpad=1)
-        cbar.ax.tick_params(labelsize=9, length=0)
+        cbar.set_label(unit, labelpad=1, size=9)
+        cbar.ax.tick_params(labelsize=9)  # , length=0)
+
+    if add_legend and (not colorbar or hatch_simple is None):
+        raise ValueError("Can only add legend when colorbar and add_hatch is True")
+
+    if add_legend:
+
+        h0 = text_legend(ax, "Color", "High model agreement", size=7)
+
+        axes[2].legend(
+            handles=[h0, legend_handle],
+            # handlelength=2,
+            # handleheight=1.25,
+            handlelength=2.4,
+            handleheight=1.3,
+            loc="lower center",
+            bbox_to_anchor=(0.5, -0.45),
+            fontsize=8.5,
+            borderaxespad=0,
+            frameon=True,
+            handler_map={mpl.text.Text: TextHandler()},
+            ncol=1,
+        )
 
     axes[0].set_title("At 1.5°C global warming", fontsize=9, pad=4)
     axes[1].set_title("At 2.0°C global warming", fontsize=9, pad=4)
     axes[2].set_title("At 4.0°C global warming", fontsize=9, pad=4)
 
+    axes[0].set_title("(a)", fontsize=9, pad=4, loc="left")
+    axes[1].set_title("(b)", fontsize=9, pad=4, loc="left")
+    axes[2].set_title("(c)", fontsize=9, pad=4, loc="left")
+
     # axes[0].set_title("Tglob anomaly +1.5 °C", fontsize=9, pad=2)
     # axes[1].set_title("Tglob anomaly +2.0 °C", fontsize=9, pad=2)
     # axes[2].set_title("Tglob anomaly +4.0 °C", fontsize=9, pad=2)
 
-    side = 0.025
+    side = 0.01
     if colorbar:
-        f.suptitle(title, fontsize=11, y=0.975)
+        f.suptitle(title, fontsize=9, y=0.975)
         plt.subplots_adjust(
-            wspace=0.075, left=side, right=1 - side, bottom=0.315, top=0.81
+            wspace=0.025, left=side, right=1 - side, bottom=0.3, top=0.82
         )
 
     else:
-        f.suptitle(title, fontsize=11, y=0.975)
+        f.suptitle(title, fontsize=9, y=0.975)
         plt.subplots_adjust(
-            wspace=0.075, left=side, right=1 - side, bottom=0.09, top=0.77
+            wspace=0.025, left=side, right=1 - side, bottom=0.08, top=0.77
         )
 
-    mpu.set_map_layout(axes)
+    mpu.set_map_layout(axes, width=18)
 
     f.canvas.draw()
 
     if colorbar:
         return cbar
 
+
+# ======================================================================================
+# ======================================================================================
+# ======================================================================================
+# ======================================================================================
+# ======================================================================================
 
 # UNUSED?
 
@@ -278,7 +766,7 @@ def at_warming_level(
 
     plt.subplots_adjust(wspace=0.075, left=0.05, right=1 - 0.025, bottom=0.15, top=0.9)
 
-    mpu.set_map_layout(axes)
+    mpu.set_map_layout(axes, width=18)
 
     f.canvas.draw()
 
@@ -417,7 +905,7 @@ def at_warming_level_diff(
         wspace=0.075, left=0.05, right=1 - 0.025, bottom=0.175, top=0.875
     )
 
-    mpu.set_map_layout(axes)
+    mpu.set_map_layout(axes, width=18)
 
     f.canvas.draw()
 
