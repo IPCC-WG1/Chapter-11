@@ -26,6 +26,51 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
         return True
 
 
+def calc_anomaly_wrt_warming_level(
+    tas_list,
+    index_list,
+    warming_level,
+    how="absolute",
+    skipna=None,
+    select_by=("model", "exp", "ens"),
+):
+
+    out = list()
+
+    # loop through all global mean temperatures
+    for tas, metadata in tas_list:
+        attributes = {key: metadata[key] for key in select_by}
+
+        # try to find the index
+        index = select_by_metadata(index_list, **attributes)
+
+        # make sure only one dataset is found in index_list
+        if len(index) > 1:
+            raise ValueError("Found more than one dataset:\n", metadata)
+
+        # an index was found for this tas dataset
+        if index:
+
+            # determine year when the warming was first reached
+            beg, end, __ = calc_year_of_warming_level(tas.tas, warming_level)
+
+            if beg:
+
+                index = calc_anomaly(
+                    index,
+                    beg,
+                    end,
+                    how=how,
+                    skipna=skipna,
+                    metadata=metadata,
+                    at_least_until=None,
+                )
+
+                out.append([index, metadata])
+
+    return out
+
+
 def calc_anomaly(
     ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None
 ):
@@ -35,16 +80,17 @@ def calc_anomaly(
     ----------
     ds : xarray Dataset or DataArray
         Data that needs to be normalized
-    start : integer
+    start : int
         Start year of the reference period.
-    end : integer
+    end : int
         End year of the reference period.
     how : "absolute" | "relative" | "norm" | "no_anom"
-        Method to calculate the anomaly. Default "absolute".
+        Method to calculate the anomaly. Default "absolute". Prepend "no_check_" to
+        avoid the time bounds check.
     """
 
     check_time_bounds = True
-    if how.startswith("no_check"):
+    if how.startswith("no_check_"):
         check_time_bounds = False
         how = how.replace("no_check_", "")
 
@@ -58,11 +104,11 @@ def calc_anomaly(
     # (groupby('time.year').mean('year'))
     if "year" in ds.dims:
         years = ds.year
-        time_str = "year"
+        dim = "year"
     else:
         years = ds.time.dt.year
         start, end = str(start), str(end)
-        time_str = "time"
+        dim = "time"
 
     # check if time series spans reference period
     yr_min, yr_max = years.min(), years.max()
@@ -76,17 +122,17 @@ def calc_anomaly(
     ):
         return []
 
-    selector = {time_str: slice(start, end)}
+    selector = {dim: slice(start, end)}
 
     # require at least one year of data even when doing no check
-    if not check_time_bounds and len(ds.sel(**selector)[time_str]) == 0:
+    if not check_time_bounds and len(ds.sel(**selector)[dim]) == 0:
         return []
 
     if how != "no_anom":
-        mean = ds.sel(**selector).mean(time_str, skipna=skipna)
+        mean = ds.sel(**selector).mean(dim, skipna=skipna)
 
     if how == "norm":
-        std = ds.sel(**selector).std(time_str, skipna=skipna)
+        std = ds.sel(**selector).std(dim, skipna=skipna)
 
     if how == "no_anom":
         return ds
@@ -98,10 +144,13 @@ def calc_anomaly(
         return (ds - mean) / std
 
 
-def calc_year_of_warming_level(anomalies, warming_level):
+def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
     # calculate the start and end year of period of first exceedance
 
-    anomalies = anomalies.rolling(year=20, center=True).mean()
+    if n_years % 2 != 0:
+        raise ValueError(f"n_years must be an even integer, found {n_years}")
+
+    anomalies = anomalies.rolling(year=n_years, center=True).mean()
 
     # find years warmer than 'warming_level'
     sel = anomalies - warming_level > 0.0
@@ -115,8 +164,8 @@ def calc_year_of_warming_level(anomalies, warming_level):
 
     central_year = anomalies.isel(year=idx).year.values
 
-    beg = int(central_year - 20 / 2)
-    end = int(central_year + (20 / 2 - 1))
+    beg = int(central_year - n_years / 2)
+    end = int(central_year + (n_years / 2 - 1))
 
     return beg, end, central_year
 
@@ -188,6 +237,8 @@ def at_warming_levels_list(
     select_by=("model", "exp", "ens"),
     factor=None,
     skipna=None,
+    as_datalist=False,
+    n_years=20,
 ):
     """compute value of index at a several warming levels
 
@@ -213,6 +264,8 @@ def at_warming_levels_list(
             reduce=reduce,
             select_by=select_by,
             skipna=skipna,
+            as_datalist=as_datalist,
+            n_years=n_years,
         )
 
         if factor is not None:
@@ -232,6 +285,8 @@ def at_warming_levels_dict(
     select_by=("model", "exp", "ens"),
     factor=None,
     skipna=None,
+    as_datalist=False,
+    n_years=20,
 ):
     """compute value of index at a several warming levels
 
@@ -257,6 +312,8 @@ def at_warming_levels_dict(
             reduce=reduce,
             select_by=select_by,
             skipna=skipna,
+            as_datalist=as_datalist,
+            n_years=n_years,
         )
 
         if factor is not None:
@@ -275,6 +332,8 @@ def at_warming_level(
     reduce="mean",
     select_by=("model", "exp", "ens"),
     skipna=None,
+    as_datalist=False,
+    n_years=20,
 ):
     """compute value of index at a certain warming level
 
@@ -292,10 +351,6 @@ def at_warming_level(
     """
 
     out = list()
-    models = list()
-    ens = list()
-    exp = list()
-
     # loop through all global mean temperatures
     for tas, metadata in tas_list:
 
@@ -312,9 +367,9 @@ def at_warming_level(
         if index:
 
             # determine year when the warming was first reached
-            beg, end, center = calc_year_of_warming_level(tas.tas, warming_level)
-
-            # print(f"{beg} -- {end} {metadata['exp']} {metadata['model']} {metadata['ens']}")
+            beg, end, center = calc_year_of_warming_level(
+                tas.tas, warming_level, n_years=n_years
+            )
 
             if beg:
                 ds_idx = index[0][0]
@@ -331,25 +386,21 @@ def at_warming_level(
                     # drop year to enable concatenating
                     idx = idx.drop_vars("year")
 
-                models.append(metadata["model"])
-                ens.append(metadata["ens"])
-                exp.append(metadata["exp"])
-
-                out.append(idx)
+                out.append([idx, metadata_idx])
 
     if not out:
         return []
 
-    out = xr.concat(out, dim="mod_ens", coords="minimal", compat="override")
+    if as_datalist:
+        return out
 
     if add_meta:
-        out = out.assign_coords(
-            model=("mod_ens", models), ens=("mod_ens", ens), exp=("mod_ens", exp)
-        )
-    return out
+        return concat_xarray_with_metadata(out)
+    else:
+        return concat_xarray_without_metadata(out)
 
 
-def time_average(index_list, beg, end, reduce="mean", skipna=None):
+def time_average(index_list, beg, end, reduce="mean", skipna=None, as_datalist=False):
     def _inner(ds, meta, beg, end, reduce, skipna):
 
         da = ds[meta["varn"]]
@@ -359,9 +410,6 @@ def time_average(index_list, beg, end, reduce="mean", skipna=None):
         if reduce is not None:
             # calculate mean
             da = getattr(da, reduce)("year", skipna=skipna)
-        else:
-            # drop year to enable concatenating
-            da = da.drop_vars("year")
 
         return da
 
@@ -375,6 +423,9 @@ def time_average(index_list, beg, end, reduce="mean", skipna=None):
         skipna=skipna,
     )
 
+    if as_datalist:
+        return index_list
+
     return concat_xarray_with_metadata(
         index_list,
         set_index=False,
@@ -386,12 +437,11 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
     out_a = list()
     out_b = list()
 
-    # loop through all global mean temperatures
     for ds_a, metadata in list_a:
 
         attributes = {key: metadata[key] for key in select_by}
 
-        # try to find the index
+        # try to find the in list_b
         match = select_by_metadata(list_b, **attributes)
 
         # make sure only one dataset is found in index_list
@@ -399,7 +449,7 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
             print(match)
             raise ValueError(metadata)
 
-        # an index was found for this tas dataset
+        # an index was found for this dataset
         if match:
             out_a += [[ds_a, metadata]]
             out_b += match
@@ -427,7 +477,7 @@ def concat_xarray_with_metadata(
     datalist,
     process=None,
     index={"mod_ens": ("model", "ens")},
-    retain=("model", "ens", "ensnumber", "exp"),
+    retain=("model", "ens", "ensnumber", "exp", "postprocess", "table", "grid", "varn"),
     set_index=False,
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
@@ -453,11 +503,16 @@ def concat_xarray_with_metadata(
 
         retain_dict["ensi"][1].append(i)
         for r in retain[:-1]:
-            retain_dict[r][1].append(metadata[r])
+            retain_dict[r][1].append(metadata.get(r, None))
 
     # concate all data
     out = xr.concat(all_ds, "mod_ens", compat="override", coords="minimal")
     # assign coordinates
+
+    # def all_none(lst):
+    #     return np.vectorize(lambda x: x is None)(lst).all()
+    # retain_dict = {key: val for key, val in retain_dict.items() if not all_none(val)}
+
     out = out.assign_coords(**retain_dict)
 
     index = {"mod_ens": retain}
@@ -474,8 +529,7 @@ def concat_xarray_without_metadata(datalist, process=None):
 
     Input
     -----
-    data : nested dict
-
+    datalist : datalist
 
     """
 
