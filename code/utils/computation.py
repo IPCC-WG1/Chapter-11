@@ -1,7 +1,7 @@
 import xarray as xr
 
 
-def time_in_range(start, end, yr_min, yr_max, metadata):
+def time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
     """determine if start--end is in time vector"""
 
     if (start < yr_min) or (end > yr_max):
@@ -19,7 +19,8 @@ def time_in_range(start, end, yr_min, yr_max, metadata):
 
             msg = f" -- {metadata}: " + msg
 
-        print(msg)
+        if not quiet:
+            print(msg)
 
         return False
     else:
@@ -72,7 +73,7 @@ def calc_anomaly_wrt_warming_level(
 
 
 def calc_anomaly(
-    ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None
+    ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None, quiet=False
 ):
     """calc anomaly of dataset
 
@@ -113,12 +114,12 @@ def calc_anomaly(
     # check if time series spans reference period
     yr_min, yr_max = years.min(), years.max()
     if check_time_bounds and not time_in_range(
-        int(start), int(end), yr_min, yr_max, metadata=metadata
+        int(start), int(end), yr_min, yr_max, metadata=metadata, quiet=quiet
     ):
         return []
 
     if at_least_until is not None and not time_in_range(
-        int(at_least_until), int(at_least_until), yr_min, yr_max, metadata=metadata
+        int(at_least_until), int(at_least_until), yr_min, yr_max, metadata=metadata, quiet=quiet
     ):
         return []
 
@@ -287,6 +288,7 @@ def at_warming_levels_dict(
     skipna=None,
     as_datalist=False,
     n_years=20,
+    **kwargs,
 ):
     """compute value of index at a several warming levels
 
@@ -314,6 +316,7 @@ def at_warming_levels_dict(
             skipna=skipna,
             as_datalist=as_datalist,
             n_years=n_years,
+            **kwargs,
         )
 
         if factor is not None:
@@ -334,6 +337,7 @@ def at_warming_level(
     skipna=None,
     as_datalist=False,
     n_years=20,
+    **kwargs,
 ):
     """compute value of index at a certain warming level
 
@@ -381,7 +385,7 @@ def at_warming_level(
 
                 if reduce is not None:
                     # calculate mean
-                    idx = getattr(idx, reduce)("year", skipna=skipna)
+                    idx = getattr(idx, reduce)("year", skipna=skipna, **kwargs)
                 else:
                     # drop year to enable concatenating
                     idx = idx.drop_vars("year")
@@ -400,7 +404,7 @@ def at_warming_level(
         return concat_xarray_without_metadata(out)
 
 
-def time_average(index_list, beg, end, reduce="mean", skipna=None, as_datalist=False):
+def time_average(index_list, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs):
     def _inner(ds, meta, beg, end, reduce, skipna):
 
         da = ds[meta["varn"]]
@@ -409,7 +413,7 @@ def time_average(index_list, beg, end, reduce="mean", skipna=None, as_datalist=F
 
         if reduce is not None:
             # calculate mean
-            da = getattr(da, reduce)("year", skipna=skipna)
+            da = getattr(da, reduce)("year", skipna=skipna, **kwargs)
 
         return da
 
