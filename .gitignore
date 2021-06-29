@@ -13,7 +13,7 @@ cmip_temperatures/*
 diagram_EA_method
 for_isort.py
 
-*/dask-worker-space/*
+dask-worker-space
 
 data/*
 
