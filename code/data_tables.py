@@ -6,11 +6,21 @@ import conf
 
 
 def save_simulation_info_raw(
-    fN, da, iav=None, panel="", add_historical=True, add_tas=True
+    fN,
+    da,
+    iav=None,
+    panel="",
+    add_historical=True,
+    add_tas=True,
+    override=None,
 ):
 
     df = _create_simulations_df(
-        da, iav=iav, add_historical=add_historical, add_tas=add_tas
+        da,
+        iav=iav,
+        add_historical=add_historical,
+        add_tas=add_tas,
+        override=override,
     )
 
     df["panel"] = panel
@@ -21,7 +31,9 @@ def save_simulation_info_raw(
         yaml.safe_dump(metas, f)
 
 
-def _create_simulations_df(da, iav=None, add_historical=True, add_tas=True):
+def _create_simulations_df(
+    da, iav=None, add_historical=True, add_tas=True, override=None
+):
 
     from utils.iav import align_for_iav
 
@@ -31,7 +43,7 @@ def _create_simulations_df(da, iav=None, add_historical=True, add_tas=True):
         da = aligned.da
         iav = aligned.iav_used_models
 
-    df = _create_df(da)
+    df = _create_df(da, override)
 
     if add_historical:
         df = _add_historical(df)
@@ -54,7 +66,7 @@ def _create_simulations_df(da, iav=None, add_historical=True, add_tas=True):
     return df
 
 
-def _create_df(da):
+def _create_df(da, override):
     """turn model info coordinates to a pd.DataFrame"""
 
     keys = ("model", "ens", "exp", "postprocess", "table", "grid", "varn")
@@ -64,6 +76,10 @@ def _create_df(da):
     dr = {key: da[key].values for key in common_keys}
 
     df = pd.DataFrame.from_dict(dr)
+
+    if override is not None:
+        for key, value in override.items():
+            df[key] = value
 
     return df
 
@@ -108,9 +124,7 @@ def _add_for_all(df, **kwargs):
     return df_to_add
 
 
-def find_cmip6_info_post(meta):
-
-    # ds = conf.cmip6.load_post(**meta)
+def _load_post(meta, conf_cmip):
 
     meta_files = meta.copy()
     meta_files.pop("panel", None)
@@ -118,7 +132,7 @@ def find_cmip6_info_post(meta):
     if any("*" in value for value in meta_files.values()):
 
         try:
-            files = conf.cmip6.load_post_all(
+            files = conf_cmip.load_post_all(
                 anomaly=None,
                 at_least_until=None,
                 year_mean=False,
@@ -127,7 +141,6 @@ def find_cmip6_info_post(meta):
         except ValueError:
             print(meta_files)
             raise
-
         if len(files) != 1:
             msg = f"Fond {len(files)} simulation for:\n{meta}"
             raise ValueError(msg)
@@ -138,10 +151,17 @@ def find_cmip6_info_post(meta):
         meta["grid"] = mta["grid"]
 
     else:
-        ds = conf.cmip6.load_post(**meta_files)
+        ds = conf_cmip.load_post(**meta_files)
+
+    return ds, meta
+
+
+def find_cmip6_info_post(meta):
+
+    ds, meta = _load_post(meta, conf.cmip6)
 
     mip_era = conf.cmip6.cmip.upper()
-    parent_activity_id = ds.attrs["parent_activity_id"]
+    parent_activity_id = ds.attrs["parent_activity_id"].replace(" ", "")
     institution_id = ds.attrs["institution_id"]
     model = meta["model"]
     exp = meta["exp"]
@@ -173,18 +193,74 @@ def find_cmip6_info_post(meta):
     return one + "\n"
 
 
-def _find_cmip6_info_post_all(df_m):
+def find_cmip5_info_post(meta):
+    # DATA_REF_SYNTAX;
+    # CMIP5.output.MOHC.HadCM3.historical;
+
+    # FREQUENCY;MODELING_REALM;TABLE_ID;ENS_MEMBER;VERSION_NO;VAR_NAME;HANDLE;SUBPANEL
+    # mon;atmos;Amon;r8i1p1;None;pr;0bc3c554-f3b0-4d2c-9db8-7979e2bf80ce
+
+    ds, meta = _load_post(meta, conf.cmip5)
+
+    mip_era = conf.cmip5.cmip.upper()
+    product = ds.attrs["product"]
+    institute_id = ds.attrs["institute_id"]
+    model = meta["model"]
+    exp = meta["exp"]
+    data_ref = ".".join([mip_era, product, institute_id, model, exp])
+
+    frequency = ds.attrs["frequency"]
+    modeling_realm = ds.attrs["modeling_realm"]
+    table = meta["table"]
+    ens = meta["ens"]
+    version_no = "none"  # this info is not available in the filename of file
+    varn = meta["varn"]
+    tracking_id = ds.attrs["tracking_id"]
+    panel = meta["panel"]
+
+    one = ";".join(
+        [
+            data_ref,
+            frequency,
+            modeling_realm,
+            table,
+            ens,
+            version_no,
+            varn,
+            tracking_id,
+            panel,
+        ]
+    )
+
+    return one + "\n"
+
+
+HEADER = dict(
+    cmip5="DATA_REF_SYNTAX;FREQUENCY;MODELING_REALM;TABLE_ID;ENS_MEMBER;VERSION_NO;VAR_NAME;HANDLE;SUBPANEL",
+    cmip6="DATA_REF_SYNTAX;SUB_EX_ID;ENS_MEMBER;TABLE_ID;VAR_NAME;GRID_LABEL;VERSION_NO;HANDLE;SUBPANEL\n",
+)
+
+FIND_CMIP_INFO_POST = dict(
+    cmip6=find_cmip6_info_post,
+    cmip5=find_cmip5_info_post,
+)
+
+
+def _find_cmip_info_post_all(df_m, cmip):
+
+    find_cmip_info_post = FIND_CMIP_INFO_POST[cmip]
 
     out = list()
+    out.append(HEADER[cmip])
 
-    header = "DATA_REF_SYNTAX;SUB_EX_ID;ENS_MEMBER;TABLE_ID;VAR_NAME;GRID_LABEL;VERSION_NO;HANDLE;SUBPANEL\n"
-    out.append(header)
+    if cmip == "cmip5":
+        df_m = df_m.drop(columns="grid")
 
     for index, row in df_m.iterrows():
 
         meta = row.to_dict()
 
-        one = find_cmip6_info_post(meta)
+        one = find_cmip_info_post(meta)
         out.append(one)
 
     return out
@@ -212,14 +288,7 @@ def _join_strings(row):
     return ",".join([el for el in row if not pd.isna(el)])
 
 
-def save_cmip6_info_post(fNs, fN_out):
-    data_table = cmip6_info_post_from_file(fNs)
-
-    with open(fN_out, "w") as f:
-        f.writelines(data_table)
-
-
-def cmip6_info_post_from_file(fNs):
+def cmip_info_post_from_file(fNs, cmip):
 
     if isinstance(fNs, str):
         fNs = [fNs]
@@ -241,40 +310,21 @@ def cmip6_info_post_from_file(fNs):
     n = len(df_m)
     print(f"Reading {n} files")
 
-    return _find_cmip6_info_post_all(df_m)
+    return _find_cmip_info_post_all(df_m, cmip=cmip)
 
 
-# df1 = df.iloc[:3].copy()
-# df2 = df.iloc[1:5].copy()
-# df3 = df.iloc[2:5].copy()
-#
-#
-#
-# df1["panel"] = "a"
-# df2["panel"] = "b"
-# df3["panel"] = "c"
-#
-#
-#
-# def merge_panels(df1, df2):
-#
-#     keys = list(set(df1.columns) - {"panel"})
-#
-#     df1 = df1.set_index(keys)
-#     df2 = df2.set_index(keys)
-#
-#     return pd.concat([df1, df2], axis=1).reset_index()
-#
-#
-# dfj = merge_panels(df1, df2)
-#
-# dfj = merge_panels(dfj, df3)
-#
-# panel = dfj.pop("panel")
-#
-#
-# def join_strings(row):
-#     return ",".join([el for el in row if not pd.isna(el)])
-#
-#
-# dfj["panel"] = panel.apply(join_strings, axis=1)
+# ======
+
+
+def save_cmip5_info_post(fNs, fN_out):
+    data_table = cmip_info_post_from_file(fNs, cmip="cmip5")
+
+    with open(fN_out, "w") as f:
+        f.writelines(data_table)
+
+
+def save_cmip6_info_post(fNs, fN_out):
+    data_table = cmip_info_post_from_file(fNs, cmip="cmip6")
+
+    with open(fN_out, "w") as f:
+        f.writelines(data_table)
