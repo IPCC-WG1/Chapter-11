@@ -105,8 +105,6 @@ class _cmip6_conf(_cmip_conf):
 
     def __init__(self):
 
-        self._cmip = "cmip6"
-
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
             file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
@@ -126,31 +124,71 @@ class _cmip6_conf(_cmip_conf):
         self._fixes_data = fixes.cmip6_data
         self._fixes_preprocess = fixes.cmip6_preprocess
 
-        self._figure_folder = root_folder_figures + "cmip6/cmip6_"
-        self._warming_levels_folder = root_folder_warming_levels + "cmip6"
-        self.root_folder_figures = root_folder_figures
+    # define some variables on class level so they don't need to be duplicated for
+    # cmip6-ng
 
-        self._hist_period = slice("1850", "2014")
-        self._proj_period = slice("2015", "2100")
+    _cmip = "cmip6"
 
-        self._scenarios_all = [
-            "ssp119",
-            "ssp126",
-            "ssp245",
-            "ssp370",
-            "ssp434",
-            "ssp460",
-            "ssp585",
-        ]
-        self._scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+    _figure_folder = root_folder_figures + "cmip6/cmip6_"
+    _warming_levels_folder = root_folder_warming_levels + "cmip6"
+    root_folder_figures = root_folder_figures
 
-        self._ANOMALY_YR_START = ANOMALY_YR_START
-        self._ANOMALY_YR_END = ANOMALY_YR_END
+    _hist_period = slice("1850", "2014")
+    _proj_period = slice("2015", "2100")
 
-        self.colors = COLORS_SSP
+    _scenarios_all = [
+        "ssp119",
+        "ssp126",
+        "ssp245",
+        "ssp370",
+        "ssp434",
+        "ssp460",
+        "ssp585",
+    ]
+    _scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+
+    _ANOMALY_YR_START = ANOMALY_YR_START
+    _ANOMALY_YR_END = ANOMALY_YR_END
+
+    colors = COLORS_SSP
 
 
 cmip6 = _cmip6_conf()
+
+
+# class _cmip6_ng_conf(_cmip6_conf):
+#     """docstring for cmip6_Conf"""
+#
+#     def __init__(self):
+#         pass
+#
+#     _cmip = "cmip6"
+#
+#
+#
+#     _files_orig = FileFinder(
+#         path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
+#         file_pattern="{varn}_{timeres}_{model}_{exp}_{ens}_{grid}.nc",
+#     )
+#
+#     _files_post = FileFinder(
+#         path_pattern=root_folder_postprocessed_data + "cmip6/{varn}/{postprocess}/",
+#         file_pattern="{postprocess}_{varn}_{timeres}_{model}_{exp}_{ens}_{grid}.nc",
+#     )
+#
+#     _files_fx = FileFinder(
+#         path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
+#         file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
+#     )
+#
+#     _fixes_files = fixes.cmip6_files
+#     _fixes_data = fixes.cmip6_data
+#     _fixes_preprocess = fixes.cmip6_preprocess
+
+
+
+
+
 
 # =============================================================================
 # Scenarios - CMIP5
