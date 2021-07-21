@@ -81,7 +81,7 @@ def cmip6_files(folder_in):
             table="day",
             varn="tasmax",
             model="EC-Earth3",
-            ens=["r20i1p1f1", "r4i1p1f1"],
+            ens=["r20i1p1f1", "r4i1p1f1", "r3i1p1f1"],
         ):
             return None
 
@@ -89,8 +89,7 @@ def cmip6_files(folder_in):
         if _corresponds_to(
             metadata,
             exp="historical",
-            table="Amon",
-            varn="tas",
+            varn=["tas", "tasmax"],
             model="EC-Earth3-Veg",
             ens=["r10i1p1f1"],
         ):
@@ -236,6 +235,18 @@ def cmip6_files(folder_in):
         ):
             fNs_in = _remove_matching_fN(
                 fNs_in, "tas_Amon_CESM2_ssp370_r4i1p1f1_gn_201501-210012.nc"
+            )
+
+        # duplicate file
+        if _corresponds_to(
+            metadata,
+            exp="ssp585",
+            table="Lmon",
+            varn="mrso",
+            model="NorESM2-LM",
+        ):
+            fNs_in = _remove_matching_fN(
+                fNs_in, "mrso_Lmon_NorESM2-LM_ssp585_r1i1p1f1_gn_201502-202012.nc"
             )
 
         # remove files that only go to March 2014
@@ -532,6 +543,7 @@ def cmip6_preprocess(metadata, fNs_in):
 
     reindex_like = False
 
+    # there are small differences in the lat/ lon coords
     if _corresponds_to(
         metadata,
         exp="historical",
