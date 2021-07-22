@@ -329,7 +329,11 @@ def one_map_flat(
 def mask_ocean(ax, facecolor="w", zorder=1.1, lw=0, **kwargs):
 
     NEF = cfeature.NaturalEarthFeature
-    OCEAN = NEF("physical", "ocean", "110m", )
+    OCEAN = NEF(
+        "physical",
+        "ocean",
+        "110m",
+    )
     ax.add_feature(OCEAN, facecolor=facecolor, zorder=zorder, lw=lw, **kwargs)
 
 
@@ -506,7 +510,7 @@ def at_warming_level_one_hatch(
 
     if colorbar:
         colorbar_kwargs = {} if colorbar_kwargs is None else colorbar_kwargs
-        
+
         factor = 0.66 if add_legend else 1
         ax2 = axes[1] if add_legend else axes[2]
 
@@ -516,15 +520,10 @@ def at_warming_level_one_hatch(
             orientation="horizontal",
             pad=0.1,
         )
-        
+
         cbar_opt.update(colorbar_kwargs)
-        
-        cbar = mpu.colorbar(
-            h,
-            axes[0],
-            ax2,
-            **cbar_opt
-        )
+
+        cbar = mpu.colorbar(h, axes[0], ax2, **cbar_opt)
         cbar.set_label(unit, labelpad=1, size=9)
         cbar.ax.tick_params(labelsize=9)  # , length=0)
 
@@ -552,9 +551,9 @@ def at_warming_level_one_hatch(
             handler_map={mpl.text.Text: TextHandler()},
             ncol=1,
         )
-        
+
         legend_opt.update(legend_kwargs)
-        
+
         axes[2].legend(handles=legend_handles, **legend_opt)
 
     side = 0.01
@@ -592,7 +591,7 @@ def at_warming_level_one(
     add_legend=False,
     plotfunc="pcolormesh",
     colorbar_kwargs=None,
-    legend_kwargs=None,   
+    legend_kwargs=None,
     **kwargs,
 ):
 
@@ -602,10 +601,10 @@ def at_warming_level_one(
     f, axes = plt.subplots(1, 3, subplot_kw=dict(projection=ccrs.Robinson()))
 
     axes = axes.flatten()
-    
+
     if colorbar_kwargs is None:
         colorbar_kwargs = dict()
-    
+
     if legend_kwargs is None:
         legend_kwargs = dict()
 
@@ -663,11 +662,11 @@ def at_warming_level_one(
             borderaxespad=0,
             frameon=True,
             handler_map={mpl.text.Text: TextHandler()},
-            ncol=1,        
+            ncol=1,
         )
-        
+
         legend_opt.update(legend_kwargs)
-        
+
         axes[2].legend(handles=[h0, legend_handle], **legend_opt)
 
     axes[0].set_title("At 1.5°C global warming", fontsize=9, pad=4)
@@ -930,9 +929,10 @@ def at_warming_level_diff(
 
     return cbar
 
+
 # options and function for Africa fact sheet plot (for Izidine)
 
-AFRICA_KWARGS=dict(
+AFRICA_KWARGS = dict(
     add_n_models=False,
     colorbar_kwargs=dict(size=0.075, pad=0.025),
     legend_kwargs=dict(
@@ -956,5 +956,3 @@ def set_extent_africa():
     mpu.set_map_layout(axes, width=17)
 
     f.canvas.draw()
-
-

@@ -1,7 +1,6 @@
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 fN = (
@@ -9,7 +8,7 @@ fN = (
     "frequency_intensity_changes_TXx_Rx1day_events_1851_vs_1850_orig_from_chao.xlsx"
 )
 
-MAPPING= {
+MAPPING = {
     "f_10": "frequency 10 year event",
     "f_50": "frequency 50 year event",
     "i_10": "intensity 10 year event",
@@ -52,15 +51,12 @@ def get_boxtats(data):
             q3=row[0.83],
             whislo=row[0.05],
             whishi=row[0.95],
-            fliers= [],
+            fliers=[],
             label=key,
         )
         out.append(bxpstats)
 
     return out
-
-
-
 
 
 def plot_boxstats(data, title, unit):

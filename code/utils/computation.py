@@ -73,7 +73,14 @@ def calc_anomaly_wrt_warming_level(
 
 
 def calc_anomaly(
-    ds, start, end, how="absolute", skipna=None, metadata=None, at_least_until=None, quiet=False
+    ds,
+    start,
+    end,
+    how="absolute",
+    skipna=None,
+    metadata=None,
+    at_least_until=None,
+    quiet=False,
 ):
     """calc anomaly of dataset
 
@@ -119,7 +126,12 @@ def calc_anomaly(
         return []
 
     if at_least_until is not None and not time_in_range(
-        int(at_least_until), int(at_least_until), yr_min, yr_max, metadata=metadata, quiet=quiet
+        int(at_least_until),
+        int(at_least_until),
+        yr_min,
+        yr_max,
+        metadata=metadata,
+        quiet=quiet,
     ):
         return []
 
@@ -404,7 +416,9 @@ def at_warming_level(
         return concat_xarray_without_metadata(out)
 
 
-def time_average(index_list, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs):
+def time_average(
+    index_list, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs
+):
     def _inner(ds, meta, beg, end, reduce, skipna):
 
         da = ds[meta["varn"]]

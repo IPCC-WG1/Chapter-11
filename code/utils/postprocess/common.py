@@ -1,5 +1,5 @@
 import time
-import traceback
+import traceback  # noqa: F401
 
 import regionmask
 

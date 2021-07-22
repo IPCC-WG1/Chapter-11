@@ -56,7 +56,12 @@ class RegridFromPostMixin:
 
 class RegionAverageFromPostMixin:
     def region_average_from_post(
-        self, lat_weights, weights, region=ar6_land, region_name="ar6", ensnumber=0,
+        self,
+        lat_weights,
+        weights,
+        region=ar6_land,
+        region_name="ar6",
+        ensnumber=0,
     ):
 
         with postprocess.RegionAverageFromPost(self.conf_cmip) as p:
@@ -180,7 +185,7 @@ class SelectRegion(RegridFromPostMixin, RegionAverageFromPostMixin):
 
     def __init__(
         self, conf_cmip, table, varn, postprocess_name, exp=None, ensnumber=0, **coords
-        ):
+    ):
 
         self.conf_cmip = conf_cmip
         self.table = table
@@ -196,7 +201,7 @@ class SelectRegion(RegridFromPostMixin, RegionAverageFromPostMixin):
             p.postprocess_name = self.postprocess_name
             p.set_files_kwargs(
                 table=self.table, varn=self.varn, exp=self.exp, ensnumber=self.ensnumber
-                )
+            )
             p.transform(coords=self.coords, mask_out=mask_out)
 
 
@@ -805,7 +810,11 @@ def tx_for_western_us_heatwave():
     )
     p_.select_region_from_orig()
     p_.region_average_from_post(
-        lat_weights="areacella", weights="land_no_ice", region=region, region_name="WNA", ensnumber=None,
+        lat_weights="areacella",
+        weights="land_no_ice",
+        region=region,
+        region_name="WNA",
+        ensnumber=None,
     )
 
 
