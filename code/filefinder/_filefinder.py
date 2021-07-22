@@ -2,7 +2,6 @@ import copy
 import glob
 import logging
 import os
-from os import path
 
 import numpy as np
 import pandas as pd
@@ -20,90 +19,28 @@ keys: {repr_keys}
 """
 
 
-class FileFinder:
-    """docstring for FileFinder"""
+class Finder:
+    def __init__(self, pattern, suffix=""):
 
-    def __init__(self, path_pattern, file_pattern):
-        super(FileFinder, self).__init__()
+        self.pattern = pattern
+        self.keys = _find_keys(pattern)
+        self.parser = parse.compile(self.pattern)
+        self._suffix = suffix
 
-        self.path_pattern = path_pattern
-        self.file_pattern = file_pattern
-        self._full_pattern = path.join(*filter(None, (path_pattern, file_pattern)))
-
-        self.keys_path = _find_keys(self.path_pattern)
-        self.keys_file = _find_keys(self.file_pattern)
-
-        self.keys = self.keys_path | self.keys_file
-
-        self._parse_path = parse.compile(self.path_pattern)
-        self._parse_file = parse.compile(self.file_pattern)
-        self._parse_full = parse.compile(self._full_pattern)
-
-        # self._all_files = None
-
-    def create_path_name(self, **kwargs):
+    def create_name(self, **kwargs):
         """build path from keys"""
 
-        return self.path_pattern.format(**kwargs)
+        return self.pattern.format(**kwargs)
 
-    def create_file_name(self, qualifier=None, **kwargs):
-        """build file name from keys"""
+    def _create_condition_dict(self, **kwargs):
 
-        return self.file_pattern.format(**kwargs)
-
-    def create_full_name(self, **kwargs):
-        """build path and file name from keys"""
-
-        path_name = self.create_path_name(**kwargs)
-        file_name = self.create_file_name(**kwargs)
-
-        return os.path.join(path_name, file_name)
-
-    def _create_condition_dict(self, keys, **kwargs):
-
-        kwargs_keys = set(kwargs.keys())
-
-        # missing_keys = keys - kwargs_keys
-        superfluous_keys = kwargs_keys - keys
-
-        # if missing_keys:
-        #     msg = "Missing Keyword Arguments: {}".format(", ".join(missing_keys))
-        #     raise ValueError(msg)
-
-        if superfluous_keys:
-            msg = "Superfluous Keyword Arguments: {}".format(
-                ", ".join(superfluous_keys)
-            )
-            print(msg)
-
+        # add wildcard for all undefinded keys
         cond_dict = {key: "*" for key in self.keys}
         cond_dict.update(**kwargs)
 
         return cond_dict
 
-    def find_paths(self, _allow_empty=False, **kwargs):
-
-        return self._find(
-            what="paths",
-            name_creator=self.create_path_name,
-            parser=self._parse_path,
-            keys=self.keys_path,
-            _allow_empty=_allow_empty,
-            **kwargs,
-        )
-
-    def find_files(self, _allow_empty=False, **kwargs):
-
-        return self._find(
-            what="files",
-            name_creator=self.create_full_name,
-            parser=self._parse_full,
-            keys=self.keys_file,
-            _allow_empty=_allow_empty,
-            **kwargs,
-        )
-
-    def _find(self, what, name_creator, parser, keys, _allow_empty, **kwargs):
+    def find(self, _allow_empty=False, **kwargs):
 
         # wrap strings in list
         for key, value in kwargs.items():
@@ -112,7 +49,13 @@ class FileFinder:
 
         list_of_df = list()
         for one_search_dict in product_dict(**kwargs):
-            df = self._find_one(what, name_creator, parser, keys, **one_search_dict)
+
+            cond_dict = self._create_condition_dict(**one_search_dict)
+            full_pattern = self.create_name(**cond_dict)
+
+            paths = sorted(self._glob(full_pattern), key=natural_keys)
+
+            df = self._parse_paths(paths)
 
             # only append if files were found
             if df is not None:
@@ -137,47 +80,77 @@ class FileFinder:
 
         return fc
 
-    def _find_one(self, what, name_creator, parser, keys, **kwargs):
+    @staticmethod
+    def _glob(pattern):
+        """Return a list of paths matching a pathname pattern
 
-        cond_dict = self._create_condition_dict(keys, **kwargs)
+        Notes
+        -----
+        glob has it's own method so it can be mocked by the tests
 
-        full_pattern = name_creator(**cond_dict)
+        """
 
-        logger.info(f"Looking for {what} with pattern: '{full_pattern}'")
+        return glob.glob(pattern)
 
-        paths = sorted(glob.glob(full_pattern), key=natural_keys)
-
-        logger.info(f" - Found: '{len(paths)}' {what}")
-
-        suffix = ""
-        if what == "paths":
-            suffix = "*"
+    def _parse_paths(self, paths):
 
         if not paths:
             return None
+
         out = list()
         for pth in paths:
-            parsed = parser.parse(pth)
-            out.append([pth + suffix] + list(parsed.named.values()))
+            parsed = self.parser.parse(pth)
+            out.append([pth + self._suffix] + list(parsed.named.values()))
 
         keys = ["filename"] + list(parsed.named.keys())
 
         df = pd.DataFrame(out, columns=keys)
         return df
 
-    def _get_all_files(self):
-        pass
+
+class FileFinder:
+    def __init__(self, path_pattern, file_pattern):
+
+        self.file = Finder(file_pattern)
+        # ensure path_pattern ends with a /
+        self.path = Finder(os.path.join(path_pattern, ""), suffix="*")
+        self.full = Finder(os.path.join(*filter(None, (path_pattern, file_pattern))))
+
+        self.keys_path = self.path.keys
+        self.keys_file = self.file.keys
+        self.keys = self.full.keys
+
+        self.file_pattern = self.file.pattern
+        self.path_pattern = self.path.pattern
+        self._full_pattern = self.full.pattern
+
+    def create_path_name(self, **kwargs):
+        # warnings.warn("'create_path_name' is deprecated, use 'path.name' instead")
+        return self.path.create_name(**kwargs)
+
+    def create_file_name(self, **kwargs):
+        # warnings.warn("'create_file_name' is deprecated, use 'file.name' instead")
+        return self.file.create_name(**kwargs)
+
+    def create_full_name(self, **kwargs):
+        # warnings.warn("'create_full_name' is deprecated, use 'full.name' instead")
+        return self.full.create_name(**kwargs)
+
+    def find_paths(self, _allow_empty=False, **kwargs):
+        return self.path.find(_allow_empty=_allow_empty, **kwargs)
+
+    def find_files(self, _allow_empty=False, **kwargs):
+        return self.full.find(_allow_empty=_allow_empty, **kwargs)
 
     def __repr__(self):
 
-        repr_keys = ""
-        for key in self.keys:
-            repr_keys += f"'{key}', "
+        repr_keys = "', '".join(sorted(self.full.keys))
+        repr_keys = f"'{repr_keys}'"
 
         msg = _FILE_FINDER_REPR.format(
-            path_pattern=self.path_pattern,
-            file_pattern=self.file_pattern,
-            repr_keys=repr_keys[:-2],
+            path_pattern=self.path.pattern,
+            file_pattern=self.file.pattern,
+            repr_keys=repr_keys,
         )
 
         return msg
@@ -244,122 +217,3 @@ class FileContainer:
 
         msg = "<FileContainer>\n"
         return msg + self.df.__repr__()
-
-
-# cmip6_ng = FileFinder(
-#     path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
-#     file_pattern="{varn}_{timeres}_{model}_{scenario}_{ens}_{grid}.nc",
-# )
-
-# root = "/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/"
-
-# cmip6 = FileFinder(
-#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
-#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
-# )
-
-# cmip6_post = FileFinder(
-#     path_pattern="/net/cfc/landclim1/mathause/projects/IPCC_AR6_CH11/data/cmip6/{exp}/{table}/{varn}/{postprocess}",
-#     file_pattern="{postprocess}.{varn}.{table}.{model}.{exp}.{ens}..nc",
-# )
-
-
-# cmip5 = FileFinder(
-#     path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}",
-#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{time}.nc",
-#     # path_out_pattern=root + "cmip5/{var}",
-#     # file_out_pattern="{varn}_{table}_{model}_{exp}_{ens}.nc",
-# )
-
-
-# cmip6_r = FileFinder(
-#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/r{r}i{i}p{p}f{f}/{grid}/",
-#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
-# )
-
-
-# cmip6_fx = FileFinder(
-#     path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
-#     file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
-# )
-
-
-# merra = FileFinder(
-#     path_pattern="/net/exo/landclim/data/dataset/MERRA/20150504/0.5x0.666deg_lat-lon_{res}/original/",
-#     file_pattern="merra.{var}.{year}.nc",
-# )
-
-
-# ==================
-
-
-# import logging
-
-# logger = logging.getLogger()
-# handler = logging.StreamHandler()
-# formatter = logging.Formatter(
-#         '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
-# logger.setLevel(logging.DEBUG)
-
-
-# tas_files = cmip6.find_paths(table='Amon', varn='tas', exp='historical')
-
-# tas_files = tas_files.filter(ens_number=0)
-
-# for i, tas_file in tas_files.iterrows():
-
-#     fN_in = tas_file.filename
-#     fN_out = cmip6_out.create_full_name(**tas_file, qualifier='global_mean')
-
-#     prc.globmean().process(fN_in, fN_out)
-
-
-# tasmax_files = cmip6.find_paths(table='Amon', varn='tasmax', exp='historical')
-
-# tasmax_files = tasmax_files.filter(ens_number=0)
-
-# for i, tas_file in tasmax_files.iterrows():
-
-#     fN_in = tas_file.filename
-#     fN_out = cmip6_out.create_full_name(**tas_file, qualifier=['annual', 'max'])
-
-#     prc.resample(time="A", how='max').process(fN_in, fN_out)
-
-#     fN_in = fN_out
-
-#     fN_out = cmip6_out.create_full_name(**tas_file, qualifier=['annual', 'max', "regid"])
-
-#     prc.regrid_cdo(resolution="2.5", how='conservative').process(fN_in, fN_out)
-
-
-# class Data:
-#     """docstring for Data"""
-
-#     def __init__(self, data, metadata):
-
-#         self._data = data
-#         self._metadata
-
-#     @property
-#     def data(self):
-#         return self._data
-
-#     @property
-#     def metadata(self):
-#         return self._metadata
-
-
-# class DataContainer:
-#     """docstring for DataContainer"""
-
-#     def __init__(self):
-
-#         self._data = list()
-#         self._metadata = list()
-
-#     def append(self, data, metadata):
-
-#         self._data.append(data)
-#         self._metadata.append(metadata)
