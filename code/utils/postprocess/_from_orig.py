@@ -60,7 +60,7 @@ class SelectRegionFromOrig(ProcessorFromOrig):
 
         ds = self.conf_cmip.load_orig(**meta)
         mask = self.get_masks(self.mask_out, meta, ds)
-        return transform.SelectRegion(meta["varn"], mask=mask)(ds, **self.coords)
+        return transform.SelectRegion(meta["varn"], mask=mask, **self.coords)(ds)
 
 
 class CDDFromOrig(ProcessorFromOrig):
