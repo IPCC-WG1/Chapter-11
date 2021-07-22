@@ -18,6 +18,16 @@ root_folder_warming_levels = "../warming_levels/"
 
 
 def figure_filename(name, *subfolders):
+    """create filenames for figures
+
+    Parameters
+    ----------
+    name : str
+        File name of the figure
+    subfolders : list of str
+        Folders of the figure.
+
+    """
 
     folders = (root_folder_figures,) + subfolders
 
@@ -54,7 +64,7 @@ COLORS_SSP = dict(
 
 
 class _cmip5_conf(_cmip_conf):
-    """docstring for cmip5_Conf"""
+    """configuration for cmip5 archive and postprocessed files"""
 
     def __init__(self):
 
@@ -101,7 +111,7 @@ cmip5 = _cmip5_conf()
 
 
 class _cmip6_conf(_cmip_conf):
-    """docstring for cmip6_Conf"""
+    """configuration for cmip6 archive and postprocessed files"""
 
     def __init__(self):
 
@@ -156,40 +166,6 @@ class _cmip6_conf(_cmip_conf):
 cmip6 = _cmip6_conf()
 
 
-# class _cmip6_ng_conf(_cmip6_conf):
-#     """docstring for cmip6_Conf"""
-#
-#     def __init__(self):
-#         pass
-#
-#     _cmip = "cmip6"
-#
-#
-#
-#     _files_orig = FileFinder(
-#         path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
-#         file_pattern="{varn}_{timeres}_{model}_{exp}_{ens}_{grid}.nc",
-#     )
-#
-#     _files_post = FileFinder(
-#         path_pattern=root_folder_postprocessed_data + "cmip6/{varn}/{postprocess}/",
-#         file_pattern="{postprocess}_{varn}_{timeres}_{model}_{exp}_{ens}_{grid}.nc",
-#     )
-#
-#     _files_fx = FileFinder(
-#         path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
-#         file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
-#     )
-#
-#     _fixes_files = fixes.cmip6_files
-#     _fixes_data = fixes.cmip6_data
-#     _fixes_preprocess = fixes.cmip6_preprocess
-
-
-
-
-
-
 # =============================================================================
 # Scenarios - CMIP5
 # =============================================================================
@@ -206,19 +182,6 @@ label_rcp = dict(
 # Scenarios - CMIP6
 # =============================================================================
 
-
-# scens_ssp_all = ["historical"] + scens_ssp[:]
-
-# colors_ssp = dict(
-#     ssp119="#f1eef6",
-#     ssp126="#d0d1e6",
-#     ssp245="#a6bddb",
-#     ssp370="#74a9cf",
-#     ssp434="#3690c0",
-#     ssp460="#0570b0",
-#     ssp585="#034e7b",
-#     historical="0.1",
-# )
 
 colors_ssp2 = dict(
     ssp119="#dadaeb",
@@ -242,10 +205,3 @@ label_ssp = dict(
     ssp585="SSP5-8.5",
     historical="hist",
 )
-
-# =============================================================================
-# Temperatures bins for the scaling plots
-# =============================================================================
-
-T_bins = np.arange(-0.5, 5.6, 0.5)
-T_bin_centers = (T_bins[:-1] + T_bins[1:]) / 2
