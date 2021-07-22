@@ -1,4 +1,5 @@
 import time
+import traceback
 
 import regionmask
 
@@ -102,9 +103,13 @@ class Processor:
 
         for file, meta in self._yield_transform(**kwargs):
 
-            ds = self._transform(**meta)
-            fN_out = self.fN_out(**meta)
-            self.save(ds, fN_out)
+            try:
+                ds = self._transform(**meta)
+                fN_out = self.fN_out(**meta)
+                self.save(ds, fN_out)
+            except Exception as err:
+                raise err
+                # traceback.print_tb(err.__traceback__)
 
     def save(self, ds, fN_out):
 
@@ -151,7 +156,9 @@ class Processor:
         return weights
 
     def get_land_mask(self, meta, da=None):
-        """load land mask ('sftlf') - uses 'natural_earth.land_110' if none is found"""
+        """
+        load land mask ('sftlf'), uses 'natural_earth.land_110' if none is found
+        """
 
         mask = self.conf_cmip.load_mask("sftlf", meta, da)
 
