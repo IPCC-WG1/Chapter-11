@@ -194,7 +194,12 @@ def maybe_reindex(da, target):
     if alignable(da, target):
         return da
 
-    if np.allclose(da.lat, target.lat) and np.allclose(da.lon, target.lon):
+    # target has been selected
+    subset = len(target.lat) < len(da.lat) or len(target.lon) < len(da.lon)
+    # cannot compute allcose if it's a subset
+    allclose = subset or (np.allclose(da.lat, target.lat) and np.allclose(da.lon, target.lon))
+
+    if allclose or subset:
         return da.reindex_like(target, method="nearest")
 
     return None
