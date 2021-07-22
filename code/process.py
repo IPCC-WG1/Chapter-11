@@ -56,7 +56,7 @@ class RegridFromPostMixin:
 
 class RegionAverageFromPostMixin:
     def region_average_from_post(
-        self, lat_weights, weights, region=ar6_land, region_name="ar6"
+        self, lat_weights, weights, region=ar6_land, region_name="ar6", ensnumber=0,
     ):
 
         with postprocess.RegionAverageFromPost(self.conf_cmip) as p:
@@ -66,8 +66,9 @@ class RegionAverageFromPostMixin:
                 varn=self.varn,
                 exp="*",
                 postprocess=self.postprocess_name,
+                ensnumber=ensnumber,
             )
-            p.transform(regions=ar6_land, lat_weights=lat_weights, weights=weights)
+            p.transform(regions=region, lat_weights=lat_weights, weights=weights)
 
 
 class ResampleSeasonalFromPostMixin:
@@ -172,6 +173,31 @@ class NoTransform(
             p.postprocess_name = self.postprocess_name
             p.set_files_kwargs(table=self.table, varn=self.varn, exp=None)
             p.transform(mask_out=mask_out)
+
+
+class SelectRegion(RegridFromPostMixin, RegionAverageFromPostMixin):
+    """transformation function to subset a square region"""
+
+    def __init__(
+        self, conf_cmip, table, varn, postprocess_name, exp=None, ensnumber=0, **coords
+        ):
+
+        self.conf_cmip = conf_cmip
+        self.table = table
+        self.varn = varn
+        self.postprocess_name = postprocess_name
+        self.exp = exp
+        self.ensnumber = ensnumber
+        self.coords = coords
+
+    def select_region_from_orig(self, mask_out=None):
+
+        with postprocess.SelectRegionFromOrig(self.conf_cmip) as p:
+            p.postprocess_name = self.postprocess_name
+            p.set_files_kwargs(
+                table=self.table, varn=self.varn, exp=self.exp, ensnumber=self.ensnumber
+                )
+            p.transform(coords=self.coords, mask_out=mask_out)
 
 
 class RxNday(RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin):
@@ -757,6 +783,33 @@ def region_average_arctic_mid_lat():
 
 
 # =============================================================================
+# calculate TX / TXx for US western heatwave
+# =============================================================================
+
+
+def tx_for_western_us_heatwave():
+
+    from utils import USheatwave2021
+
+    coords = USheatwave2021.region_extended_slice
+    region = USheatwave2021.region
+
+    p_ = SelectRegion(
+        conf.cmip6,
+        "day",
+        "tasmax",
+        "tx_western_us",
+        exp=["historical", "ssp585"],
+        ensnumber=None,
+        **coords,
+    )
+    p_.select_region_from_orig()
+    p_.region_average_from_post(
+        lat_weights="areacella", weights="land_no_ice", region=region, region_name="WNA", ensnumber=None,
+    )
+
+
+# =============================================================================
 # main
 # =============================================================================
 
@@ -809,6 +862,7 @@ def main(args=None):
         "mrsos_annmean": mrsos_annmean,
         "seaice_any_annual": seaice_any_annual,
         "region_average_arctic_mid_lat": region_average_arctic_mid_lat,
+        "tx_for_western_us_heatwave": tx_for_western_us_heatwave,
     }
 
     func = functions[postprocess]
