@@ -128,6 +128,7 @@ class _cmip_conf:
 
         # exit if the model is removed by the fixes
         if fNs_in is None:
+            print("- model manually removed in 'fixes_files'")
             return []
 
         ds = mf_read_netcdfs(
