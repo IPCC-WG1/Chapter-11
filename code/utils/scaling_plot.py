@@ -37,11 +37,14 @@ REGION_NAMES = dict(
 )
 
 
-def _prep_for_concat(ds):
-    to_drop = ["type", "ensnumber", "table", "grid", "varn", "ensi", "postprocess"]
+def _prep_for_concat(da):
+    to_drop = ["ensnumber", "table", "grid", "varn", "ensi", "postprocess"]
 
-    ds = ds.set_index(mod_ens=("model", "exp", "ens"))
-    return ds.drop_vars(to_drop)
+    if "type" in da.coords.keys():
+        to_drop.append("type")
+
+    da = da.set_index(mod_ens=("model", "exp", "ens"))
+    return da.drop_vars(to_drop)
 
 
 def concat_for_scaling(c6_at_warming_, warming_levels):
