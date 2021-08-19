@@ -1,5 +1,6 @@
 import glob
 
+import numpy as np
 import xarray as xr
 
 from ._fixes_common import (
@@ -86,13 +87,40 @@ def cmip5_files(folder_in):
         # missing month
         if _corresponds_to(
             metadata,
-            varn="tas",
+            varn=["tas", "mrso"],
             model="CESM1-CAM5-1-FV2",
             exp=["rcp45", "rcp85"],
-            table="Amon",
             ens="r1i1p1",
         ):
             return None
+
+        # mrso constant in time!
+        if _corresponds_to(
+            metadata,
+            varn="mrso",
+            model="CMCC-CESM",
+            ens="r1i1p1",
+        ):
+            return None
+
+        # mrso can be negative
+        if _corresponds_to(
+            metadata,
+            varn="mrso",
+            model=["IPSL-CM5A-LR", "IPSL-CM5A-MR"],
+        ):
+            return None
+
+        # jumps between hist and proj; could be fixable given more time
+        if _corresponds_to(
+            metadata,
+            varn="mrso",
+            model="NorESM1-ME",
+        ):
+            return None
+
+
+
 
         # =========================================================================
 
@@ -452,6 +480,77 @@ def cmip5_data(ds, metadata):
         ds2 = ds.sel(time=slice("2100", None))
         # put together again
         ds = xr.combine_by_coords([ds1, ds2])
+
+    # missing months but after 2100
+    if _corresponds_to(
+        metadata,
+        exp="rcp85",
+        table="Lmon",
+        varn="mrso",
+        model="CCSM4",
+        ens="r1i1p1",
+    ):
+        check_time = False
+        ds = ds.sel(time=slice(None, "2101"))
+
+    # land ice can melt after 2100 (which is a problem for the step just below)
+    if _corresponds_to(
+        metadata,
+        table="Lmon",
+        varn="mrso",
+        model="CESM1-CAM5",
+    ):
+        ds = ds.sel(time=slice(None, "2100"))
+
+
+    # overwrite ice with NaN
+    if _corresponds_to(
+        metadata,
+        varn=["mrso", "mrsos"],
+    ):
+        ds = ds.load()
+        # mask gridpoints with constant values
+        da = ds[metadata["varn"]]
+        mask = (da.isel(time=0) == da).all("time")
+        ds[metadata["varn"]] = da.where(~mask)
+
+    # has < 15 gripoints with values > -0.5 : fixing
+    if _corresponds_to(
+        metadata,
+        varn="mrso",
+        model="IPSL-CM5B-LR",
+        exp=["rcp45", "rcp85", "historical"],
+    ):
+        ds["mrso"] = np.fmax(0, ds["mrso"])
+
+
+    # values > 3400 -> ice
+    if _corresponds_to(
+        metadata,
+        varn="mrso",
+        model="FGOALS-s2",
+    ):
+        da = ds.mrso
+        ds["mrso"] = da.where(da < 3400)
+
+    # data that should not be below 0; SM precip
+    if _corresponds_to(
+        metadata,
+        varn=["pr", "mrso", "mrsos"],
+    ):
+
+        varn = metadata["varn"]
+        min_allowed = 0.0
+        mn = ds[varn].min().compute().item()
+
+        if mn < min_allowed:
+            # fix values that are close
+            if np.allclose(mn, min_allowed, atol=1e-4):
+                ds[varn] = np.fmax(min_allowed, ds[varn])
+            else:
+                raise ValueError(
+                    f"Expected no values smaller {min_allowed}, found: {mn}"
+                )
 
     return ds, check_time
 

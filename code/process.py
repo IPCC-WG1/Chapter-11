@@ -484,7 +484,7 @@ def pr_monthly():
     p_ = ResampleMonthly(conf.cmip6, "Amon", "pr", "mean", "monthly")
     p_.resample_monthly_from_orig()
     p_.regrid_from_post()
-    # p_.region_average_from_post(lat_weights="areacella", weights="land")
+    p_.region_average_from_post(lat_weights="areacella", weights="land")
     p_.resample_seasonal_from_post(
         "mean", invalidate_beg_end=True, from_concat=True, after_regrid=True
     )
@@ -683,6 +683,14 @@ def mrso_annmean():
     p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
 
 
+def mrso_annmean_CMIP5():
+
+    p_ = ResampleAnnual(conf.cmip5, "Lmon", "mrso", "mean", "sm_annmean")
+    p_.annual_from_orig(mask_out=["ocean", "landice", "antarctica", GREENLAND])
+    p_.regrid_from_post(method="con")
+    p_.region_average_from_post(lat_weights="areacella", weights="land_no_ice")
+
+
 # def mrso_smdd_day():
 #
 #     p_ = SMDryDaysZhangFromOrig(conf.cmip6, "day", "mrso", "SMdd_q10_day")
@@ -864,6 +872,7 @@ def main(args=None):
         "mrso": mrso,
         # "mrso_dry_months": mrso_dry_months,
         "mrso_annmean": mrso_annmean,
+        "mrso_annmean_CMIP5": mrso_annmean_CMIP5,
         # "mrso_smdd": mrso_smdd,
         # "mrso_smdd_intensity": mrso_smdd_intensity,
         # "mrso_smdd_day": mrso_smdd_day,
