@@ -110,11 +110,8 @@ def _get_same_sign(da, thresh_samesign, dim="mod_ens"):
     if not (thresh_samesign > 0) and (thresh_samesign < 1):
         raise ValueError(f"thresh must be in 0..1, is {thresh_samesign}")
 
-    # n_ens = len(da[dim])
-
-    notnull = da.notnull()
-
-    n_ens = notnull.sum(dim)
+    # count n_ens at each gridpoint, taking missing values into account
+    n_ens = da.notnull().sum(dim)
 
     # get the sign of change
     sign = np.sign(da)
@@ -139,6 +136,8 @@ def _get_signif_indiv(da, iav, n_sigma, thresh_signif, dim="mod_ens"):
         data to check significance
     iav : xr.Dataset
         Inter-annual variability
+    n_sigma : float
+        sigma multiplier
     thresh_signif : float
         threshold for the fraction of models that need to be
         significant
@@ -180,6 +179,8 @@ def add_signif_sign_hatch(
 ):
     """
     add hatching given the signal and the interannual variability
+
+    not used as we are only applying the simple hatching scheme
     """
 
     # minimal check that da and iav are aligned
@@ -190,7 +191,7 @@ def add_signif_sign_hatch(
     consistent_change = _get_same_sign(da, thresh_samesign, dim=dim)
     signif = _get_signif_indiv(da, iav, n_sigma, thresh_signif, dim)
 
-    # we don't want to hatch Na
+    # we don't want to hatch na
     all_notnull = da.notnull().all(dim)
 
     h0 = plot.text_legend(ax, "Color", "Robust signal", size=7)

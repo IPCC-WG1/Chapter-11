@@ -54,6 +54,7 @@ ORDER_REGIONS_IN_TABLE = [
 
 
 def retrieve_continents():
+    """load continents as regionmask data from usgs"""
 
     file = pooch.retrieve(
         "https://pubs.usgs.gov/of/2006/1187/basemaps/continents/continents.zip",
@@ -69,6 +70,8 @@ def retrieve_continents():
 
 
 def create_mid_lat_arctic_region():
+    # unused
+
     # for Ed Hawkins; Seneviratne Sonia Isabelle
 
     # from the arctic cycle up
@@ -106,7 +109,7 @@ def create_mid_lat_arctic_region():
     return mid_lat_arctic
 
 
-class REGIONS:
+class Regions:
     """container for regions (so they can be loaded lazily)"""
 
     def __init__(self):
@@ -125,6 +128,7 @@ class REGIONS:
 
     @property
     def mid_lat_arctic_region(self):
+
         if self._mid_lat_arctic_region is None:
             self._mid_lat_arctic_region = create_mid_lat_arctic_region()
         return self._mid_lat_arctic_region
@@ -194,4 +198,4 @@ class REGIONS:
         return mask_3D
 
 
-regions = REGIONS()
+regions = Regions()

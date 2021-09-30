@@ -21,7 +21,7 @@ class SmallXHatch(mpl.hatch.Shapes):
     Identifier 'c'.
     """
 
-    # create a x
+    # create an x
     p = 0.25
     verts = [
         (-p, -p),  # left, bottom
@@ -50,40 +50,6 @@ class SmallXHatch(mpl.hatch.Shapes):
         self.shape_codes = self.path.codes
         super().__init__(hatch, density)
 
-
-#
-#     def set_vertices_and_codes(self, vertices, codes):
-#         offset = 1.0 / self.num_rows
-#         shape_vertices = self.shape_vertices * offset * self.size
-#         if not self.filled:
-#             inner_vertices = shape_vertices[::-1] * 0.9
-#         shape_codes = self.shape_codes
-#         shape_size = len(shape_vertices)
-#
-#         cursor = 0
-#         for row in range(self.num_rows + 1):
-#             if row % 2 == 0:
-#                 cols = np.linspace(0, 1, self.num_rows + 1)
-#             else:
-#                 cols = (
-#                     np.linspace(offset / 2, 1 - offset / 2, self.num_rows) + offset / 2
-#                 )
-#             row_pos = row * offset
-#             for col_pos in cols:
-#                 vertices[cursor : cursor + shape_size] = shape_vertices + (
-#                     col_pos,
-#                     row_pos,
-#                 )
-#                 codes[cursor : cursor + shape_size] = shape_codes
-#                 cursor += shape_size
-#                 if not self.filled:
-#                     vertices[cursor : cursor + shape_size] = inner_vertices + (
-#                         col_pos,
-#                         row_pos,
-#                     )
-#                     codes[cursor : cursor + shape_size] = shape_codes
-#                     cursor += shape_size
-#
 mpl.hatch._hatch_types.append(SmallXHatch)
 
 
@@ -190,7 +156,29 @@ def text_legend(ax, s, label, size=8, ec="0.1", fc="none", lw=0.5):
 
 
 def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
+    """add hatch pattern to a cartopy map
 
+    Parameters
+    ----------
+    ax : matplotlib.axes
+        Axes to draw the hatch on.
+    da : xr.DataArray
+        DataArray with the hatch information. Data of value 1 is hatched.
+    label : str
+        label for a legend entry
+    invert : bool, default: False
+        If True hatches 0 values instead.
+    linewidth : float, default: 0.25
+        Default thickness of the hatching.
+    color : matplotlib color, default: "0.1"
+        Color of the hatch lines.
+
+    Returns
+    -------
+    legend_handle : handle for the legend entry
+    """
+
+    # dummpy patch for the legend entry
     legend_handle = mpl.patches.Patch(
         facecolor="none",
         ec=color,
@@ -201,7 +189,6 @@ def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
 
     mn = da.min().item()
     mx = da.max().item()
-
     if mx > 1 or mn < 0:
         raise ValueError("Expected da in 0..1, got {mn}..{mx}")
 
@@ -209,7 +196,7 @@ def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
     if da.sum() == 0:
         return legend_handle
 
-    # ~ does only work for bool dtype
+    # ~ does only work for bool
     if invert:
         da = np.abs(da - 1)
 
@@ -222,6 +209,7 @@ def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
     mpl.rcParams["hatch.linewidth"] = linewidth
     mpl.rcParams["hatch.color"] = color
 
+    # unfortunately cannot set options via context manager
     # with mpl.rc_context({"hatch.linewidth": linewidth, "hatch.color": color}):
     da.plot.contourf(
         ax=ax,
@@ -246,6 +234,22 @@ def map_subplots(
     gridspec_kw=None,
     **fig_kw,
 ):
+    """Create a figure and a set of subplots with cartopy axes
+
+    Parameters
+    -----------
+    nrows, ncols : int, default: 1
+        Number of rows/columns of the subplot grid.
+    projection : cartopy projection, default: ccrs.Robinson()
+        Defines the projection of the map. See cartopy home page.
+    See plt.subplots for other arguments
+
+    Returns
+    -------
+    fig : `~.figure.Figure`
+
+    ax : `.axes.Axes` or array of Axes
+    """
 
     if subplot_kw is None:
         subplot_kw = dict()
@@ -280,6 +284,41 @@ def one_map_flat(
     plotfunc="pcolormesh",
     **kwargs,
 ):
+    """plot 2D (=flat) DataArray on a cartopy GeoAxes
+
+    Parameters
+    ----------
+    da : DataArray
+        DataArray to plot.
+    ax : cartopy.GeoAxes
+        GeoAxes to plot da on.
+    levels : int or list-like object, optional
+        Split the colormap (cmap) into discrete color intervals.
+    mask_ocean : bool, default: False
+        If true adds the ocean feature.
+    ocean_kws : dict, default: None
+        Arguments passed to ``ax.add_feature(OCEAN)``.
+    add_coastlines : bool, default: None
+            If None or true plots coastlines. See coastline_kws.
+    coastline_kws : dict, default: None
+            Arguments passed to ``ax.coastlines()``.
+    add_land : bool, default: False
+            If true adds the land feature. See land_kws.
+    land_kws : dict, default: None
+            Arguments passed to ``ax.add_feature(LAND)``.
+    plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
+        Which plot function to use
+    **kwargs : keyword arguments
+        Further keyword arguments passed to the plotting function.
+
+    Returns
+    -------
+    h : handle (artist)
+    The same type of primitive artist that the wrapped matplotlib
+    function returns
+    """
+
+    # ploting options
     opt = dict(
         transform=ccrs.PlateCarree(),
         add_colorbar=False,
@@ -292,9 +331,6 @@ def one_map_flat(
 
     if land_kws is None:
         land_kws = dict(fc="0.8", ec="none")
-
-    if coastline_kws is None:
-        coastline_kws = dict()
 
     if add_land:
         ax.add_feature(cfeature.LAND, **land_kws)
@@ -314,9 +350,13 @@ def one_map_flat(
         ocean_kws = {} if ocean_kws is None else ocean_kws
         _mask_ocean(ax, **ocean_kws)
 
+    if coastline_kws is None:
+        coastline_kws = dict()
+
     if add_coastlines:
         coastlines(ax, **coastline_kws)
 
+    # make the spines a bit finer
     s = ax.spines["geo"]
     s.set_lw(0.5)
     s.set_color("0.5")
@@ -327,7 +367,23 @@ def one_map_flat(
 
 
 def mask_ocean(ax, facecolor="w", zorder=1.1, lw=0, **kwargs):
+    """plot the ocean feature on a cartopy GeoAxes
 
+    Parameters
+    ----------
+    ax : cartopy.GeoAxes
+        GeoAxes to plot the ocean.
+    facecolor : matplotlib color, default: "w"
+        Color the plot the ocean in.
+    zorder : float, default: 1.2
+        Zorder of the ocean mask. Slightly more than 1 so it's higher than a normal
+        artist.
+    lw : float, default: 0
+        With of the edge. Set to 0 to avoid overlaps with the land and coastlines.
+    kwargs : keyword arguments
+        Additional keyword arguments to be passed to ax.add_feature.
+
+     """
     NEF = cfeature.NaturalEarthFeature
     OCEAN = NEF(
         "physical",
@@ -342,6 +398,21 @@ _mask_ocean = mask_ocean
 
 
 def coastlines(ax, color="0.1", lw=1, zorder=1.2, **kwargs):
+    """plot coastlines on a cartopy GeoAxes
+
+    Parameters
+    ----------
+    ax : cartopy.GeoAxes
+        GeoAxes to plot the coastlines.
+    color : matplotlib color, default: "0.1"
+        Color the plot the coastlines.
+    lw : float, default: 0
+        With of the edge. Set to 0 to avoid overlaps with the land and coastlines.
+    zorder : float, default: 1.2
+        Zorder of the ocean mask - slightly more than the ocean.
+    kwargs : keyword arguments
+        Additional keyword arguments to be passed to ax.add_feature.
+     """
     ax.coastlines(color=color, lw=lw, zorder=zorder, *kwargs)
 
 
@@ -361,9 +432,57 @@ def one_map(
     add_n_models=True,
     **kwargs,
 ):
+    """flatten and plot a 3D DataArray on a cartopy GeoAxes, maybe add simple hatch
 
-    func = getattr(da, average)
-    d = func(dim, skipna=skipna)
+    Parameters
+    ----------
+    da : DataArray
+        DataArray to plot.
+    ax : cartopy.GeoAxes
+        GeoAxes to plot da on.
+    average : str
+        Function to reduce da with (along dim), e.g. "mean", "median".
+    dim : str, default: "mod_ens"
+        Dimension to reduce da over.
+    levels : int or list-like object, optional
+        Split the colormap (cmap) into discrete color intervals.
+    mask_ocean : bool, default: False
+        If true adds the ocean feature.
+    ocean_kws : dict, default: None
+        Arguments passed to ``ax.add_feature(OCEAN)``.
+    skipna : bool, optional
+        If True, skip missing values (as marked by NaN). By default, only
+        skips missing values for float dtypes
+    add_coastlines : bool, default: None
+            If None or true plots coastlines. See coastline_kws.
+    coastline_kws : dict, default: None
+            Arguments passed to ``ax.coastlines()``.
+    hatch_simple : float, default: None
+        If not None determines hatching on the fraction of models with the same sign.
+        hatch_simple must be in 0..1.
+    add_land : bool, default: False
+            If true adds the land feature. See land_kws.
+    land_kws : dict, default: None
+            Arguments passed to ``ax.add_feature(LAND)``.
+    plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
+        Which plot function to use
+    add_n_models : bool, default: True
+        If True adds to number of models in the top right of the map. May only work for
+        the Robinson projection.
+    **kwargs : keyword arguments
+        Further keyword arguments passed to the plotting function.
+
+    Returns
+    -------
+    h : handle (artist)
+        The same type of primitive artist that the wrapped matplotlib
+        function returns
+    legend_handle
+        Handle of the legend (or None):
+    """
+
+    # reduce da with the choosen function
+    d = getattr(da, average)(dim, skipna=skipna)
 
     if add_n_models:
         n = len(da[dim])
@@ -384,6 +503,7 @@ def one_map(
     if hatch_simple is not None:
         from . import iav as iav_utils
 
+        # find if more than hatch_simple models share the same sign (per grid point)
         consistent_change = iav_utils._get_same_sign(da, hatch_simple, dim=dim)
         # we don't want to hatch Na
         all_notnull = da.notnull().all(dim)
@@ -421,12 +541,12 @@ def one_map_hatched(
     plotfunc="pcolormesh",
     **kwargs,
 ):
+    """flatten and plot a 3D DataArray on a cartopy GeoAxes, add comprehensive hatch
+
+    UNUSED
+    """
 
     from . import iav as iav_utils
-
-    reload(iav_utils)
-    reload(iav_utils)
-    reload(iav_utils)
 
     data_iav_aligned = iav_utils.align_for_iav(iav, da, da_abs=da_abs)
 
@@ -476,6 +596,12 @@ def at_warming_level_one_hatch(
     colorbar_kwargs=None,
     **kwargs,
 ):
+    """
+    plot at three warming levels: flatten and plot a 3D DataArray on a cartopy GeoAxes,
+    maybe add comprehensive hatching
+
+    UNUSED
+    """
 
     if len(at_warming_c) != 3 or (da_abs is not None and len(da_abs) != 3):
         raise ValueError("wrong size!")
@@ -594,12 +720,53 @@ def at_warming_level_one(
     legend_kwargs=None,
     **kwargs,
 ):
+    """
+    plot at three warming levels: flatten and plot a 3D DataArray on a cartopy GeoAxes,
+    maybe add simple hatch
+
+    Parameters
+    ----------
+    at_warming_c : list of DataArray
+        List of three DataArray objects at warming levels to plot.
+    unit : str
+        Unit of the data. Added as label to the colorbar.
+    title : str
+        Suptitle of the figure. If average is not "mean" it is added to the title.
+    levels : int or list-like object, optional
+        Split the colormap (cmap) into discrete color intervals.
+    average : str
+        Function to reduce da with (along dim), e.g. "mean", "median".
+    mask_ocean : bool, default: False
+        If true adds the ocean feature.
+    colorbar : bool, default: True
+        If to add a colorbar to the figure.
+    ocean_kws : dict, default: None
+        Arguments passed to ``ax.add_feature(OCEAN)``.
+    skipna : bool, optional
+        If True, skip missing values (as marked by NaN). By default, only
+        skips missing values for float dtypes
+    hatch_simple : float, default: None
+        If not None determines hatching on the fraction of models with the same sign.
+        hatch_simple must be in 0..1.
+    add_legend : bool, default: False
+        If a legend should be added.
+    plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
+        Which plot function to use
+    legend_kwargs : keyword arguments for the legend
+        Additional keyword arguments passed on to ax.legend.
+    **kwargs : keyword arguments
+        Further keyword arguments passed to the plotting function.
+
+    Returns
+    -------
+    cbar : handle (artist)
+        Colorbar handle.
+    """
 
     if average != "mean":
         title += f" – {average}"
 
     f, axes = plt.subplots(1, 3, subplot_kw=dict(projection=ccrs.Robinson()))
-
     axes = axes.flatten()
 
     if colorbar_kwargs is None:
@@ -624,7 +791,6 @@ def at_warming_level_one(
         )
 
     for ax in axes:
-        # ax.coastlines(zorder=4, lw=0.5)
         ax.set_global()
 
     if colorbar:
@@ -644,13 +810,14 @@ def at_warming_level_one(
         cbar = mpu.colorbar(**colorbar_opt)
 
         cbar.set_label(unit, labelpad=1, size=9)
-        cbar.ax.tick_params(labelsize=9)  # , length=0)
+        cbar.ax.tick_params(labelsize=9)
 
     if add_legend and (not colorbar or hatch_simple is None):
         raise ValueError("Can only add legend when colorbar and add_hatch is True")
 
     if add_legend:
 
+        # add a text legend entry - the non-hatched regions show high agreement
         h0 = text_legend(ax, "Color", "High model agreement", size=7)
 
         legend_opt = dict(
@@ -682,18 +849,14 @@ def at_warming_level_one(
     # axes[2].set_title("Tglob anomaly +4.0 °C", fontsize=9, pad=2)
 
     side = 0.01
+    subplots_adjust_opt = dict(wspace=0.025, left=side, right=1 - side)
     if colorbar:
-        f.suptitle(title, fontsize=9, y=0.975)
-        plt.subplots_adjust(
-            wspace=0.025, left=side, right=1 - side, bottom=0.3, top=0.82
-        )
-
+        subplots_adjust_opt.update({"bottom": 0.3, "top": 0.82})
     else:
-        f.suptitle(title, fontsize=9, y=0.975)
-        plt.subplots_adjust(
-            wspace=0.025, left=side, right=1 - side, bottom=0.08, top=0.77
-        )
+        subplots_adjust_opt.update({"bottom": 0.08, "top": 0.77})
 
+    f.suptitle(title, fontsize=9, y=0.975)
+    plt.subplots_adjust(**subplots_adjust_opt)
     mpu.set_map_layout(axes, width=18)
 
     f.canvas.draw()
@@ -703,12 +866,45 @@ def at_warming_level_one(
 
 
 # ======================================================================================
+
+# options and function for Africa fact sheet plot (for Izidine)
+
+AFRICA_KWARGS = dict(
+    add_n_models=False,
+    colorbar_kwargs=dict(size=0.075, pad=0.025),
+    legend_kwargs=dict(
+        bbox_to_anchor=(0.5, -0.225),
+    ),
+)
+
+
+def set_extent_africa():
+    """set extent to African domain
+
+    for Izidine
+    used in Africa_TNn_map_Izidine.ipynb
+    """
+
+    f = plt.gcf()
+    # only the GeoAxes
+    axes = np.array(f.axes)[:3]
+
+    for ax in axes:
+        ax.set_extent([-25, 65, -36, 38], ccrs.PlateCarree())
+
+    side = 0.02
+    plt.subplots_adjust(wspace=0.025, left=side, right=1 - side, bottom=0.2, top=0.85)
+    mpu.set_map_layout(axes, width=17)
+
+    f.canvas.draw()
+
+
 # ======================================================================================
 # ======================================================================================
 # ======================================================================================
 # ======================================================================================
 
-# UNUSED?
+# UNUSED
 
 
 def at_warming_level(
@@ -928,31 +1124,3 @@ def at_warming_level_diff(
     f.canvas.draw()
 
     return cbar
-
-
-# options and function for Africa fact sheet plot (for Izidine)
-
-AFRICA_KWARGS = dict(
-    add_n_models=False,
-    colorbar_kwargs=dict(size=0.075, pad=0.025),
-    legend_kwargs=dict(
-        bbox_to_anchor=(0.5, -0.225),
-    ),
-)
-
-
-def set_extent_africa():
-    # set extent to african domain
-    # for Izidine
-
-    f = plt.gcf()
-    axes = np.array(f.axes)[:3]
-
-    for ax in axes:
-        ax.set_extent([-25, 65, -36, 38], ccrs.PlateCarree())
-
-    side = 0.02
-    plt.subplots_adjust(wspace=0.025, left=side, right=1 - side, bottom=0.2, top=0.85)
-    mpu.set_map_layout(axes, width=17)
-
-    f.canvas.draw()

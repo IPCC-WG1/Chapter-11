@@ -1,8 +1,31 @@
+import warnings
+
 import xarray as xr
 
 
-def time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
-    """determine if start--end is in time vector"""
+def _time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
+    """determine if start--end is in time vector
+
+    Parameters
+    ----------
+    start : int
+        Start year.
+    ens : int
+        End year.
+    yr_min : int
+        First year on time vector.
+    yr_max : int
+        Last year on time vector.
+    metadata : dict
+        MetaData of the model.
+    quiet : bool, default: False
+        If a warning should be printed.
+
+    Returns
+    -------
+    _time_in_range : bool
+        True if time is in range, else False.
+    """
 
     if (start < yr_min) or (end > yr_max):
         msg = f"no data for {start} - {end} ({yr_min.values}..{yr_max.values})"
@@ -35,6 +58,24 @@ def calc_anomaly_wrt_warming_level(
     skipna=None,
     select_by=("model", "exp", "ens"),
 ):
+    """calc anomaly of dataset w.r.t. a warming level
+
+    Parameters
+    ----------
+    tas_list : DataList
+        DataList of global mean temperatures.
+    index_list : DataList
+        DataList of the index to calculate the anomaly for.
+    warming_level : float
+        Global warming level (GWL) to compute the anomaly for.
+    skipna : bool, default: None
+        If invalid values should be skipped.
+    how : "absolute" | "relative" | "norm" | "no_anom"
+        Method to calculate the anomaly. Default "absolute". Prepend "no_check_" to
+        avoid the time bounds check.
+    select_by : list of str, optional
+        Conditions to align tas_list and index_list.
+    """
 
     out = list()
 
@@ -95,6 +136,20 @@ def calc_anomaly(
     how : "absolute" | "relative" | "norm" | "no_anom"
         Method to calculate the anomaly. Default "absolute". Prepend "no_check_" to
         avoid the time bounds check.
+    skipna : bool, default: None
+        If invalid values should be skipped.
+    metadata : MetaData, optional
+        Used to display a message if the models fails the bounds check
+    at_least_until : int, default: None
+        If not None ensure ds runs at least to this year.
+    quiet : bool, default: True
+        If check_time_bounds should print a message on failure.
+
+    Returns
+    -------
+    ds : xarray Dataset or DataArray or empty list
+        Normalized data
+
     """
 
     check_time_bounds = True
@@ -102,7 +157,9 @@ def calc_anomaly(
         check_time_bounds = False
         how = how.replace("no_check_", "")
 
-    assert how in ("absolute", "relative", "norm", "no_anom")
+    how_options = ("absolute", "relative", "norm", "no_anom")
+    if how not in how_options:
+        raise ValueError("'how' must be one of: " + ",", join(how_options))
 
     if ("year" in ds.dims) and ("time" in ds.dims):
         msg = "'year' and 'time' in dims"
@@ -120,12 +177,13 @@ def calc_anomaly(
 
     # check if time series spans reference period
     yr_min, yr_max = years.min(), years.max()
-    if check_time_bounds and not time_in_range(
+
+    if check_time_bounds and not _time_in_range(
         int(start), int(end), yr_min, yr_max, metadata=metadata, quiet=quiet
     ):
         return []
 
-    if at_least_until is not None and not time_in_range(
+    if at_least_until is not None and not _time_in_range(
         int(at_least_until),
         int(at_least_until),
         yr_min,
@@ -158,6 +216,29 @@ def calc_anomaly(
 
 
 def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
+    """calculate the period when a certain global warming level is reached
+
+    Parameters
+    ----------
+    anomalies : xr.DataArray
+        Global mean temperature anomalies.
+    warming_level : float
+        Global warming level
+    n_years : int, default: 20
+        Length of period over which global warming level must be reached. Currently
+        restricted to even number of years.
+
+    Returns
+    -------
+    beg: int
+        Start year of the period. None if warming level is not exceeded.
+    end: int
+        End year of the period. None if warming level is not exceeded.
+    central_year: int
+        central year of the period. None if warming level is not exceeded.
+
+    """
+
     # calculate the start and end year of period of first exceedance
 
     if n_years % 2 != 0:
@@ -184,20 +265,20 @@ def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
 
 
 def select_by_metadata(datalist, **attributes):
-    """Select specific metadata describing preprocessed data.
+    """Select specific data described by metadata.
+
     Parameters
     ----------
-    metadata : list of (ds, metadata) pairs
-        A list of metadata describing preprocessed data.
+    datalist : DataList
+        List of (ds, metadata) pairs.
     **attributes :
-        Keyword arguments specifying the required variable attributes and
-        their values.
-        Use the value '*' to select any variable that has the attribute.
+        Keyword arguments specifying the required variable attributes and their values.
+        Use '*' to select any variable that has the attribute.
 
     Returns
     -------
-    list of (ds, metadata) pairs
-        A list of matching metadata.
+    out: DataList
+        List of (ds, metadata) pairs that has matching metadata.
     """
 
     selection = []
@@ -212,20 +293,20 @@ def select_by_metadata(datalist, **attributes):
 
 
 def remove_by_metadata(datalist, **attributes):
-    """Select specific metadata describing preprocessed data.
+    """Remove specific data described by metadata.
+
     Parameters
     ----------
-    metadata : list of (ds, metadata) pairs
-        A list of metadata describing preprocessed data.
+    datalist : DataList
+        List of (ds, metadata) pairs
     **attributes :
         Keyword arguments specifying the required variable attributes and
         their values.
-        Use the value '*' to select any variable that has the attribute.
 
     Returns
     -------
-    list of (ds, metadata) pairs
-        A list of matching metadata.
+    out : DataList
+        List of (ds, metadata) pairs with non-matching metadata.
     """
 
     selection = []
@@ -253,17 +334,37 @@ def at_warming_levels_list(
     as_datalist=False,
     n_years=20,
 ):
-    """compute value of index at a several warming levels
+    """compute value of index at several warming levels, returned in a list
 
     Parameters
     ==========
-    tas_list : list of (ds, metadata) pairs
-        List of (ds, metadata) pairs containing annual mean global mean
-        temperature data.
-    index_list : list of (ds, metadata) pairs
+    tas_list : DataList
+        List of (ds, metadata) pairs containing annual mean global mean temperature data
+    index_list : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     warming_levels : iterable of float
         warming levels at which to assess the index
+    add_meta : bool: default: True
+        If metadata should be added when returning a xr.DataArray.
+    reduce : str or None, default: "mean"
+        How to compute the average over the warming level period. If None the individual
+        years are returned.
+    select_by : list of str, optional
+        Conditions to align tas_list and index_list.
+    factor : float, default: None
+        If givem multiplies the data in index_list with this factor.
+    skipna : bool, default: None
+        If True, skip missing values (as marked by NaN).
+    as_datalist, bool, default: False
+        If True returns data as DataList else as xr.DataArray.
+    n_years : int, default: 20
+        Length of period over which global warming level must be reached. Currently
+        restricted to even number of years.
+
+    Returns
+    -------
+    out : list of xr.DataArray or list DataList
+        Data at the given warming levels. Output type depends on ``as_datalist``.
     """
 
     out = list()
@@ -282,6 +383,8 @@ def at_warming_levels_list(
         )
 
         if factor is not None:
+            if as_datalist:
+                raise ValueError("Cannot set `factor` and `as_datalist`")
             res *= factor
 
         out.append(res)
@@ -302,17 +405,40 @@ def at_warming_levels_dict(
     n_years=20,
     **kwargs,
 ):
-    """compute value of index at a several warming levels
+    """compute value of index at several warming levels, returned in a dict
 
     Parameters
     ==========
-    tas_list : list of (ds, metadata) pairs
-        List of (ds, metadata) pairs containing annual mean global mean
-        temperature data.
-    index_list : list of (ds, metadata) pairs
+    tas_list : DataList
+        List of (ds, metadata) pairs containing annual mean global mean temperature data
+    index_list : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     warming_levels : iterable of float
         warming levels at which to assess the index
+    add_meta : bool: default: True
+        If metadata should be added when returning a xr.DataArray.
+    reduce : str or None, default: "mean"
+        How to compute the average over the warming level period. If None the individual
+        years are returned.
+    select_by : list of str, optional
+        Conditions to align tas_list and index_list.
+    factor : float, default: None
+        If givem multiplies the data in index_list with this factor.
+    skipna : bool, default: None
+        If True, skip missing values (as marked by NaN).
+    as_datalist, bool, default: False
+        If True returns data as DataList else as xr.DataArray.
+    n_years : int, default: 20
+        Length of period over which global warming level must be reached. Currently
+        restricted to even number of years.
+    kwargs : dict
+        Additional keyword arguments passed on to the average function.
+
+    Returns
+    -------
+    out : dict of xr.DataArray or dict of DataList
+        Data at the given warming levels. The given warming_levels are the dict's keys.
+        Output type depends on ``as_datalist``.
     """
 
     out = dict()
@@ -332,6 +458,8 @@ def at_warming_levels_dict(
         )
 
         if factor is not None:
+            if as_datalist:
+                raise ValueError("Cannot set `factor` and `as_datalist`")
             res *= factor
 
         out[str(warming_level)] = res
@@ -351,22 +479,41 @@ def at_warming_level(
     n_years=20,
     **kwargs,
 ):
-    """compute value of index at a certain warming level
+    """compute value of index at one warming level
 
     Parameters
     ==========
-    tas_list : list of (ds, metadata) pairs
-        List of (ds, metadata) pairs containing annual mean global mean
-        temperature data.
-    index_list : list of (ds, metadata) pairs
+    tas_list : DataList
+        List of (ds, metadata) pairs containing annual mean global mean temperature data
+    index_list : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     warming_level : float
         warming level at which to assess the index
-    select_by : iterable of str
-        List attributes on which to select from index_list.
+    add_meta : bool: default: True
+        If metadata should be added when returning a xr.DataArray.
+    reduce : str or None, default: "mean"
+        How to compute the average over the warming level period. If None the individual
+        years are returned.
+    select_by : list of str, optional
+        Conditions to align tas_list and index_list.
+    skipna : bool, default: None
+        If True, skip missing values (as marked by NaN).
+    as_datalist, bool, default: False
+        If True returns data as DataList else as xr.DataArray.
+    n_years : int, default: 20
+        Length of period over which global warming level must be reached. Currently
+        restricted to even number of years.
+    kwargs : dict
+        Additional keyword arguments passed on to the average function.
+
+    Returns
+    -------
+    out : xr.DataArray or DataList
+        Data at the given warming level. Output type depends on ``as_datalist``.
     """
 
     out = list()
+
     # loop through all global mean temperatures
     for tas, metadata in tas_list:
 
@@ -419,6 +566,34 @@ def at_warming_level(
 def time_average(
     index_list, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs
 ):
+    """compute time average of index
+
+    Parameters
+    ==========
+    index_list : DataList
+        List of (ds, metadata) pairs containing annual data of the index.
+    beg : int
+        Start year to calculate the average over.
+    end : int
+        End year to calculate the average over.
+    warming_levels : iterable of float
+        warming levels at which to assess the index
+    reduce : str or None, default: "mean"
+        How to compute the average over the warming level period. If None the individual
+        years are returned.
+    skipna : bool, default: None
+        If True, skip missing values (as marked by NaN).
+    as_datalist, bool, default: False
+        If True returns data as DataList else as xr.DataArray.
+    kwargs : dict
+        Additional keyword arguments passed on to the average function.
+
+    Returns
+    -------
+    out : xr.DataArray or DataList
+        Data averaged over the given time period. Output type depends on ``as_datalist``.
+    """
+
     def _inner(ds, meta, beg, end, reduce, skipna):
 
         da = ds[meta["varn"]]
@@ -452,6 +627,27 @@ def time_average(
 
 def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=True):
 
+    """align two datalists (inner join)
+
+    Parameters
+    ----------
+    list_a : DataList
+        List of (ds, metadata) pairs.
+    list_b : DataList
+        List of (ds, metadata) pairs.
+    select_by : list of str, optional
+        Conditions to align lists on.
+    check : bool, default: True
+        If True checks that only one dataset is found in list_b
+
+    Returns
+    -------
+    out_a : DataList
+        Aligned list of (ds, metadata) pairs.
+    out_b : DataList
+        Aligned list of (ds, metadata) pairs.
+    """
+
     out_a = list()
     out_b = list()
 
@@ -476,12 +672,43 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
 
 
 def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
-    """align DataArrays by model"""
+    """select same models by aligning DataArrays
+
+    Parameters
+    ----------
+    data : iterable of xr.DataArray
+        DataArray objects to align
+    by : list of str, optional
+        Conditions to align lists on.
+
+    Returns
+    -------
+    out : list of xr.DataArray
+        List of aligned DataArray objects.
+
+    """
 
     return align_modellist(data, join="inner", by=by)
 
 
 def align_modellist(data, join="inner", by=dict(ens=("model", "ensname", "exp"))):
+    """align DataArrays
+
+    Parameters
+    ----------
+    data : iterable of xr.DataArray
+        DataArray objects to align
+    by : list of str, optional
+        Conditions to align lists on.
+
+    Returns
+    -------
+    out : list of xr.DataArray
+        List of aligned DataArray objects.
+
+    """
+
+    warnings.warn("Maybe better not use this")
 
     res = list()
     for i, o in enumerate(data):
@@ -502,13 +729,32 @@ def concat_xarray_with_metadata(
 
     Input
     -----
-    data : nested dict
+    datalist : DataList
+        List of (ds, metadata) pairs.
+    process : callable, default: None
+        Function to apply for each ds before concatenation.
+    index : dict, optional
+        Only applies if set_index is True. dict describing how to create a MultiIndex.
+    retain : iterable of str, optional
+        Which metadata information to assign as non-dimension coordinates.
+    set_index : bool, default: False
+        If True sets a MultiIndex to the DataArray
 
+    Returns
+    -------
+    out : xr.DataArray
+        Concatenated DataArray
+
+
+    Notes
+    -----
+    should be named ``to_dataarray``
 
     """
 
     all_ds = list()
 
+    # no longer necessary since we can plot non-coord dimensions
     retain += ("ensi",)
     retain_dict = {r: ("mod_ens", list()) for r in retain}
 
@@ -526,16 +772,10 @@ def concat_xarray_with_metadata(
     # concate all data
     out = xr.concat(all_ds, "mod_ens", compat="override", coords="minimal")
     # assign coordinates
-
-    # def all_none(lst):
-    #     return np.vectorize(lambda x: x is None)(lst).all()
-    # retain_dict = {key: val for key, val in retain_dict.items() if not all_none(val)}
-
     out = out.assign_coords(**retain_dict)
 
-    index = {"mod_ens": retain}
-
     if set_index:
+        index = {"mod_ens": retain}
         # create multiindex
         out = out.set_index(**index)
 
@@ -550,6 +790,8 @@ def concat_xarray_without_metadata(datalist, process=None):
     datalist : datalist
 
     """
+
+    warnings.warn("Maybe better not use this")
 
     all_ds = list()
 
@@ -573,10 +815,17 @@ def process_datalist(func, datalist, pass_meta=False, **kwargs):
     ----------
     func : callable
         function to apply
-    datalist : datalist
+    datalist : DataList
         List to apply the function over.
+    pass_meta : bool, default: False
+        If "meta" should be passed as keyword argument to ``func``.
     **kwargs : extra arguments
         passed to func
+
+    Returns
+    -------
+    datalist_out : DataList
+        List with ``func`` applied to each element.
     """
 
     datalist_out = list()

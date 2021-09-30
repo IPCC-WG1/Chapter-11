@@ -2,6 +2,27 @@ from . import xarray_utils as xru
 
 
 def _get_fx_data(self, varn, meta, table="*", disallow_alternate=False):
+    """load cmip fx data with fallbacks
+
+    Parameters
+    ----------
+    varn : str
+        Variable name to load.
+    meta : dict of metadata
+        Metadata of the model to load the fx files for. Note incompatible metadata
+        (e.g. "varn") will be automatically removed from meta.
+    table : str, default "*"
+        Which 'table' to look for the fx files. Note that cmip6 has the tables 'fx'
+        and 'Ofx', therefore we use a wildcard per default.
+    disallow_alternate : bool, default: False
+        If we are allowed to look for fx files of the model for different 'exp' or
+        'ens' than the ones specified in 'meta'.
+
+    Returns
+    -------
+    fx : xr.DataArray or None
+        Returns the fx DataArray if found, else returns None.
+    """
 
     # only retain necessary keys in meta (e.g. discard ensnumber)
     keys = self.files_fx.keys - set(["table", "varn"])
@@ -45,6 +66,7 @@ def _get_fx_data(self, varn, meta, table="*", disallow_alternate=False):
 
 
 def _load_mask_or_weights(self, varn, meta, da=None):
+    """load fx file with nas filled and aligned to da"""
 
     mask = self.load_fx(varn, meta)
 
@@ -55,6 +77,7 @@ def _load_mask_or_weights(self, varn, meta, da=None):
         # get rid of the 'type' coordinate, it can cause problems for cdo
         mask = mask.drop_vars("type", errors="ignore")
 
+        # check range of the weights
         mask = xru.check_range(
             mask,
             min_allowed=0.0,

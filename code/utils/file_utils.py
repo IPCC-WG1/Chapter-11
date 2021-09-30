@@ -3,11 +3,9 @@ import os
 import numpy as np
 
 
-# file utilities
 def _check_all_files_exist(fnames):
-    """
-    error if one file does not exist
-    """
+    """error if one file does not exist"""
+
     fnames = _str2lst(fnames)
     if _any_file_does_not_exist(fnames):
         msg = "file(s) missing:\n" + "\n".join(fnames)
