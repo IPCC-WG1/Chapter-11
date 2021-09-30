@@ -128,7 +128,6 @@ class SaveFiguredata:
 
         return ds
 
-
     def scaling(self, da, panels):
 
         da.attrs["units"] = self.units
@@ -149,8 +148,5 @@ class SaveFiguredata:
             "global warming level derived from global mean annual mean Near-Surface\n"
             "Air Temperature (Cross-Chapter Box 11.1)."
         )
-
-
-
 
         return ds

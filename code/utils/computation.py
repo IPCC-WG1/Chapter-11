@@ -159,7 +159,7 @@ def calc_anomaly(
 
     how_options = ("absolute", "relative", "norm", "no_anom")
     if how not in how_options:
-        raise ValueError("'how' must be one of: " + ",", join(how_options))
+        raise ValueError("'how' must be one of: " + ",".join(how_options))
 
     if ("year" in ds.dims) and ("time" in ds.dims):
         msg = "'year' and 'time' in dims"
@@ -459,7 +459,7 @@ def at_warming_levels_dict(
 
         if factor is not None:
             if as_datalist:
-                raise ValueError("Cannot set `factor` and `as_datalist`")
+                raise ValueError("That does not work")
             res *= factor
 
         out[str(warming_level)] = res

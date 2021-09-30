@@ -1,6 +1,5 @@
 import copy
 import logging
-from importlib import reload
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -49,6 +48,7 @@ class SmallXHatch(mpl.hatch.Shapes):
         self.shape_vertices = self.path.vertices
         self.shape_codes = self.path.codes
         super().__init__(hatch, density)
+
 
 mpl.hatch._hatch_types.append(SmallXHatch)
 
@@ -383,7 +383,7 @@ def mask_ocean(ax, facecolor="w", zorder=1.1, lw=0, **kwargs):
     kwargs : keyword arguments
         Additional keyword arguments to be passed to ax.add_feature.
 
-     """
+    """
     NEF = cfeature.NaturalEarthFeature
     OCEAN = NEF(
         "physical",
@@ -412,7 +412,7 @@ def coastlines(ax, color="0.1", lw=1, zorder=1.2, **kwargs):
         Zorder of the ocean mask - slightly more than the ocean.
     kwargs : keyword arguments
         Additional keyword arguments to be passed to ax.add_feature.
-     """
+    """
     ax.coastlines(color=color, lw=lw, zorder=zorder, *kwargs)
 
 

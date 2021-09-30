@@ -119,9 +119,6 @@ def cmip5_files(folder_in):
         ):
             return None
 
-
-
-
         # =========================================================================
 
         # get the files in the directory
@@ -502,7 +499,6 @@ def cmip5_data(ds, metadata):
     ):
         ds = ds.sel(time=slice(None, "2100"))
 
-
     # overwrite ice with NaN
     if _corresponds_to(
         metadata,
@@ -522,7 +518,6 @@ def cmip5_data(ds, metadata):
         exp=["rcp45", "rcp85", "historical"],
     ):
         ds["mrso"] = np.fmax(0, ds["mrso"])
-
 
     # values > 3400 -> ice
     if _corresponds_to(
