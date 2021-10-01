@@ -27,16 +27,20 @@ dependencies:
   - jupyter
   - line_profiler
   - matplotlib
+  - nb_black
   - nc-time-axis
   - netcdf4
   - numba
   - numpy
+  - openpyxl
   - pandas
   - parse
   - patsy
   - pint
   - pip
+  - pooch
   - pytest
+  - pytest-cov
   - python-cdo
   - pyyaml
   - rasterio
@@ -45,11 +49,13 @@ dependencies:
   - seaborn
   - shapely
   - statsmodels
+  - tabulate
   - windspharm
   - xarray
   - xarray
   - xclim=0.17
   - xesmf
+  - xlwt
   - zarr
   - pip:
     - git+https://github.com/mathause/regionmask.git@feature/ar6_regions
