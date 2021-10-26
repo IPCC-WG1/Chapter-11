@@ -58,8 +58,6 @@ There are three associated external data repositories which provide the data fro
 * [mathause/cmip_warming_levels](https://github.com/mathause/cmip_warming_levels) documents the year when a certain global warming level was reached in cmip5 and cmip6 data. There is no associated table in the IPCC report.
 
 
-
-
 ## Data
 
 This repository is provided _without_ data. The data volume (approximately 1 TB) prohibits an efficient distribution. In addition not all data is in the public domain.
@@ -68,6 +66,22 @@ There are several ways to obtain some or all the data
 - The data can be provided upon reasonable request (either the whole data folder or parts).
 - Some of the final data (i.e. exactly what is shown in the figure) is available from [CEDA](https://catalogue.ceda.ac.uk), (e.g. the data for [Figure SPM 5](https://catalogue.ceda.ac.uk/uuid/2787230b963942009e452255a3880609)).
 - Some datasets are publicly available, e.g. [HadEX3](https://www.metoffice.gov.uk/hadobs/hadex3/).
+
+
+## License
+
+Copyright (c) 2021 ETH Zurich, Mathias Hauser.
+
+This is free software; you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, version 3  or
+(at your option) any later version.
+
+The code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this code. If
+not, see https://www.gnu.org/licenses/.
 
 
 ## Acknowledgment
