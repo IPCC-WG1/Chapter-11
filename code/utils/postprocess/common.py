@@ -295,9 +295,11 @@ class Processor:
 
         return f"{cmip}: <{klass}>{ppn}"
 
+
 # TODO: use bridge/ strategy pattern instead of subclassing
 # The start should be easy - pass the correct function to use in `find_all_files`,
 # however, reading the weights might also have to be abstracted away.
+
 
 class ProcessorFromOrig(Processor):
     def find_all_files(self):
