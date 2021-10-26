@@ -1,6 +1,6 @@
-# filefinder
+# FileFinder
 
-> Find and parse file and folder names.
+_Find and parse file and folder names._
 
 Define regular folder and file patterns with the intuitive python syntax:
 
