@@ -1,12 +1,13 @@
+import warnings
+
+import xarray as xr
+
 from .datalist import (  # noqa: F401
-    align_modellist,
     concat_xarray_with_metadata,
-    concat_xarray_without_metadata,
     match_data_list,
     process_datalist,
     remove_by_metadata,
     select_by_metadata,
-    select_same_models,
 )
 from .warming_level import (  # noqa: F401
     at_warming_level,
@@ -230,3 +231,50 @@ def time_average(
         index_list,
         set_index=False,
     )
+
+
+def align_modellist(data, join="inner", by=dict(ens=("model", "ensname", "exp"))):
+    """align DataArrays
+
+    Parameters
+    ----------
+    data : iterable of xr.DataArray
+        DataArray objects to align
+    by : list of str, optional
+        Conditions to align lists on.
+
+    Returns
+    -------
+    out : list of xr.DataArray
+        List of aligned DataArray objects.
+
+    """
+
+    warnings.warn("Maybe better not use this")
+
+    res = list()
+    for i, o in enumerate(data):
+        # create a MultiIndex
+        res.append(o.set_index(**by))
+
+    return list(xr.align(*res, join=join))
+
+
+def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
+    """select same models by aligning DataArrays
+
+    Parameters
+    ----------
+    data : iterable of xr.DataArray
+        DataArray objects to align
+    by : list of str, optional
+        Conditions to align lists on.
+
+    Returns
+    -------
+    out : list of xr.DataArray
+        List of aligned DataArray objects.
+
+    """
+
+    return align_modellist(data, join="inner", by=by)

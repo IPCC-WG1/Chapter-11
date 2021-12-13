@@ -1,8 +1,4 @@
-from .datalist import (
-    concat_xarray_with_metadata,
-    concat_xarray_without_metadata,
-    select_by_metadata,
-)
+from .datalist import concat_xarray_with_metadata, select_by_metadata
 
 
 def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
@@ -58,7 +54,6 @@ def at_warming_levels_list(
     tas_list,
     index_list,
     warming_levels,
-    add_meta=True,
     reduce="mean",
     select_by=("model", "exp", "ens"),
     factor=None,
@@ -106,7 +101,6 @@ def at_warming_levels_list(
             tas_list,
             index_list,
             warming_level,
-            add_meta=add_meta,
             reduce=reduce,
             select_by=select_by,
             skipna=skipna,
@@ -128,7 +122,6 @@ def at_warming_levels_dict(
     tas_list,
     index_list,
     warming_levels,
-    add_meta=True,
     reduce="mean",
     select_by=("model", "exp", "ens"),
     factor=None,
@@ -180,7 +173,6 @@ def at_warming_levels_dict(
             tas_list,
             index_list,
             warming_level,
-            add_meta=add_meta,
             reduce=reduce,
             select_by=select_by,
             skipna=skipna,
@@ -203,7 +195,6 @@ def at_warming_level(
     tas_list,
     index_list,
     warming_level,
-    add_meta=True,
     reduce="mean",
     select_by=("model", "exp", "ens"),
     skipna=None,
@@ -289,70 +280,67 @@ def at_warming_level(
     if as_datalist:
         return out
 
-    if add_meta:
-        return concat_xarray_with_metadata(out)
-    else:
-        return concat_xarray_without_metadata(out)
+    return concat_xarray_with_metadata(out)
 
 
-def calc_anomaly_wrt_warming_level(
-    tas_list,
-    index_list,
-    warming_level,
-    how="absolute",
-    skipna=None,
-    select_by=("model", "exp", "ens"),
-):
-    """calc anomaly of dataset w.r.t. a warming level
+# def calc_anomaly_wrt_warming_level(
+#     tas_list,
+#     index_list,
+#     warming_level,
+#     how="absolute",
+#     skipna=None,
+#     select_by=("model", "exp", "ens"),
+# ):
+#     """calc anomaly of dataset w.r.t. a warming level
 
-    Parameters
-    ----------
-    tas_list : DataList
-        DataList of global mean temperatures.
-    index_list : DataList
-        DataList of the index to calculate the anomaly for.
-    warming_level : float
-        Global warming level (GWL) to compute the anomaly for.
-    skipna : bool, default: None
-        If invalid values should be skipped.
-    how : "absolute" | "relative" | "norm" | "no_anom"
-        Method to calculate the anomaly. Default "absolute". Prepend "no_check_" to
-        avoid the time bounds check.
-    select_by : list of str, optional
-        Conditions to align tas_list and index_list.
-    """
+#     Parameters
+#     ----------
+#     tas_list : DataList
+#         DataList of global mean temperatures.
+#     index_list : DataList
+#         DataList of the index to calculate the anomaly for.
+#     warming_level : float
+#         Global warming level (GWL) to compute the anomaly for.
+#     skipna : bool, default: None
+#         If invalid values should be skipped.
+#     how : "absolute" | "relative" | "norm" | "no_anom"
+#         Method to calculate the anomaly. Default "absolute". Prepend "no_check_" to
+#         avoid the time bounds check.
+#     select_by : list of str, optional
+#         Conditions to align tas_list and index_list.
+#     """
 
-    out = list()
+#     out = list()
 
-    # loop through all global mean temperatures
-    for tas, metadata in tas_list:
-        attributes = {key: metadata[key] for key in select_by}
+#     # loop through all global mean temperatures
+#     for tas, metadata in tas_list:
+#         attributes = {key: metadata[key] for key in select_by}
 
-        # try to find the index
-        index = select_by_metadata(index_list, **attributes)
+#         # try to find the index
+#         index = select_by_metadata(index_list, **attributes)
 
-        # make sure only one dataset is found in index_list
-        if len(index) > 1:
-            raise ValueError("Found more than one dataset:\n", metadata)
+#         # make sure only one dataset is found in index_list
+#         if len(index) > 1:
+#             raise ValueError("Found more than one dataset:\n", metadata)
 
-        # an index was found for this tas dataset
-        if index:
+#         # an index was found for this tas dataset
+#         if index:
 
-            # determine year when the warming was first reached
-            beg, end, __ = calc_year_of_warming_level(tas.tas, warming_level)
+#             # determine year when the warming was first reached
+#             beg, end, __ = calc_year_of_warming_level(tas.tas, warming_level)
 
-            if beg:
+#             if beg:
 
-                index = calc_anomaly(
-                    index,
-                    beg,
-                    end,
-                    how=how,
-                    skipna=skipna,
-                    metadata=metadata,
-                    at_least_until=None,
-                )
+#                 index = calc_anomaly(
+#                     index,
+#                     beg,
+#                     end,
+#                     how=how,
+#                     skipna=skipna,
+#                     metadata=metadata,
+#                     at_least_until=None,
+#                 )
 
-                out.append([index, metadata])
+#                 out.append([index, metadata])
 
-    return out
+#     return out

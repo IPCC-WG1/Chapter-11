@@ -1,5 +1,3 @@
-import warnings
-
 import xarray as xr
 
 
@@ -107,53 +105,6 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
     return out_a, out_b
 
 
-def select_same_models(data, by=dict(ens=("model", "ensname", "exp"))):
-    """select same models by aligning DataArrays
-
-    Parameters
-    ----------
-    data : iterable of xr.DataArray
-        DataArray objects to align
-    by : list of str, optional
-        Conditions to align lists on.
-
-    Returns
-    -------
-    out : list of xr.DataArray
-        List of aligned DataArray objects.
-
-    """
-
-    return align_modellist(data, join="inner", by=by)
-
-
-def align_modellist(data, join="inner", by=dict(ens=("model", "ensname", "exp"))):
-    """align DataArrays
-
-    Parameters
-    ----------
-    data : iterable of xr.DataArray
-        DataArray objects to align
-    by : list of str, optional
-        Conditions to align lists on.
-
-    Returns
-    -------
-    out : list of xr.DataArray
-        List of aligned DataArray objects.
-
-    """
-
-    warnings.warn("Maybe better not use this")
-
-    res = list()
-    for i, o in enumerate(data):
-        # create a MultiIndex
-        res.append(o.set_index(**by))
-
-    return list(xr.align(*res, join=join))
-
-
 def concat_xarray_with_metadata(
     datalist,
     process=None,
@@ -214,32 +165,6 @@ def concat_xarray_with_metadata(
         index = {"mod_ens": retain}
         # create multiindex
         out = out.set_index(**index)
-
-    return out
-
-
-def concat_xarray_without_metadata(datalist, process=None):
-    """create xr Dataset with 'ens' and 'model' as multiindex
-
-    Input
-    -----
-    datalist : datalist
-
-    """
-
-    warnings.warn("Maybe better not use this")
-
-    all_ds = list()
-
-    for i, (ds, metadata) in enumerate(datalist):
-
-        if process is not None:
-            ds = process(ds)
-
-        all_ds.append(ds)
-
-    # concate all data
-    out = xr.concat(all_ds, "ens", compat="override", coords="minimal")
 
     return out
 
