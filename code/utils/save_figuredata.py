@@ -76,19 +76,20 @@ class SaveFiguredata:
         average : str
             Reduction function to apply.
         panel : str
-            If not None indicate which panel of the
-            figure the data represents.
+            If not None indicate which panel of the figure the data represents.
         warming_level : float
             Global warming level of da.
         dim : str, default: "mod_ens"
             Dimension to average over.
         hatch_simple : float, default: None
-            Indicate if the figure is hatched using the
-            simple approach. Number indicates the fraction
-            models that need to exhibit a change in the same
+            Indicate if the figure is hatched using the simple approach. Number
+            indicates the fraction models that need to exhibit a change in the same
             direction.
 
-
+        Returns
+        -------
+        da : xr.Dataset
+            Data with the appropriate attributes attached.
         """
 
         # filter out inf & set to <NA>
@@ -129,6 +130,20 @@ class SaveFiguredata:
         return ds
 
     def scaling(self, da, panels):
+        """save data used for scaling plots
+
+        Parameters
+        ----------
+        da : xr.DataArray
+            DataArray used for the plot.
+        panel : str
+            If not None indicate which panel of the figure the data represents.
+
+        Returns
+        -------
+        da : xr.Dataset
+            Data with the appropriate attributes attached.
+        """
 
         da.attrs["units"] = self.units
         ds = self._to_ds(da)

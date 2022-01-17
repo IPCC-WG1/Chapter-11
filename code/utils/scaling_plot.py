@@ -8,6 +8,8 @@ import xarray as xr
 
 from . import plot
 
+# regions that are combined into one subplot
+
 REGION_GROUPS = dict(
     NAmerica=[1, 2, 3, 4, 5],
     CAmerica=[6, 7, 8],
@@ -38,6 +40,8 @@ REGION_NAMES = dict(
 
 
 def _prep_for_concat(da):
+    """prepare data for concatenation"""
+
     to_drop = ["ensnumber", "table", "grid", "varn", "ensi", "postprocess"]
 
     if "type" in da.coords.keys():
@@ -48,6 +52,11 @@ def _prep_for_concat(da):
 
 
 def concat_for_scaling(c6_at_warming_, warming_levels):
+    """
+    concatenate data at different warming levels. missing warming levels are filled with
+    nan.
+
+    """
 
     c6_at_warming_ = [_prep_for_concat(ds) for ds in c6_at_warming_]
 
@@ -57,14 +66,31 @@ def concat_for_scaling(c6_at_warming_, warming_levels):
 
 
 def plot_reg_full(ax, at_warming, region, conf_cmip):
+    """show scaling for all ensemble members of a certain region
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Axes to draw the scaling on.
+    at_warming : xr.DataArray
+        Warming levels data (piped through ``concat_for_scaling``).
+    region : int
+        Number of the region to plot.
+    conf_cmip : config
+        Configuration (used for the colors).
+
+    Returns
+    -------
+    line artists
+    """
 
     lw = 1.5
-
-    reg = at_warming.sel(region=region)
     opt_ens = dict(color="0.5", lw=0.5)
 
-    for i in range(len(reg.mod_ens)):
+    reg = at_warming.sel(region=region)
 
+    # plot all ensemble members
+    for i in range(len(reg.mod_ens)):
         reg.sel(mod_ens=i).plot(ax=ax, **opt_ens)
 
     h0 = ax.plot([], [], **opt_ens, label="Ensemble member")
@@ -94,6 +120,7 @@ def plot_reg_full(ax, at_warming, region, conf_cmip):
 
 
 def plot_region_groups():
+    """map plot with region groups colored separately"""
 
     colors = sns.color_palette("Paired", 12)
 
@@ -113,21 +140,31 @@ def plot_region_groups():
         )
 
     ax.set_global()
-
     f.subplots_adjust(left=0.01, right=0.99)
-
     ax.legend(fontsize=7, loc="lower left", ncol=1)
-
     mpu.set_map_layout(np.array([ax]))
-
     ax.set_title("")
 
 
 def plot_scaling(c6_at_warming_, conf_cmip, title, ylabel, legend_opt=None):
+    """show scaling for multi model median of all regions
 
-    # ====
+    Parameters
+    ----------
+    c6_at_warming_ : xr.DataArray
+        Warming levels data (piped through ``concat_for_scaling``).
+    conf_cmip : config
+        Configuration (used for ``plot_reg_full``).
+    title : str
+        Suptitle of the figure.
+    ylabel : str
+        Label for the y-axis of the leftmost panels.
+    legend_opt : dict, default: None
+        To override the default legend options.
+
+    """
+
     # options
-
     colors = [
         np.array([221, 84, 46]) / 255,
         np.array([33, 52, 219]) / 255,
@@ -180,6 +217,7 @@ def plot_scaling(c6_at_warming_, conf_cmip, title, ylabel, legend_opt=None):
             label = "{} ({:0.1f}°C/°C)".format(d.abbrevs.item(), slope)
 
             d.plot(ax=ax, label=label, lw=1, color=colors[j])
+
         leg = ax.legend(loc="upper left", **legend_opt)
         leg.set_zorder(0)
         ax.set_title(REGION_NAMES[region_name], fontsize=9)

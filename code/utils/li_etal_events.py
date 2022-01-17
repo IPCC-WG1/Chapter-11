@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+# used for Figure_11.12 andFigure_11.15
+
 fN = (
     "../data/Li_etal/"
     "frequency_intensity_changes_TXx_Rx1day_events_1851_vs_1850_orig_from_chao.xlsx"
@@ -25,6 +27,7 @@ ORANGE = dict(fc="#fdbf6f", ec="#ff7f00")
 
 
 def read_data(varn):
+    """read data from excel file in ../data/Li_etal/"""
 
     data = dict()
     for key, row in ROWS.items():
@@ -42,6 +45,7 @@ def read_data(varn):
 
 # read data from dataframe
 def get_boxtats(data):
+    """prepare data for ax.bxp plot"""
 
     out = list()
     for key, row in data.iterrows():
@@ -60,6 +64,17 @@ def get_boxtats(data):
 
 
 def plot_boxstats(data, title, unit):
+    """create boxplot for data from Li et al
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        From read_data
+    title : str
+        axes title
+    unit : str
+        unit for y_label
+    """
     def box_opt(fc, ec):
 
         return dict(
