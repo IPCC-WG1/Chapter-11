@@ -3,12 +3,14 @@ import os
 import numpy as np
 
 
-def _check_all_files_exist(fnames):
+def _check_all_files_exist(files):
     """error if one file does not exist"""
 
-    fnames = _str2lst(fnames)
-    if _any_file_does_not_exist(fnames):
-        msg = "file(s) missing:\n" + "\n".join(fnames)
+    if isinstance(files, str):
+        files = [files]
+
+    if _any_file_does_not_exist(files):
+        msg = "file(s) missing:\n" + "\n".join(files)
         raise RuntimeError(msg)
 
 
@@ -17,16 +19,15 @@ def _file_exists(fname):
     return os.path.isfile(fname)
 
 
-def _any_file_does_not_exist(fnames):
+def _any_file_does_not_exist(files):
     """
     check if any file in the list does not exist
     """
 
-    fnames = _str2lst(fnames)
+    if isinstance(files, str):
+        files = [files]
 
-    inexistent = [not os.path.isfile(fN) for fN in fnames]
-
-    return np.any(np.array(inexistent))
+    return any(not os.path.isfile(fN) for fN in files)
 
 
 def _source_files_newer_(source_files, dest_file):
@@ -34,7 +35,8 @@ def _source_files_newer_(source_files, dest_file):
     check if the any of the source files is older than the dest file
     """
 
-    source_files = _str2lst(source_files)
+    if isinstance(source_files, str):
+        source_files = [source_files]
 
     # get timestamp of all files
     age_source = [os.path.getctime(sf) for sf in source_files]
@@ -45,17 +47,6 @@ def _source_files_newer_(source_files, dest_file):
 
     # return true if any is older
     return np.all(source_is_older)
-
-
-def _str2lst(list_or_string):
-    """
-    convert a string to a list
-    """
-
-    if isinstance(list_or_string, str):
-        list_or_string = [list_or_string]
-
-    return list_or_string
 
 
 def mkdir(directory):
