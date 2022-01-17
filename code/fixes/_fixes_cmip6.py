@@ -492,7 +492,7 @@ def cmip6_data(ds, metadata):
         # land_area_fraction is given as 0..1
         ds["mrsos"] = ds.mrsos * 100
 
-    # # pr too small by a factor 1000; reported & waiting for confirmation
+    # pr too small by a factor 1000; reported & waiting for confirmation
     if _corresponds_to(
         metadata,
         varn="pr",
