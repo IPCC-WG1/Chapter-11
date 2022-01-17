@@ -9,7 +9,7 @@ import filefinder as ff
 from . import computation
 from .file_utils import _file_exists, mkdir
 from .fx_files import _get_fx_data, _load_mask_or_weights
-from .xarray_utils import mf_read_netcdfs
+from . import xarray_utils as xru
 
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
@@ -172,7 +172,7 @@ class _cmip_conf:
             return []
 
         # read, concatenate and fix files
-        ds = mf_read_netcdfs(
+        ds = xru.open_mfdataset(
             fNs_in,
             metadata=metadata,
             fixes=self.fixes_data,

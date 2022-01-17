@@ -4,13 +4,34 @@ import numpy as np
 import xarray as xr
 
 
-def mf_read_netcdfs(
+def open_mfdataset(
     fNs_in,
     metadata,
     fixes=None,
     fixes_preprocess=None,
     check_time=True,
 ):
+    """wrapper for xarray.open_mfdataset to read cmip6 data
+
+    Parameters
+    ----------
+    fNs_in : list of str
+        Filenames to read and concatenate.
+    metadata : dict
+        Metadata dictionary containing information on the files to read.
+    fixes : Callable
+        Function to fix data after concatenation. See also the fixes folder (../fixes).
+    fixes_preprocess : Callable
+        Function to fix data before concatenation. See also the preprocess keyword of
+        ``xr.open_mfdataset`` and the fixes folder (../fixes).
+    check_time : bool, default: True
+        If True checks the time axis for missing time step.
+
+    Returns
+    -------
+    out : xr.Dataset
+        Loaded netCDFs.
+    """
 
     # inatialize fixes_preprocess
     fixes_preprocess = fixes_preprocess(metadata, fNs_in)
@@ -58,19 +79,37 @@ def mf_read_netcdfs(
     return ds
 
 
-# =============================================================================
 
 
 def cos_wgt(ds, lat="lat"):
-    """cosine-weighted latitude"""
+    """cosine-weights of the latitude"""
     return np.cos(np.deg2rad(ds[lat]))
 
 
-# =============================================================================
 
 
 def all_years(ds, dim="time", errors="raise"):
-    # check that all years are present
+    """check all years are present
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Data to check the time axis for.
+    dim : str, default: "time"
+        Name of the time coordinates. Datetime coordinates are expeced.
+    errors : str, default: "raise"
+        Behaviour on inclomplete years. Raise a ValueError if it is set to "raise" or
+        a warning if "warn" is indicated.
+
+    Returns
+    -------
+    all_years : bool
+        Returns True if all years are present and False if not.
+
+    Raises
+    ------
+    ValueError : if not all years are present and errors="raise".
+    """
 
     if dim in ds.coords:
         year = ds[dim].dt.year
@@ -92,6 +131,21 @@ def all_years(ds, dim="time", errors="raise"):
 
 
 def assert_all_timesteps(ds, dim="time"):
+    """check if time coordinates are 'equally' spaced
+
+    Currently only works for daily and monthly data.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Data to check the time axis for.
+    dim : str, default: "time"
+        Name of the time coordinates. Datetime coordinates are expeced.
+
+    Raises
+    ------
+    ValueError : if missing time steps are detected
+    """
 
     if dim in ds.coords:
 
@@ -139,7 +193,27 @@ def assert_all_timesteps(ds, dim="time"):
             raise ValueError("Unknwon time step")
 
 
-def remove_duplicated_timesteps(ds, dim="time"):
+def remove_duplicated_timesteps(ds, dim="time", max_allowed=5):
+    """remove duplicated timesteps from dataset (if present)
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Data to remove duplicate timesteps from.
+    dim : str, default: "time"
+        Name of the time coordinates. Datetime coordinates are expeced.
+    max_allowed : int, default: 5
+        If more than ``max_allowed`` duplicate timesteps are found an error is raised.
+
+    Returns
+    -------
+    ds : xr.Dataset or xr.DataArray
+        Data with duplicate timesteps removed.
+
+    Raises
+    ------
+    ValueError : if more than ``max_allowed`` duplicate timesteps are found
+    """
 
     if dim in ds.coords:
         # find delta time in days
@@ -153,7 +227,7 @@ def remove_duplicated_timesteps(ds, dim="time"):
 
             n_duplicates = len(duplicates)
 
-            if n_duplicates > 5:
+            if n_duplicates > max_allowed:
                 raise ValueError(f"Found {n_duplicates} duplicated timesteps")
 
             warnings.warn(f"Found {n_duplicates} duplicated timestep(s)")
@@ -175,6 +249,7 @@ def remove_duplicated_timesteps(ds, dim="time"):
 
 
 def alignable(*objects):
+    """check if xr objects can be aligned"""
 
     try:
         xr.align(*objects, join="exact", copy=False)
@@ -184,18 +259,38 @@ def alignable(*objects):
 
 
 def assert_alignable(*objects, message=""):
+    """raise custom error message if xr objects are not alignable"""
 
     if not alignable(*objects):
         raise ValueError(message)
 
 
 def maybe_reindex(da, target):
+    """make sure da has the same coordinates as target
+
+    Parameters
+    ----------
+    da : xr.Dataset or xr.DataArray
+        Data to reindex like target.
+    target : xr.Dataset or xr.DataArray
+        Target to align to.
+
+    Notes
+    -----
+    target can be smaller (a subset) than da.
+
+    Returns
+    -------
+    da : xr.DataArray or xr.Dataset or None
+        Aligned data. None is returned if alignment is not possible.
+    """
 
     if alignable(da, target):
         return da
 
     # target has been selected
     subset = len(target.lat) < len(da.lat) or len(target.lon) < len(da.lon)
+
     # cannot compute allcose if it's a subset
     allclose = subset or (
         np.allclose(da.lat, target.lat) and np.allclose(da.lon, target.lon)
@@ -215,6 +310,36 @@ def check_range(
     max_larger=None,
     maybe_fix=True,
 ):
+    """check if values are within the alowed range
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Data to check the values.
+    min_allowed : float, default None
+        Minimally allowed value. A ValueError is raised if smaller values are found. But
+        see also ``maybe_fix``. If None no check is performed.
+    max_allowed : float, default None
+        Maximally allowed value. A ValueError is raised if larger values are found. But
+        see also ``maybe_fix``. If None no check is performed.
+    min_smaller : float, default None
+        A ValueError is raised if the smallest value in da is larger than
+        ``min_smaller``. If None no check is performed.
+    max_lerger : float, default None
+        A ValueError is raised if the largest value in da is smaller than
+        ``max_larger``. If None no check is performed.
+    maybe_fix : bool, default: True
+        If True and the ``min_allowed`` or ``max_allowed`` conditions are only minimally
+        violated (``np.allcose``) the data is fixed by setting it to the allowed values.
+        This can fix numerical issues. If False no fix is attempted.
+
+    Returns
+    -------
+    da : xr.DataArray
+        Fixed input DataArray (if applicable).
+    """
+
+    # could replace None with +/- np.inf to simplify logic?
 
     if not isinstance(da, xr.DataArray):
         raise TypeError(f"must be a DataArray, found {type(da)}")
@@ -230,7 +355,7 @@ def check_range(
 
     if (max_allowed is not None) and (mx > max_allowed):
         # fix values that are close
-        if np.allclose(mx, max_allowed):
+        if maybe_fix and np.allclose(mx, max_allowed):
             da = np.fmin(max_allowed, da)
         else:
             raise ValueError(f"Expected no values larger {max_allowed}, found: {mx}")
