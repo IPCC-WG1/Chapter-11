@@ -8,10 +8,7 @@ import matplotlib.hatch
 import matplotlib.pyplot as plt
 import mplotutils as mpu
 import numpy as np
-import xarray as xr
 from matplotlib.path import Path
-
-from . import computation
 
 
 class SmallXHatch(mpl.hatch.Shapes):

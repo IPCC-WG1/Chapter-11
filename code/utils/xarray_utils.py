@@ -79,13 +79,9 @@ def open_mfdataset(
     return ds
 
 
-
-
 def cos_wgt(ds, lat="lat"):
     """cosine-weights of the latitude"""
     return np.cos(np.deg2rad(ds[lat]))
-
-
 
 
 def all_years(ds, dim="time", errors="raise"):
@@ -243,9 +239,6 @@ def remove_duplicated_timesteps(ds, dim="time", max_allowed=5):
                 ds = ds.sel({dim: ~sel})
 
     return ds
-
-
-# =============================================================================
 
 
 def alignable(*objects):

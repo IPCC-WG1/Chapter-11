@@ -46,17 +46,17 @@ ANOMALY_YR_END = 1900
 # =============================================================================
 
 # https://github.com/IPCC-WG1/colormaps/blob/master/categorical_colors_rgb_0-255/ssp_cat_2.txt
-COLORS_SSP = dict(
-    ssp119=np.array([30, 150, 132]) / 255,
-    ssp126=np.array([29, 51, 84]) / 255,
-    ssp245=np.array([234, 221, 61]) / 255,
-    ssp370=np.array([242, 17, 17]) / 255,
-    ssp370low=np.array([242, 17, 17]) / 255,
-    ssp434=np.array([99, 189, 229]) / 255,
-    ssp460=np.array([232, 136, 49]) / 255,
-    ssp534os=np.array([154, 109, 201]) / 255,
-    ssp585=np.array([132, 11, 34]) / 255,
-)
+COLORS_SSP = {
+    "ssp119": np.array([30, 150, 132]) / 255,
+    "ssp126": np.array([29, 51, 84]) / 255,
+    "ssp245": np.array([234, 221, 61]) / 255,
+    "ssp370": np.array([242, 17, 17]) / 255,
+    "ssp370low": np.array([242, 17, 17]) / 255,
+    "ssp434": np.array([99, 189, 229]) / 255,
+    "ssp460": np.array([232, 136, 49]) / 255,
+    "ssp534os": np.array([154, 109, 201]) / 255,
+    "ssp585": np.array([132, 11, 34]) / 255,
+}
 
 # =============================================================================
 # CMIP5 Configuration

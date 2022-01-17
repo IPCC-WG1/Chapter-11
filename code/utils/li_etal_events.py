@@ -75,6 +75,7 @@ def plot_boxstats(data, title, unit):
     unit : str
         unit for y_label
     """
+
     def box_opt(fc, ec):
 
         return dict(
