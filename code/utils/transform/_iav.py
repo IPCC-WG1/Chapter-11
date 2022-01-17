@@ -3,10 +3,10 @@ import warnings
 import numpy as np
 import xarray as xr
 
-from .utils import _ProcessWithXarray
+from .transform_with_xarray import TransformWithXarray
 
 
-class IAV(_ProcessWithXarray):
+class IAV(TransformWithXarray):
     def __init__(
         self,
         var,

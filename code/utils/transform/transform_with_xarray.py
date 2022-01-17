@@ -1,13 +1,25 @@
+from abc import ABC, abstractmethod
+
 import xarray as xr
 
 from .. import xarray_utils as xru
 
 
-class _ProcessWithXarray:
+class TransformWithXarray(ABC):
 
     _name = None
 
     def __call__(self, ds, **kwargs):
+        """transform dataset according to a transformation function
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Dataset to transform
+        kwargs : keyword arguments
+            Additional keyword arguments passed to the transformation function.
+
+        """
 
         # handle non-existing data
         if len(ds) == 0:
@@ -19,7 +31,8 @@ class _ProcessWithXarray:
             # read single variable
             da = ds[self.var]
 
-            da = self._maybe_mask_out(da)
+            if self.mask is not None:
+                da = self._mask_out(da)
 
             # apply the transformation funcion
             da, attrs = self._trans(da, attrs, **kwargs)
@@ -38,34 +51,21 @@ class _ProcessWithXarray:
 
         return ds
 
-    def _maybe_mask_out(self, da):
+    def _mask_out(self, da):
 
-        if self.mask is not None:
+        xru.assert_alignable(self.mask, da, message="mask has different coordinates!")
 
-            xru.assert_alignable(
-                self.mask, da, message="mask has different coordinates!"
-            )
-            # mask sets True -> NA
-            da = da.where(~self.mask)
+        # mask sets True -> NA
+        da = da.where(~self.mask)
 
         return da
 
+    @abstractmethod
     def _trans(self, da, attrs):
-        raise NotImplementedError("Implement _trans in the subclass")
+        ...
 
     @property
     def name(self):
         if self._name is None:
             raise NotImplementedError("Please define a name")
         return self._name
-
-
-def _get_func(obj, how):
-    """get a function by name"""
-
-    func = getattr(obj, how, None)
-
-    if func is None:
-        raise KeyError(f"how cannot be '{how}'")
-
-    return func

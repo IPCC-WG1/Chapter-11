@@ -2,10 +2,10 @@ import numpy as np
 import xarray as xr
 
 from .. import xarray_utils as xru
-from .utils import _ProcessWithXarray
+from .transform_with_xarray import TransformWithXarray
 
 
-class SM_dry_days_clim_Zhang(_ProcessWithXarray):
+class SM_dry_days_clim_Zhang(TransformWithXarray):
     def __init__(self, var, quantile=0.1, beg=1850, end=1900, dim="time", mask=None):
         """calc climatology of SM dry days after Zhang 2005
 
@@ -90,7 +90,7 @@ class SM_dry_days_clim_Zhang(_ProcessWithXarray):
         return thresh_full, attrs
 
 
-class _SM_dry_days_Zhang_(_ProcessWithXarray):
+class _SM_dry_days_Zhang_(TransformWithXarray):
     def __init__(self, var, threshold, is_pic, dim="time", freq="A", mask=None):
         """calc climatology of SM dry days after Zhang 2005
 
@@ -99,12 +99,10 @@ class _SM_dry_days_Zhang_(_ProcessWithXarray):
         var : str
             Name of the variable on the Dataset
         threshold : xr.DataArray
-            DataArray containing the threshold derived with
-            SM_dry_days_clim_Zhang
+            DataArray containing the threshold derived with SM_dry_days_clim_Zhang
         is_pic : bool
-            Whether da is a piControl simulation or not. If it is not
-            treats the climatological period different than the other
-            period(s).
+            Whether da is a piControl simulation or not. If it is not treats the
+            climatological period different than the other period(s).
 
         References
         ----------
@@ -161,6 +159,7 @@ class _SM_dry_days_Zhang_(_ProcessWithXarray):
         during_clim = da.sel({dim: slice(str(self.beg), str(self.end))})
         after_clim = da.sel({dim: slice(str(self.end + 1), None)})
 
+        # calculate mean threshold for before_clim and after_clim periods
         if len(before_clim[dim]) or len(after_clim[dim]):
             thresh_monthly = threshold.groupby(dim_month).mean()
 
@@ -198,7 +197,7 @@ class SM_dry_days_Intensity_Zhang(_SM_dry_days_Zhang_):
         return da_.resample({self.dim: self.freq}).mean(skipna=True)
 
 
-class SM_dry_days_clim(_ProcessWithXarray):
+class SM_dry_days_clim(TransformWithXarray):
     def __init__(
         self, var, quantile=0.1, clim=slice("1850", "1900"), dim="time", mask=None
     ):
@@ -237,7 +236,7 @@ class SM_dry_days_clim(_ProcessWithXarray):
         return da, attrs
 
 
-class SM_dry_days(_ProcessWithXarray):
+class SM_dry_days(TransformWithXarray):
     def __init__(self, var, dim="time", mask=None):
         """calc climatology of SM dry days
 

@@ -3,11 +3,22 @@ import xclim
 from xclim import atmos
 
 from .. import xarray_utils as xru
-from .utils import _ProcessWithXarray
+from .transform_with_xarray import TransformWithXarray
 
 
-class CDD(_ProcessWithXarray):
+class CDD(TransformWithXarray):
     def __init__(self, var="pr", freq="A", mask=None):
+        """transformation function to calculate Consecutive Dry Days (CDD)
+
+        Parameters
+        ----------
+        var : str, default: "pr"
+            Name of the variable to extract.
+        freq : str, default: "A"
+            Resampling frequency.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
+        """
 
         self.var = var
         self.freq = freq
@@ -28,15 +39,30 @@ class CDD(_ProcessWithXarray):
         return da, attrs
 
 
-class TX_Days_Above(_ProcessWithXarray):
+class TX_Days_Above(TransformWithXarray):
     def __init__(self, thresh="25.0 degC", var="tasmax", freq="A", mask=None):
+        """
+        transformation function to calculate Number of days where daily maximum
+        temperature exceed a threshold
+
+        Parameters
+        ----------
+        thresh : str, default: '25.0 degC'
+            Threshold temperature on which to base evaluation [℃] or [K].
+        var : str, default: "tasmax"
+            Name of the variable to extract.
+        freq : str, default: "A"
+            Resampling frequency.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
+        """
 
         self.thresh = thresh
         self.var = var
         self.freq = freq
         self.mask = mask
 
-        self._name = "CDD"
+        self._name = "TX_Days_Above"
 
     def _trans(self, da, attrs):
 
@@ -51,19 +77,21 @@ class TX_Days_Above(_ProcessWithXarray):
         return da, attrs
 
 
-class VPD(_ProcessWithXarray):
-    def __init__(self, rh, mask=None):
-        """calculate Vapour Pressure Deficit (VPD)
+class VPD(TransformWithXarray):
+    def __init__(self, var, rh, mask=None):
+        """transformation function to calculate Vapour Pressure Deficit (VPD)
 
         Parameters
         ----------
+        var : str, default: "tasmax"
+            Name of the variable to extract.
         rh : xr.DataArray
             Relative humidity data
-        mask : xr.DataArray, default None
-            Mask to mask out data
-
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
         """
 
+        self.var = var
         self.rh = rh
         self.mask = mask
 

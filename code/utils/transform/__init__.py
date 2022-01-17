@@ -2,6 +2,6 @@
 
 from ._cdo import *
 from ._iav import *
-from ._sm import *
+from ._sm_dry_days import *
 from ._transform import *
 from ._xclim import *
