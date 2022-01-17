@@ -1,14 +1,13 @@
 import time
 import traceback  # noqa: F401
 
-import regionmask
-
-from .. import xarray_utils as xru
 from ..file_utils import _any_file_does_not_exist
+from .weights_masks import MasksMixin, WeightsMixin
 
 
-class Processor:
+class Processor(MasksMixin, WeightsMixin):
     def __init__(self, conf_cmip):
+        """process CMIP5 or CMIP6 data"""
 
         self.conf_cmip = conf_cmip
 
@@ -121,161 +120,6 @@ class Processor:
         if len(ds) != 0:
             ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
 
-    def get_area_weights(self, lat_weights, weights, meta, ds):
-        """get area weights: lat weights and weights for land, landice etc."""
-
-        area_weights = self.get_lat_weights(lat_weights, meta, ds)
-        # lat weights are required
-        if area_weights is None:
-            return []
-
-        weights = self.get_weights(weights, meta, ds)
-        if weights is not None:
-            area_weights = area_weights * weights
-
-        return area_weights
-
-    def get_lat_weights(self, lat_weights, meta, ds):
-
-        # return if ds is empty
-        if not len(ds):
-            return
-
-        weights = None
-        if lat_weights is not None:
-            weights = self.conf_cmip.load_fx(lat_weights, meta)
-
-        if weights is not None:
-            weights = xru.check_range(weights, min_allowed=0)
-            weights = xru.maybe_reindex(weights, ds)
-
-        # "latitude" means there are 2D coords
-        if weights is None and "latitude" not in ds.coords:
-            weights = xru.cos_wgt(ds)
-
-        return weights
-
-    def get_land_mask(self, meta, da=None):
-        """
-        load land mask ('sftlf'), uses 'natural_earth.land_110' if none is found
-        """
-
-        mask = self.conf_cmip.load_mask("sftlf", meta, da)
-
-        if mask is None:
-            mask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
-            mask = mask.squeeze(drop=True)
-
-        return mask
-
-    def get_ocean_mask(self, meta, da=None):
-        """load ocean mask (inverse of the land mask)"""
-
-        return ~self.get_land_mask(meta, da=da)
-
-    def get_landice_mask(self, meta, da=None):
-        """load landice mask ('sftgif')"""
-
-        return self.conf_cmip.load_mask("sftgif", meta, da)
-
-    def get_antarctica_mask(self, meta, da):
-
-        if da is None:
-            raise ValueError("'da' required to mask out Antarctica")
-
-        return da.lat < -60
-
-    def get_regions_mask(self, regions, meta, da):
-
-        if da is None:
-            raise ValueError("'da' required to mask out 'regions'")
-
-        if not isinstance(regions, regionmask.Regions):
-            raise ValueError("'regions' must be a 'regionmask.Regions' instance")
-
-        mask = regions.mask_3D(da)
-        return mask.any("region")
-
-    def get_masks(self, masks, meta, da=None):
-        """get one or several combined masks to mask out
-
-        masks are combined by logical or
-
-        Parameters
-        ----------
-        masks : str, or list of strings, optional
-            Name of the mask(s) to load, if None returns None.
-        meta : meta-dict
-            meta-dict of the simulation to load the mask for
-        da : DataArray
-            Model data, used to reindex the mask to if the grids don't exactly match.
-        """
-
-        # empty da -> no need to load anything
-        if issubclass(type(da), list):
-            return
-
-        if isinstance(masks, (str, regionmask.Regions)):
-            masks = [masks]
-        elif masks is None:
-            masks = []
-
-        # initialize as no mask
-        mask = False
-
-        for m in masks:
-            if isinstance(m, str):
-                other = getattr(self, f"get_{m}_mask")(meta, da)
-            elif isinstance(m, regionmask.Regions):
-                other = self.get_regions_mask(m, meta, da)
-
-            if other is not None:
-                mask = mask | other
-
-        if mask is False:
-            mask = None
-
-        return mask
-
-    def get_land_weights(self, meta, da=None):
-
-        mask = self.conf_cmip.load_weights("sftlf", meta, da)
-
-        if mask is None:
-            mask = regionmask.defined_regions.natural_earth.land_110.mask_3D(da)
-            mask = mask.squeeze(drop=True)
-
-        return mask
-
-    def get_ocean_weights(self, meta, da=None):
-
-        return 1 - self.get_land_weights(meta, da=da)
-
-    def get_landice_weights(self, meta, da=None):
-        return self.conf_cmip.load_weights("sftgif", meta, da)
-
-    def get_land_no_ice_weights(self, meta, da=None):
-
-        land = self.get_land_weights(meta, da=da)
-        landice = self.get_landice_weights(meta, da=da)
-
-        # I am not entirely sure here. This could also be (land - landice). However,
-        # this results in *negative* land fraction for some models.
-        if landice is not None:
-            land = (land) - ((land) * (landice))
-
-        return land
-
-    def get_weights(self, weights, meta, da=None):
-
-        if weights is None:
-            return None
-
-        if not isinstance(weights, str):
-            raise ValueError(f"'weights' must be a str. Found: {weights}")
-
-        return getattr(self, f"get_{weights}_weights")(meta, da)
-
     def _transform(self, **meta):
         raise NotImplementedError("")
 
@@ -296,7 +140,8 @@ class Processor:
         return f"{cmip}: <{klass}>{ppn}"
 
 
-# TODO: use bridge/ strategy pattern instead of subclassing
+# TODO: unify ProcessorFromOrig & ProcessorFromPost to avoid having two code paths
+# use bridge/ strategy pattern instead of subclassing
 # The start should be easy - pass the correct function to use in `find_all_files`,
 # however, reading the weights might also have to be abstracted away.
 

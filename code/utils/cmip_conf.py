@@ -7,9 +7,9 @@ import xarray as xr
 import filefinder as ff
 
 from . import computation
-from .file_utils import _file_exists, mkdir
-from .fx_files import _get_fx_data, _load_mask_or_weights
 from . import xarray_utils as xru
+from .file_utils import _file_exists, mkdir
+from .fx_files import _find_fx_files, _load_mask_or_weights
 
 warnings.filterwarnings("ignore", message="variable '.*' has multiple fill values")
 
@@ -182,8 +182,8 @@ class _cmip_conf:
 
         return ds
 
-    # add _get_fx_data as method
-    _get_fx_data = _get_fx_data
+    # add _find_fx_files as method
+    _find_fx_files = _find_fx_files
 
     def load_fx(self, varn, meta, table="*", disallow_alternate=False):
         """load time-constant files, e.g. land fraction
@@ -208,7 +208,7 @@ class _cmip_conf:
             Returns the fx DataArray if found, else returns None.
         """
 
-        __, meta_fx = self._get_fx_data(
+        __, meta_fx = self._find_fx_files(
             varn, meta, table=table, disallow_alternate=disallow_alternate
         )
 

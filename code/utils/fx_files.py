@@ -1,8 +1,8 @@
 from . import xarray_utils as xru
 
 
-def _get_fx_data(self, varn, meta, table="*", disallow_alternate=False):
-    """load cmip fx data with fallbacks
+def _find_fx_files(self, varn, meta, table="*", disallow_alternate=False):
+    """find cmip fx files with fallbacks - does not load the files
 
     Parameters
     ----------
