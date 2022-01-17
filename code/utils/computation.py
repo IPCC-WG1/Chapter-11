@@ -13,7 +13,6 @@ from .warming_level import (  # noqa: F401
     at_warming_level,
     at_warming_levels_dict,
     at_warming_levels_list,
-    calc_anomaly_wrt_warming_level,
     calc_year_of_warming_level,
 )
 

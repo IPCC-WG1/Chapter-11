@@ -50,6 +50,98 @@ def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
     return beg, end, central_year
 
 
+def at_warming_level(
+    tas_list,
+    index_list,
+    warming_level,
+    reduce="mean",
+    select_by=("model", "exp", "ens"),
+    skipna=None,
+    as_datalist=False,
+    n_years=20,
+    **kwargs,
+):
+    """compute value of index at one warming level
+
+    Parameters
+    ==========
+    tas_list : DataList
+        List of (ds, metadata) pairs containing annual mean global mean temperature data
+    index_list : DataList
+        List of (ds, metadata) pairs containing annual data of the index.
+    warming_level : float
+        warming level at which to assess the index
+    add_meta : bool: default: True
+        If metadata should be added when returning a xr.DataArray.
+    reduce : str or None, default: "mean"
+        How to compute the average over the warming level period. If None the individual
+        years are returned.
+    select_by : list of str, optional
+        Conditions to align tas_list and index_list.
+    skipna : bool, default: None
+        If True, skip missing values (as marked by NaN).
+    as_datalist, bool, default: False
+        If True returns data as DataList else as xr.DataArray.
+    n_years : int, default: 20
+        Length of period over which global warming level must be reached. Currently
+        restricted to even number of years.
+    kwargs : dict
+        Additional keyword arguments passed on to the average function.
+
+    Returns
+    -------
+    out : xr.DataArray or DataList
+        Data at the given warming level. Output type depends on ``as_datalist``.
+    """
+
+    out = list()
+
+    # loop through all global mean temperatures
+    for tas, metadata in tas_list:
+
+        attributes = {key: metadata[key] for key in select_by}
+
+        # try to find the index
+        index = select_by_metadata(index_list, **attributes)
+
+        # make sure only one dataset is found in index_list
+        if len(index) > 1:
+            raise ValueError("Found more than one dataset:\n", metadata)
+
+        # an index was found for this tas dataset
+        if index:
+
+            # determine year when the warming was first reached
+            beg, end, center = calc_year_of_warming_level(
+                tas.tas, warming_level, n_years=n_years
+            )
+
+            if beg:
+                ds_idx = index[0][0]
+                metadata_idx = index[0][1]
+
+                # get the Dataarray
+                da_idx = ds_idx[metadata_idx["varn"]]
+                idx = da_idx.sel(year=slice(beg, end))
+
+                if reduce is not None:
+                    # calculate mean
+                    idx = getattr(idx, reduce)("year", skipna=skipna, **kwargs)
+                else:
+                    # drop year to enable concatenating
+                    idx = idx.drop_vars("year")
+
+                out.append([idx, metadata_idx])
+
+    if not out:
+        return []
+
+    if as_datalist:
+        return out
+
+    return concat_xarray_with_metadata(out)
+
+
 def at_warming_levels_list(
     tas_list,
     index_list,
@@ -189,98 +281,6 @@ def at_warming_levels_dict(
         out[str(warming_level)] = res
 
     return out
-
-
-def at_warming_level(
-    tas_list,
-    index_list,
-    warming_level,
-    reduce="mean",
-    select_by=("model", "exp", "ens"),
-    skipna=None,
-    as_datalist=False,
-    n_years=20,
-    **kwargs,
-):
-    """compute value of index at one warming level
-
-    Parameters
-    ==========
-    tas_list : DataList
-        List of (ds, metadata) pairs containing annual mean global mean temperature data
-    index_list : DataList
-        List of (ds, metadata) pairs containing annual data of the index.
-    warming_level : float
-        warming level at which to assess the index
-    add_meta : bool: default: True
-        If metadata should be added when returning a xr.DataArray.
-    reduce : str or None, default: "mean"
-        How to compute the average over the warming level period. If None the individual
-        years are returned.
-    select_by : list of str, optional
-        Conditions to align tas_list and index_list.
-    skipna : bool, default: None
-        If True, skip missing values (as marked by NaN).
-    as_datalist, bool, default: False
-        If True returns data as DataList else as xr.DataArray.
-    n_years : int, default: 20
-        Length of period over which global warming level must be reached. Currently
-        restricted to even number of years.
-    kwargs : dict
-        Additional keyword arguments passed on to the average function.
-
-    Returns
-    -------
-    out : xr.DataArray or DataList
-        Data at the given warming level. Output type depends on ``as_datalist``.
-    """
-
-    out = list()
-
-    # loop through all global mean temperatures
-    for tas, metadata in tas_list:
-
-        attributes = {key: metadata[key] for key in select_by}
-
-        # try to find the index
-        index = select_by_metadata(index_list, **attributes)
-
-        # make sure only one dataset is found in index_list
-        if len(index) > 1:
-            raise ValueError("Found more than one dataset:\n", metadata)
-
-        # an index was found for this tas dataset
-        if index:
-
-            # determine year when the warming was first reached
-            beg, end, center = calc_year_of_warming_level(
-                tas.tas, warming_level, n_years=n_years
-            )
-
-            if beg:
-                ds_idx = index[0][0]
-                metadata_idx = index[0][1]
-
-                # get the Dataarray
-                da_idx = ds_idx[metadata_idx["varn"]]
-                idx = da_idx.sel(year=slice(beg, end))
-
-                if reduce is not None:
-                    # calculate mean
-                    idx = getattr(idx, reduce)("year", skipna=skipna, **kwargs)
-                else:
-                    # drop year to enable concatenating
-                    idx = idx.drop_vars("year")
-
-                out.append([idx, metadata_idx])
-
-    if not out:
-        return []
-
-    if as_datalist:
-        return out
-
-    return concat_xarray_with_metadata(out)
 
 
 # def calc_anomaly_wrt_warming_level(
