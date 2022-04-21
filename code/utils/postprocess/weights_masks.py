@@ -7,7 +7,7 @@ from .. import xarray_utils as xru
 
 
 class MasksMixin:
-    """helper class to load boolean masks to mask out grid cells"""
+    """helper class to load CMIP boolean masks to mask out grid cells"""
 
     def get_masks(self, masks, meta, da=None):
         """get one or several combined masks to mask out grid cells
@@ -161,7 +161,7 @@ class MasksMixin:
 
 
 class WeightsMixin:
-    """helper class to load area weights required for weighed averages"""
+    """helper class to load CMIP area weights required for weighed averages"""
 
     def get_area_weights(self, lat_weights_name, weights, meta, ds):
         """combine lat_weights with one or none of the other available weighs
@@ -224,7 +224,7 @@ class WeightsMixin:
         return getattr(self, f"get_{weights}_weights")(meta, da)
 
     def get_lat_weights(self, lat_weights_name, meta, ds):
-        """get lat weights, from fx if possible, else as cos(lat) unless ds is 2D
+        """get lat weights from fx if possible, else as cos(lat) unless ds is 2D
 
         Parameters
         ----------
