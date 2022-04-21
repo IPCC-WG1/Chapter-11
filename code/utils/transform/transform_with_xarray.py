@@ -32,7 +32,7 @@ class TransformWithXarray(ABC):
             da = ds[self.var]
 
             if self.mask is not None:
-                da = self._mask_out(da)
+                da = self.mask_out(da, self.mask)
 
             # apply the transformation funcion
             da, attrs = self._trans(da, attrs, **kwargs)
@@ -51,12 +51,13 @@ class TransformWithXarray(ABC):
 
         return ds
 
-    def _mask_out(self, da):
+    @staticmethod
+    def mask_out(da, mask):
 
-        xru.assert_alignable(self.mask, da, message="mask has different coordinates!")
+        xru.assert_alignable(mask, da, message="mask has different coordinates!")
 
         # mask sets True -> NA
-        da = da.where(~self.mask)
+        da = da.where(~mask)
 
         return da
 
