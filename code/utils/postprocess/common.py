@@ -6,6 +6,8 @@ from .weights_masks import MasksMixin, WeightsMixin
 
 
 class Processor(MasksMixin, WeightsMixin):
+    """(post-) process CMIP data"""
+
     def __init__(self, conf_cmip):
         """process CMIP5 or CMIP6 data"""
 
@@ -18,6 +20,8 @@ class Processor(MasksMixin, WeightsMixin):
 
     @property
     def postprocess_name(self):
+        """name of this postprocessing step"""
+
         if self._postprocess_name is None:
             raise AttributeError("postprocess_name is not set!")
         return self._postprocess_name
@@ -28,7 +32,7 @@ class Processor(MasksMixin, WeightsMixin):
 
     @property
     def all_files(self):
-        """all files to postprocess, inizialize with find_all_files_*"""
+        """all files to postprocess, initialize with find_all_files"""
 
         return self._all_files
 
@@ -36,20 +40,25 @@ class Processor(MasksMixin, WeightsMixin):
     def all_files(self, value):
 
         if self._all_files is not None:
-            raise ValueError("files already set!")
+            raise AttributeError("files already set!")
 
         print(f"Found {len(value)} simulations")
         self._all_files = value
 
+    def find_all_files(self):
+        """find all files that should be processed"""
+        raise NotImplementedError("Implement in subclass.")
+
     def set_files_kwargs(self, **kwargs):
+        """set the metadata to determine which files should be processed"""
         self._files_kwargs = kwargs
 
-    def _find_new_simulations(self):
+    def find_new_simulations(self):
+        """determine unprocessed simulations in ``all_files``"""
 
         files = self.all_files
 
         files_to_process = list()
-
         for file, meta in files:
 
             fN_out = self.fN_out(**meta)
@@ -61,16 +70,19 @@ class Processor(MasksMixin, WeightsMixin):
         self.files_to_process = files_to_process
 
     def fN_out(self, **meta):
+        """create output file name"""
 
         # make sure postprocess does not get deleted
         meta = meta.copy()
 
+        # remove postprocess from meta - is given by self.postprocess_name
         meta.pop("postprocess", None)
+
         return self.conf_cmip.files_post.create_full_name(
             postprocess=self.postprocess_name, **meta
         )
 
-    def _yield_transform(self, **kwargs):
+    def _yield_filenames(self, **kwargs):
 
         print("")
         print(f"Processing {str(self)}")
@@ -78,7 +90,7 @@ class Processor(MasksMixin, WeightsMixin):
         print("")
 
         self.find_all_files()
-        self._find_new_simulations()
+        self.find_new_simulations()
 
         self.transform_kwargs = kwargs
         n_to_process = len(self.files_to_process)
@@ -100,7 +112,7 @@ class Processor(MasksMixin, WeightsMixin):
 
     def transform(self, **kwargs):
 
-        for file, meta in self._yield_transform(**kwargs):
+        for file, meta in self._yield_filenames(**kwargs):
 
             try:
                 ds = self._transform(**meta)
@@ -110,18 +122,28 @@ class Processor(MasksMixin, WeightsMixin):
                 raise err
                 # traceback.print_tb(err.__traceback__)
 
-    def save(self, ds, fN_out):
+    def _transform(self, **meta):
+        """transform single simulation, TBD by subclass"""
+        raise NotImplementedError("Implement in subclass.")
 
-        # make folder
+    def save(self, ds, fN_out):
+        """save created dataset
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            The dataset created from transform.
+        fN_out : str
+            The file name to save the dataset. Created from ``fN_out(**meta)``.
+        """
+
+        # folder is created in _yield_filenames
 
         if ds is None:
             raise ValueError("Forgot to return ds?")
 
         if len(ds) != 0:
             ds.to_netcdf(fN_out, format="NETCDF4_CLASSIC")
-
-    def _transform(self, **meta):
-        raise NotImplementedError("")
 
     def __enter__(self):
         return self
@@ -130,11 +152,10 @@ class Processor(MasksMixin, WeightsMixin):
         pass
 
     def __repr__(self):
-        """provide a nice str repr of our Weighted object"""
+        """provide a nice str repr of the Processor"""
 
         klass = self.__class__.__name__
-        ppn = self._postprocess_name
-        ppn = "" if ppn is None else f" ({ppn})"
+        ppn = "" if self._postprocess_name is None else f" ({self._postprocess_name})"
         cmip = self.conf_cmip.cmip.upper()
 
         return f"{cmip}: <{klass}>{ppn}"
