@@ -166,6 +166,62 @@ class _cmip6_conf(_cmip_conf):
 cmip6 = _cmip6_conf()
 
 
+class _cmip6_ng_conf(_cmip_conf):
+    """docstring for cmip6_Conf"""
+
+    def __init__(self):
+
+        self._cmip = "cmip6_ng"
+
+        self._files_orig = FileFinder(
+            path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",
+            file_pattern="{varn}_{timeres}_{model}_{exp}_{ens}_{grid}.nc",
+        )
+
+        self._filefinder_find_all_files_orig_ = self.files_orig.find_files
+
+        self._files_post = FileFinder(
+            path_pattern=root_folder_postprocessed_data
+            + "cmip6-ng/{varn}/{postprocess}/",
+            file_pattern="{postprocess}_{varn}_{model}_{exp}_{ens}_{grid}.nc",
+        )
+
+        self._files_fx = FileFinder(
+            path_pattern="/net/atmos/data/cmip6-ng/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
+            file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}.nc",
+        )
+
+        self._fixes_files = fixes.cmip6_files
+        self._fixes_data = fixes.cmip6_data
+        self._fixes_preprocess = fixes.cmip6_preprocess
+
+        self._figure_folder = root_folder_figures + "cmip6/cmip6_"
+        self._warming_levels_folder = root_folder_warming_levels + "cmip6"
+        self.root_folder_figures = root_folder_figures
+
+        self._hist_period = slice("1850", "2014")
+        self._proj_period = slice("2015", "2100")
+
+        self._scenarios_all = [
+            "ssp119",
+            "ssp126",
+            "ssp245",
+            "ssp370",
+            "ssp434",
+            "ssp460",
+            "ssp585",
+        ]
+        self._scenarios = ["ssp119", "ssp126", "ssp245", "ssp370", "ssp585"]
+
+        self._ANOMALY_YR_START = ANOMALY_YR_START
+        self._ANOMALY_YR_END = ANOMALY_YR_END
+
+        self.colors = COLORS_SSP
+
+
+cmip6_ng = _cmip6_ng_conf()
+
+
 # =============================================================================
 # Scenarios - CMIP5
 # =============================================================================

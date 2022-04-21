@@ -34,7 +34,10 @@ def parse_ens(filelist):
     return filelist
 
 
-def create_ensnumber(filelist, keys=["exp", "table", "varn", "model"]):
+def create_ensnumber(filelist, keys=None):
+
+    if keys is None:
+        keys = ["exp", "table", "varn", "model"]
 
     df = filelist.df
     combined = filelist.combine_by_key(keys)

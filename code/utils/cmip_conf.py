@@ -508,6 +508,16 @@ class _cmip_conf:
             **metadata,
         )
 
+    _filefinder_find_all_files_orig_ = None
+
+    @property
+    def _filefinder_find_all_files_orig(self):
+
+        if self._filefinder_find_all_files_orig_ is None:
+            return self.files_orig.find_paths
+
+        return self._filefinder_find_all_files_orig_
+
     def find_all_files_orig(
         self,
         varn,
@@ -536,7 +546,7 @@ class _cmip_conf:
 
         # all core acenarios inclusive hist
         scenarios = self.scenarios_incl_hist
-        filefinder = self.files_orig.find_paths
+        filefinder = self._filefinder_find_all_files_orig
 
         return self._find_all_files(
             scenarios,
@@ -602,9 +612,12 @@ class _cmip_conf:
 
         files = filefinder(varn=varn, exp=exp, **metadata)
 
-        files = ff.cmip.ensure_unique_grid(files)
+        if self._cmip != "cmip6_ng":
+            files = ff.cmip.ensure_unique_grid(files)
         files = ff.cmip.parse_ens(files)
-        files = ff.cmip.create_ensnumber(files)
+
+        keys = None if self._cmip != "cmip6_ng" else ["exp", "varn", "model"]
+        files = ff.cmip.create_ensnumber(files, keys=keys)
         files = files.search(ensnumber=ensnumber)
 
         return files
