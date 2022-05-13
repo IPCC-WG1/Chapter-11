@@ -815,10 +815,10 @@ def at_warming_level_one(
     if add_legend:
 
         # add a text legend entry - the non-hatched regions show high agreement
-        h0 = text_legend(ax, "Color", "High model agreement", size=7)
+        h0 = text_legend(ax, "Colour", "High model agreement", size=7)
 
         legend_opt = dict(
-            handlelength=2.4,
+            handlelength=2.6,
             handleheight=1.3,
             loc="lower center",
             bbox_to_anchor=(0.5, -0.45),
@@ -860,6 +860,176 @@ def at_warming_level_one(
 
     if colorbar:
         return cbar
+
+
+def at_warming_level_one_4(
+    at_warming_c,
+    unit,
+    title,
+    levels,
+    average,
+    mask_ocean=False,
+    colorbar=True,
+    ocean_kws=None,
+    skipna=None,
+    hatch_simple=None,
+    add_legend=False,
+    plotfunc="pcolormesh",
+    colorbar_kwargs=None,
+    legend_kwargs=None,
+    **kwargs,
+):
+    """
+    plot at four warming levels: flatten and plot a 3D DataArray on a cartopy GeoAxes,
+    maybe add simple hatch
+
+    Parameters
+    ----------
+    at_warming_c : list of DataArray
+        List of three DataArray objects at warming levels to plot.
+    unit : str
+        Unit of the data. Added as label to the colorbar.
+    title : str
+        Suptitle of the figure. If average is not "mean" it is added to the title.
+    levels : int or list-like object, optional
+        Split the colormap (cmap) into discrete color intervals.
+    average : str
+        Function to reduce da with (along dim), e.g. "mean", "median".
+    mask_ocean : bool, default: False
+        If true adds the ocean feature.
+    colorbar : bool, default: True
+        If to add a colorbar to the figure.
+    ocean_kws : dict, default: None
+        Arguments passed to ``ax.add_feature(OCEAN)``.
+    skipna : bool, optional
+        If True, skip missing values (as marked by NaN). By default, only
+        skips missing values for float dtypes
+    hatch_simple : float, default: None
+        If not None determines hatching on the fraction of models with the same sign.
+        hatch_simple must be in 0..1.
+    add_legend : bool, default: False
+        If a legend should be added.
+    plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
+        Which plot function to use
+    legend_kwargs : keyword arguments for the legend
+        Additional keyword arguments passed on to ax.legend.
+    **kwargs : keyword arguments
+        Further keyword arguments passed to the plotting function.
+
+    Returns
+    -------
+    cbar : handle (artist)
+        Colorbar handle.
+    """
+
+    if average != "mean":
+        title += f" – {average}"
+
+    f, axes = plt.subplots(1, 4, subplot_kw=dict(projection=ccrs.Robinson()))
+    axes = axes.flatten()
+
+    if colorbar_kwargs is None:
+        colorbar_kwargs = dict()
+
+    if legend_kwargs is None:
+        legend_kwargs = dict()
+
+    for i in range(4):
+
+        h, legend_handle = one_map(
+            da=at_warming_c[i],
+            ax=axes[i],
+            average=average,
+            levels=levels,
+            mask_ocean=mask_ocean,
+            ocean_kws=ocean_kws,
+            skipna=skipna,
+            hatch_simple=hatch_simple,
+            plotfunc=plotfunc,
+            **kwargs,
+        )
+
+    for ax in axes:
+        ax.set_global()
+
+    if colorbar:
+        factor = 0.8 if add_legend else 1
+        ax2 = axes[2] if add_legend else axes[3]
+
+        colorbar_opt = dict(
+            mappable=h,
+            ax1=axes[0],
+            ax2=ax2,
+            size=0.15,
+            shrink=0.25 * factor,
+            orientation="horizontal",
+            pad=0.075,
+        )
+        colorbar_opt.update(colorbar_kwargs)
+        cbar = mpu.colorbar(**colorbar_opt)
+
+        cbar.set_label(unit, labelpad=1, size=9)
+        cbar.ax.tick_params(labelsize=9)
+
+    if add_legend and (not colorbar or hatch_simple is None):
+        raise ValueError("Can only add legend when colorbar and add_hatch is True")
+
+    if add_legend:
+
+        # add a text legend entry - the non-hatched regions show high agreement
+        h0 = text_legend(ax, "Colour", "High model agreement", size=7)
+
+        legend_opt = dict(
+            handlelength=2.6,
+            handleheight=1.3,
+            loc="lower center",
+            bbox_to_anchor=(0.45, -0.55),
+            fontsize=8.5,
+            borderaxespad=0,
+            frameon=True,
+            handler_map={mpl.text.Text: TextHandler()},
+            ncol=1,
+        )
+
+        legend_opt.update(legend_kwargs)
+
+        axes[3].legend(handles=[h0, legend_handle], **legend_opt)
+
+    axes[0].set_title("At 1.5°C global warming", fontsize=9, pad=4)
+    axes[1].set_title("At 2.0°C global warming", fontsize=9, pad=4)
+    axes[2].set_title("At 3.0°C global warming", fontsize=9, pad=4)
+    axes[3].set_title("At 4.0°C global warming", fontsize=9, pad=4)
+
+    axes[0].set_title("(a)", fontsize=9, pad=4, loc="left")
+    axes[1].set_title("(b)", fontsize=9, pad=4, loc="left")
+    axes[2].set_title("(c)", fontsize=9, pad=4, loc="left")
+    axes[3].set_title("(d)", fontsize=9, pad=4, loc="left")
+
+    # axes[0].set_title("Tglob anomaly +1.5 °C", fontsize=9, pad=2)
+    # axes[1].set_title("Tglob anomaly +2.0 °C", fontsize=9, pad=2)
+    # axes[2].set_title("Tglob anomaly +4.0 °C", fontsize=9, pad=2)
+
+    side = 0.01
+    subplots_adjust_opt = dict(wspace=0.025, left=side, right=1 - side)
+    if colorbar:
+        # subplots_adjust_opt.update({"bottom": 0.325, "top": 0.80})
+        # subplots_adjust_opt.update({"bottom": 0.3, "top": 0.82})
+
+        subplots_adjust_opt.update({"bottom": 0.325, "top": 0.82})
+    else:
+        subplots_adjust_opt.update({"bottom": 0.08, "top": 0.77})
+
+    f.suptitle(title, fontsize=9, y=0.98)
+    plt.subplots_adjust(**subplots_adjust_opt)
+    mpu.set_map_layout(axes, width=18)
+
+    f.canvas.draw()
+
+    if colorbar:
+        return cbar
+
+
+
 
 
 # ======================================================================================
