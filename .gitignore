@@ -73,6 +73,9 @@ coverage.xml
 *.mo
 *.pot
 
+# vscode
+.vscode
+
 # Django stuff:
 *.log
 local_settings.py
