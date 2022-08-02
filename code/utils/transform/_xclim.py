@@ -42,7 +42,7 @@ class CDD(TransformWithXarray):
 class TX_Days_Above(TransformWithXarray):
     def __init__(self, thresh="25.0 degC", var="tasmax", freq="A", mask=None):
         """
-        transformation function to calculate Number of days where daily maximum
+        transformation function to calculate number of days where daily maximum
         temperature exceed a threshold
 
         Parameters

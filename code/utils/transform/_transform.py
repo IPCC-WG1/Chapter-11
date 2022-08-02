@@ -212,8 +212,8 @@ class RollingResampleAnnual(_Resample):
         ----------
         var : str
             Name of the variable to extract.
-        window : dict
-            Mapping from the dimension name to its moving window size.
+        window : int
+            Moving window size.
         how_rolling : str
             Which reduction to apply to the rolling function, e.g. "mean", "std".
         how : str
