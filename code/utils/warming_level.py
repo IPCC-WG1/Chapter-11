@@ -27,8 +27,14 @@ def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
 
     # calculate the start and end year of period of first exceedance
 
-    if n_years % 2 != 0:
-        raise ValueError(f"n_years must be an even integer, found {n_years}")
+    if not isinstance(n_years, int) or n_years < 1:
+        raise ValueError(f"n_years must be a positive integer, got {n_years}")
+
+    if n_years % 2 != 0:  # odd
+        beg_offset = end_offset = (n_years - 1) // 2
+    else:  # even
+        beg_offset = n_years // 2
+        end_offset = n_years // 2 - 1
 
     anomalies = anomalies.rolling(year=n_years, center=True).mean()
 
@@ -44,8 +50,8 @@ def calc_year_of_warming_level(anomalies, warming_level, n_years=20):
 
     central_year = anomalies.isel(year=idx).year.values
 
-    beg = int(central_year - n_years / 2)
-    end = int(central_year + (n_years / 2 - 1))
+    beg = int(central_year - beg_offset)
+    end = int(central_year + end_offset)
 
     return beg, end, central_year
 
