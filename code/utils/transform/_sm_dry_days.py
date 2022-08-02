@@ -13,8 +13,8 @@ class SM_dry_days_clim_Zhang(TransformWithXarray):
         ----------
         var : str
             Name of the variable on the Dataset
-        quantile : float
-            Quantile in range 0..1, default: 0.1
+        quantile : float, default: 0.1
+            Quantile in range 0..1
         beg : int, default: 1850
             Start of climatology period.
         end : int, default: 1900
