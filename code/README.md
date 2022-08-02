@@ -13,7 +13,7 @@ Data processing and helper functions are organized in python modules packages (s
 
 ### Processing of CMIP data
 
-CMIP6 (and to a lesser extent CMIP5) data is processed from the `process.py` file.
+CMIP6 (and CMIP5) data is processed from the `process.py` file.
 
 
 ```bash
@@ -45,16 +45,13 @@ This repository was used inside a conda environment using python 3.7. The used p
 
 ## Code organization
 
-
 - `filefinder`: List, create, and parse file and directory content; see below
 - `fixes`: fixes applied to the unprocessed cmip5 and cmip6 data
 -  `utils`: helper functions, e.g. for ploting
 - `utils/transform`: Functions to process an `xr.Dataset`, e.g. calculate annual maxima, global mean, resample, or regional means. These functions are independent of cmip5 or cmip6.
 - `utils/postprocess`: Wraps the functions in `utils/transform` for cmip5 and cmip6 data.
 
-
 ---
-
 
 # Internals
 
@@ -67,7 +64,7 @@ I use some terms and classes that are not obvious which are explained below, how
 
 #### FileFinder
 
-The _FileFinder_ is used to define regular folder and file patterns with an intuitive syntax. It can parse (regular) folder and file names. See [filefinder/README.md](filefinder/README.md) for details.
+The _FileFinder_ is used to define regular folder and file patterns with the python string format syntax. It can parse (regular) folder and file names. See [filefinder/README.md](filefinder/README.md) for details.
 
 ### DataList
 
@@ -79,7 +76,7 @@ datalist = [
     ...
 ]
 ```
-where `ds` is a data store (e.g. an `xr.DataArray`) and meta is a `dict` containing metadata, e.g. `meta = {"model": "CESM", exp: "ssp585", ...}`. There are functions to handle this data structure in utils/computation.py, e.g.:
+where `ds` is a data store (e.g. an `xr.DataArray`) and meta is a `dict` containing metadata, e.g. `meta = {"model": "CESM", "exp": "ssp585", ...}`. There are functions to handle this data structure in utils/computation.py, e.g.:
 
 ```python
 computation.select_by_metadata(datalist, exp="ssp585")
@@ -95,7 +92,7 @@ I list some suggestions how the code base could be improved.
 
 ### FileFinder
 
-_FileFinder_ could be extracted to its own package.
+_FileFinder_ could be extracted to its own package. Now available under [github.com/mathause/filefinder](https://github.com/mathause/filefinder/).
 
 
 ### DataList
@@ -122,19 +119,10 @@ class DataList:
       would replace computation.select_by_metadata
       """
 
-    def remove(self, **attributes):
-      """Remove specific data described by metadata.
-
-      would replace computation.remove_by_metadata
-      """
-
     def map(self, func, pass_meta=False, **kwargs):
       """loop over DataList and apply a function
 
       would replace computation.process_datalist"""
-
-    def groupby(self, attribute):
-        """GroupBy object of DataList to iterate over"""
 
     def to_dataarray(self, along):
       """concatenate data along a dimension and return as xr.DataArray
@@ -157,10 +145,8 @@ def join(*objects, select_by=("model", "exp", "ens"), check=True):
 - Would be nice if each `Processor` had it's own name that it automatically prefixes, such that the name does not have to be built manually.
 - Loading masks and weights (e.g. `get_lat_weights`, `get_land_mask`) is currently done in the wrong class. It should be moved from `Processor` to the `conf.cmip` class.
 - Rename arguments `metadata` to `meta` for all functions. Rather pass `meta` as `dict` and not as keyword arguments (or `**kwargs`) - in this way we can directly pass all of them through.
-
-
-
-
+- If a simulation cannot be processed because e.g. the grid weights are missing this is indicated with an empty list and then I use number of if statements. This could potentially be done with errors - e.g. `WeightsNotFoundError` - this may remove the need for the if statements and attach a reason for the failure (but would require a dedicated error handler).
+- Simulations that are removed (but not fixed) from postprocessing in `fixes._fixes_cmip?.cmip6_files` should not turn of in the list of simulations to process.
 
 ### utils/plot.py
 
