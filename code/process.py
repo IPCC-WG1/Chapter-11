@@ -301,67 +301,67 @@ class ConsecutiveMonthsClimFromOrig(RegridFromPostMixin):
             p.transform(how=self.how, beg=beg, end=end, dim="time", mask_out=mask_out)
 
 
-class SMDryDaysZhangFromOrig(
-    RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin
-):
-    def __init__(self, conf_cmip, table, varn, postprocess_name):
+# class SMDryDaysZhangFromOrig(
+#     RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin
+# ):
+#     def __init__(self, conf_cmip, table, varn, postprocess_name):
 
-        self.conf_cmip = conf_cmip
-        self.table = table
-        self.varn = varn
-        self.quantile = 0.1
-        self.postprocess_name = postprocess_name
-        self.postprocess_name_clim = postprocess_name + "_clim"
+#         self.conf_cmip = conf_cmip
+#         self.table = table
+#         self.varn = varn
+#         self.quantile = 0.1
+#         self.postprocess_name = postprocess_name
+#         self.postprocess_name_clim = postprocess_name + "_clim"
 
-    def sm_dry_days_clim_from_orig(self, mask_out=None):
+#     def sm_dry_days_clim_from_orig(self, mask_out=None):
 
-        with postprocess.SMDryDaysClimZhangFromOrig(self.conf_cmip) as p:
-            p.postprocess_name = self.postprocess_name_clim
-            p.set_files_kwargs(table=self.table, varn=self.varn, exp="historical")
-            p.transform(quantile=self.quantile, mask_out=mask_out)
+#         with postprocess.SMDryDaysClimZhangFromOrig(self.conf_cmip) as p:
+#             p.postprocess_name = self.postprocess_name_clim
+#             p.set_files_kwargs(table=self.table, varn=self.varn, exp="historical")
+#             p.transform(quantile=self.quantile, mask_out=mask_out)
 
-    def sm_dry_days_from_orig(self, exp=None, mask_out=None):
+#     def sm_dry_days_from_orig(self, exp=None, mask_out=None):
 
-        with postprocess.SMDryDaysZhangFromOrig(self.conf_cmip) as p:
-            p.postprocess_name = self.postprocess_name
-            p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
-            p.transform(self.postprocess_name_clim, is_pic=False, mask_out=mask_out)
+#         with postprocess.SMDryDaysZhangFromOrig(self.conf_cmip) as p:
+#             p.postprocess_name = self.postprocess_name
+#             p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
+#             p.transform(self.postprocess_name_clim, is_pic=False, mask_out=mask_out)
 
-    def sm_dry_days_from_orig_pi_control(self, mask_out=None):
+#     def sm_dry_days_from_orig_pi_control(self, mask_out=None):
 
-        with postprocess.SMDryDaysZhangFromOrig(self.conf_cmip) as p:
-            p.postprocess_name = self.postprocess_name
-            p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
-            p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
+#         with postprocess.SMDryDaysZhangFromOrig(self.conf_cmip) as p:
+#             p.postprocess_name = self.postprocess_name
+#             p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
+#             p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
 
 
-class SMDryDaysIntensityZhangFromOrig(
-    RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin
-):
-    def __init__(self, conf_cmip, table, varn, postprocess_name):
+# class SMDryDaysIntensityZhangFromOrig(
+#     RegridFromPostMixin, RegionAverageFromPostMixin, IAV20FromPostMixin
+# ):
+#     def __init__(self, conf_cmip, table, varn, postprocess_name):
 
-        self.conf_cmip = conf_cmip
-        self.table = table
-        self.varn = varn
-        self.quantile = 0.1
-        self.postprocess_name = postprocess_name + "_intensity"
-        self.postprocess_name_clim = postprocess_name + "_clim"
+#         self.conf_cmip = conf_cmip
+#         self.table = table
+#         self.varn = varn
+#         self.quantile = 0.1
+#         self.postprocess_name = postprocess_name + "_intensity"
+#         self.postprocess_name_clim = postprocess_name + "_clim"
 
-    # get the climatology from SMDryDaysZhangFromOrig
+#     # get the climatology from SMDryDaysZhangFromOrig
 
-    def sm_dry_days_intensity_from_orig(self, exp=None, mask_out=None):
+#     def sm_dry_days_intensity_from_orig(self, exp=None, mask_out=None):
 
-        with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
-            p.postprocess_name = self.postprocess_name
-            p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
-            p.transform(self.postprocess_name_clim, is_pic=False, mask_out=mask_out)
+#         with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
+#             p.postprocess_name = self.postprocess_name
+#             p.set_files_kwargs(table=self.table, varn=self.varn, exp=exp)
+#             p.transform(self.postprocess_name_clim, is_pic=False, mask_out=mask_out)
 
-    def sm_dry_days_intensity_from_orig_pi_control(self, mask_out=None):
+#     def sm_dry_days_intensity_from_orig_pi_control(self, mask_out=None):
 
-        with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
-            p.postprocess_name = self.postprocess_name
-            p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
-            p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
+#         with postprocess.SMDryDaysIntensityZhangFromOrig(self.conf_cmip) as p:
+#             p.postprocess_name = self.postprocess_name
+#             p.set_files_kwargs(table=self.table, varn=self.varn, exp="piControl")
+#             p.transform(self.postprocess_name_clim, is_pic=True, mask_out=mask_out)
 
 
 # =============================================================================
