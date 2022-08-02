@@ -1029,9 +1029,6 @@ def at_warming_level_one_4(
         return cbar
 
 
-
-
-
 # ======================================================================================
 
 # options and function for Africa fact sheet plot (for Izidine)
