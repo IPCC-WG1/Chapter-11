@@ -3,10 +3,25 @@ from .common import ProcessorFromOrig
 
 
 class GlobalMeanFromOrig(ProcessorFromOrig):
-    def transform(self, lat_weights=None, weights=None, mask_out=None):
+    """calculate global average of CMIP data"""
+
+    def transform(self, lat_weights=None, weights=None):
+        """calculate global average for all selected CMIP simulations
+
+        Parameters
+        ----------
+        lat_weights : str, default: None
+            Name of the latitude weights, e.g. "areacella". Uses cosine weights
+            if None or if they are unavailable (and the coordinates are not 2D).
+        weights : str, default: None
+            Name of the fractional weights (e.g. "land") to apply.
+        """
+
         self.lat_weights = lat_weights
         self.weights = weights
-        self.mask_out = mask_out
+
+        # mask_out makes no sense for the global average - use ``weights``
+        self.mask_out = None
 
         super().transform()
 
@@ -14,6 +29,7 @@ class GlobalMeanFromOrig(ProcessorFromOrig):
 
         ds = self.conf_cmip.load_orig(**meta)
 
+        # get lat_weights * weights (e.g. to compute land-only average)
         weights = self.get_area_weights(self.lat_weights, self.weights, meta, ds)
         if not len(weights):
             return []
@@ -23,7 +39,17 @@ class GlobalMeanFromOrig(ProcessorFromOrig):
 
 
 class NoTransformFromOrig(ProcessorFromOrig):
-    def transform(self, lat_weights=None, mask_out=None):
+    """no transformation of CMIP data (just copy it over to the archive)"""
+
+    def transform(self, mask_out=None):
+        """apply _no_ transformation for all selected CMIP simulations
+
+        Parameters
+        ----------
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
+
         self.mask_out = mask_out
 
         super().transform()
@@ -36,7 +62,18 @@ class NoTransformFromOrig(ProcessorFromOrig):
 
 
 class SelectGridpointFromOrig(ProcessorFromOrig):
+    """select a set of coords of CMIP data"""
+
     def transform(self, coords, mask_out=None):
+        """index a set of coords for all selected CMIP simulations
+
+        Parameters
+        ----------
+        coords : dict of indexers
+            A dict with keys matching dimensions and values given by scalars.
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.coords = coords
         self.mask_out = mask_out
@@ -50,7 +87,18 @@ class SelectGridpointFromOrig(ProcessorFromOrig):
 
 
 class SelectRegionFromOrig(ProcessorFromOrig):
+    """select a rectangular region of CMIP data"""
+
     def transform(self, coords, mask_out=None):
+        """index a rectangular region (slice) for all selected CMIP simulations
+
+        Parameters
+        ----------
+        coords : dict of indexers
+            A dict with keys matching dimensions and values given by slices.
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.coords = coords
         self.mask_out = mask_out
@@ -64,12 +112,22 @@ class SelectRegionFromOrig(ProcessorFromOrig):
 
 
 class CDDFromOrig(ProcessorFromOrig):
+    """calculate consecutive dry days of CMIP data"""
 
     _postprocess_name = "CDD"
 
     # set varn="pr" as default?
 
     def transform(self, freq="A", mask_out=None):
+        """calculate consecutive dry days for all selected CMIP simulations
+
+        Parameters
+        ----------
+        freq : str, default: "A"
+            Resampling frequency (offset alias).
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.freq = freq
         self.mask_out = mask_out
@@ -83,7 +141,16 @@ class CDDFromOrig(ProcessorFromOrig):
 
 
 class RxNdayFromOrig(ProcessorFromOrig):
+    """calculate max n-day precipitation amount of CMIP data"""
+
     def transform(self, window):
+        """calculate max n-day precipitation amount for all selected CMIP simulations
+
+        Parameters
+        ----------
+        window : int
+            Moving window size.
+        """
 
         self.window = window
         super().transform()
@@ -98,12 +165,21 @@ class RxNdayFromOrig(ProcessorFromOrig):
 
 
 class TxDaysAboveFromOrig(ProcessorFromOrig):
+    """calculate number of days above threshold for daily maximum temp. of CMIP data"""
 
     postprocess_name = "tx_days_above_35"
-
     # set varn="tasmax" as default?
 
     def transform(self, thresh="35.0 degC", freq="A"):
+        """calculate consecutive dry days for all selected CMIP simulations
+
+        Parameters
+        ----------
+        thresh : str, default: '35.0 degC'
+            Threshold temperature on which to base evaluation [℃] or [K].
+        freq : str, default: "A"
+            Resampling frequency (offset alias).
+        """
 
         self.freq = freq
         self.thresh = thresh
@@ -114,13 +190,23 @@ class TxDaysAboveFromOrig(ProcessorFromOrig):
         transform_func = transform.TX_Days_Above(
             var=meta["varn"], freq=self.freq, thresh=self.thresh
         )
-
         ds = self.conf_cmip.load_orig(**meta)
         return transform_func(ds)
 
 
 class ResampleAnnualFromOrig(ProcessorFromOrig):
+    """resample to annual of CMIP data"""
+
     def transform(self, how, mask_out=None):
+        """downsample data to annual resolution for all selected CMIP simulations
+
+        Parameters
+        ----------
+        how : str
+            Used for downsampling. Must be a valid aggregation operation, e.g. "mean".
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.how = how
         self.mask_out = mask_out
@@ -137,7 +223,18 @@ class ResampleAnnualFromOrig(ProcessorFromOrig):
 
 
 class ResampleMonthlyFromOrig(ProcessorFromOrig):
+    """resample to monthly of CMIP data"""
+
     def transform(self, how, mask_out=None):
+        """downsample data to monthly resolution for all selected CMIP simulations
+
+        Parameters
+        ----------
+        how : str
+            Used for downsampling. Must be a valid aggregation operation, e.g. "mean".
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.how = how
         self.mask_out = mask_out
@@ -155,7 +252,18 @@ class ResampleMonthlyFromOrig(ProcessorFromOrig):
 
 
 class ResampleAnnualQuantileFromOrig(ProcessorFromOrig):
+    """resample to annual quantiles of CMIP data"""
+
     def transform(self, q, mask_out=None):
+        """downsample data to annual quantiles for all selected CMIP simulations
+
+        Parameters
+        ----------
+        q : float or array-like of float
+            Quantile to compute, which must be between 0 and 1 inclusive.
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         self.q = q
         self.mask_out = mask_out
@@ -173,9 +281,27 @@ class ResampleAnnualQuantileFromOrig(ProcessorFromOrig):
 
 
 class RegionAverageFromOrig(ProcessorFromOrig):
+    """calculate regional average of CMIP data"""
+
     def transform(
         self, regions, lat_weights=None, weights=None, mask_out=None, land_only=True
     ):
+        """calculate global average for all selected CMIP simulations
+
+        Parameters
+        ----------
+        regions : regionmask.Regions
+            Regions to take the average over.
+        lat_weights : str, default: None
+            Name of the latitude weights, e.g. "areacella". Uses cosine weights
+            if None or if they are unavailable (and the coordinates are not 2D).
+        weights : str, default: None
+            Name of the fractional weights (e.g. "land") to apply.
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        land_only : bool, default: True
+            Whether to mask out ocean points before calculating regional means.
+        """
 
         self.regions = regions
         self.lat_weights = lat_weights
@@ -206,7 +332,26 @@ class RegionAverageFromOrig(ProcessorFromOrig):
 
 
 class ConsecutiveMonthsClim(ProcessorFromOrig):
+    """calculate the calendar months that have the consecutive max/min  of CMIP data"""
+
     def transform(self, how, beg, end, dim="time", mask_out=None):
+        """
+        calculate climatological min/ max of consecutive months (i.e. rolling with
+        wrap-around for all selected CMIP simulations
+
+        Parameters
+        ----------
+        how : "min" | "max"
+            Which reduction to apply, e.g. "mean", "std".
+        beg : int
+            Start year of the climatology period
+        end : int
+            End year of the climatology period
+        dim : str
+            Name of the time dimension.
+        mask_out : str, list of str, or None, default: None
+            Name(s) of the mask(s) to apply (sets values to NaN).
+        """
 
         beg, end = str(beg), str(end)
 
