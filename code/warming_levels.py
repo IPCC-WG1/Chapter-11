@@ -62,7 +62,7 @@ def warming_level_years(
 
     # creates yml dict
     if print_warming_level:
-        out_yml += "warming_level_{}:\n".format(warming_level_to_str(warming_level))
+        out_yml += f"warming_level_{warming_level_to_str(warming_level)}:\n"
 
     for ds, meta in tas_list:
 

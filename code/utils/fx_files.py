@@ -25,7 +25,7 @@ def _find_fx_files(self, varn, meta, table="*", disallow_alternate=False):
     """
 
     # only retain necessary keys in meta (e.g. discard ensnumber)
-    keys = self.files_fx.keys - set(["table", "varn"])
+    keys = self.files_fx.keys - {"table", "varn"}
     meta = {key: meta[key] for key in keys}
 
     # try to get an exact match

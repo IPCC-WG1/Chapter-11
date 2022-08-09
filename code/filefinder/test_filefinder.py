@@ -52,13 +52,13 @@ def test_keys():
     path_pattern = "{ab}_{c}"
     ff = FileFinder(path_pattern=path_pattern, file_pattern=file_pattern)
 
-    expected = set(("a", "b", "c", "ab"))
+    expected = {"a", "b", "c", "ab"}
     assert ff.keys == expected
 
-    expected = set(("a", "b", "c"))
+    expected = {"a", "b", "c"}
     assert ff.keys_file == expected
 
-    expected = set(("ab", "c"))
+    expected = {"ab", "c"}
     assert ff.keys_path == expected
 
 

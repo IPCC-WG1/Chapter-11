@@ -691,7 +691,7 @@ class _cmip_conf:
         meta.pop("p", None)
         meta.pop("f", None)
 
-        msg = "-- no data found for: {}".format(meta)
+        msg = f"-- no data found for: {meta}"
         print(msg)
 
     def _create_folder_for_output(self, files, postprocess_name):

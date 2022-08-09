@@ -214,7 +214,7 @@ def plot_scaling(c6_at_warming_, conf_cmip, title, ylabel, legend_opt=None):
             d = c6_at_warming_mmm_.sel(region=r)
 
             slope = d.polyfit("wl", 1).polyfit_coefficients.sel(degree=1).item()
-            label = "{} ({:0.1f}°C/°C)".format(d.abbrevs.item(), slope)
+            label = f"{d.abbrevs.item()} ({slope:0.1f}°C/°C)"
 
             d.plot(ax=ax, label=label, lw=1, color=colors[j])
 
