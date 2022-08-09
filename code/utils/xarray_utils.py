@@ -51,7 +51,7 @@ def open_mfdataset(
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
     varn = metadata["varn"]
-    units = ds[varn].attrs.get("units", None)
+    units = ds[varn].attrs.get("units")
     if units in ["seconds", "days"]:
         ds[varn].attrs.pop("units")
 
