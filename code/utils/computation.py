@@ -2,10 +2,6 @@ import warnings
 
 import xarray as xr
 
-# === NOTE ===
-# restructured the content of this file after the analysis. Import all the functions
-# here so the code still works.
-
 from .datalist import (  # noqa: F401
     concat_xarray_with_metadata,
     match_data_list,
@@ -19,6 +15,10 @@ from .warming_level import (  # noqa: F401
     at_warming_levels_list,
     calc_year_of_warming_level,
 )
+
+# === NOTE ===
+# restructured the content of this file after the analysis. Import all the functions
+# here so the code still works.
 
 
 def _time_in_range(start, end, yr_min, yr_max, meta, quiet=False):
@@ -183,8 +183,6 @@ def time_average(
         Start year to calculate the average over.
     end : int
         End year to calculate the average over.
-    warming_levels : iterable of float
-        warming levels at which to assess the index
     reduce : str or None, default: "mean"
         How to compute the average over the warming level period. If None the individual
         years are returned.
@@ -239,6 +237,8 @@ def align_modellist(data, join="inner", by=dict(ens=("model", "ensname", "exp"))
     ----------
     data : iterable of xr.DataArray
         DataArray objects to align
+    join : str, default: inner
+        How the data is joined. Passed on to `xr.align`.
     by : list of str, optional
         Conditions to align lists on.
 

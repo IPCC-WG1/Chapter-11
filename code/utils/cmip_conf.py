@@ -428,6 +428,9 @@ class _cmip_conf:
         at_least_until : int, default None
             If not None checks if the simulation extends to at least the indicated year,
             and if not the model simulation is discarded.
+        year_mean : bool, default: True
+            If the data should be averaged to annual using,
+            ``groupby("time.year").mean()``.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
         **meta : kwargs, optional
@@ -485,6 +488,9 @@ class _cmip_conf:
         at_least_until : int, default 2099
             If not None checks if the simulation extends to at least the indicated year,
             and if not the model simulation is discarded.
+        year_mean : bool, default: True
+            If the data should be averaged to annual using,
+            ``groupby("time.year").mean()``.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
         **meta : kwargs, optional

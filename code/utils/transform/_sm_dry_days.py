@@ -19,6 +19,10 @@ class SM_dry_days_clim_Zhang(TransformWithXarray):
             Start of climatology period.
         end : int, default: 1900
             End of climatology period.
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
 
         References
         ----------
@@ -103,6 +107,12 @@ class _SM_dry_days_Zhang_(TransformWithXarray):
         is_pic : bool
             Whether da is a piControl simulation or not. If it is not treats the
             climatological period different than the other period(s).
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
+        freq : str, default: "A"
+            Frequency for the resampling.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
 
         References
         ----------
@@ -211,6 +221,10 @@ class SM_dry_days_clim(TransformWithXarray):
             Quantile in range 0..1, default: 0.1
         clim : slice(str, str)
             Climatology period, default: slice("1850", "1900")
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
         """
 
         self.var = var
@@ -244,10 +258,10 @@ class SM_dry_days(TransformWithXarray):
         ----------
         var : str
             Name of the variable on the Dataset
-        quantile : float
-            Quantile in range 0..1, default: 0.1
-        clim : slice(str, str)
-            Climatology period, default: slice("1850", "1900")
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
         """
 
         self.var = var

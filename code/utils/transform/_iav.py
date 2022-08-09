@@ -33,7 +33,10 @@ class IAV(TransformWithXarray):
         deg : int or None
             Degree of the polynom used to detrend. If None no detrending is applied.
             Default: 2.
-
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
+        mask : xr.DataArray, optional
+            If given sets values in da to NaN where mask is False.
         """
 
         self.var = var

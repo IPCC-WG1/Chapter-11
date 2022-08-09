@@ -434,12 +434,6 @@ class RegionAverage(TransformWithXarray):
         self._name = "region_average_" + regions.name.replace(" ", "_")
 
     def _trans(self, da, attrs):
-        """
-        Parameters
-        ----------
-        da : DataArray
-            Object over which the weighted reduction operation is applied.
-        """
 
         weights = self._get_weights(da)
         mask_3D = self._get_mask3D(da)

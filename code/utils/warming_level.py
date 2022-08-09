@@ -77,8 +77,6 @@ def at_warming_level(
         List of (ds, metadata) pairs containing annual data of the index.
     warming_level : float
         warming level at which to assess the index
-    add_meta : bool: default: True
-        If metadata should be added when returning a xr.DataArray.
     reduce : str or None, default: "mean"
         How to compute the average over the warming level period. If None the individual
         years are returned.
@@ -236,8 +234,6 @@ def at_warming_levels_dict(
         List of (ds, metadata) pairs containing annual data of the index.
     warming_levels : iterable of float
         warming levels at which to assess the index
-    add_meta : bool: default: True
-        If metadata should be added when returning a xr.DataArray.
     reduce : str or None, default: "mean"
         How to compute the average over the warming level period. If None the individual
         years are returned.

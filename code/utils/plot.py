@@ -161,6 +161,8 @@ def hatch_map(ax, da, hatch, label, invert=False, linewidth=0.25, color="0.1"):
         Axes to draw the hatch on.
     da : xr.DataArray
         DataArray with the hatch information. Data of value 1 is hatched.
+    hatch : str
+        Hatch pattern.
     label : str
         label for a legend entry
     invert : bool, default: False
@@ -424,6 +426,8 @@ def one_map(
     add_coastlines=True,
     coastline_kws=None,
     hatch_simple=None,
+    add_land=False,
+    land_kws=None,
     plotfunc="pcolormesh",
     add_n_models=True,
     **kwargs,
@@ -492,6 +496,8 @@ def one_map(
         ocean_kws=ocean_kws,
         add_coastlines=add_coastlines,
         coastline_kws=coastline_kws,
+        add_land=add_land,
+        land_kws=land_kws,
         plotfunc=plotfunc,
         **kwargs,
     )
@@ -748,6 +754,8 @@ def at_warming_level_one(
         If a legend should be added.
     plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
         Which plot function to use
+    colorbar_kwargs : keyword arguments for the colorbar
+        Additional keyword arguments passed on to mpu.colorbar
     legend_kwargs : keyword arguments for the legend
         Additional keyword arguments passed on to ax.legend.
     **kwargs : keyword arguments
@@ -910,6 +918,8 @@ def at_warming_level_one_4(
         If a legend should be added.
     plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
         Which plot function to use
+    colorbar_kwargs : keyword arguments for the colorbar
+        Additional keyword arguments passed on to mpu.colorbar
     legend_kwargs : keyword arguments for the legend
         Additional keyword arguments passed on to ax.legend.
     **kwargs : keyword arguments

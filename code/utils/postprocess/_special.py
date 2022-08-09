@@ -118,6 +118,8 @@ class SMDryDaysClimZhangFromOrig(ProcessorFromOrig):
             Start of climatology period.
         end : int, default: 1900
             End of climatology period.
+        dim : str, default: "time"
+            Dimension along which to apply the transformation.
         mask_out : str, list of str, or None, default: None
             Name(s) of the mask(s) to apply (sets values to NaN).
 

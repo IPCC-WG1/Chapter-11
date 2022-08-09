@@ -97,9 +97,10 @@ class HadEx3_cls:
             Variable name (e.g. 'TXx')
         climatology : "61-90" | "81-10"
             Climatology of the HadEx files
-        vaiable : str
-            Name of the variable to read, e.g. "Ann",
-            "JAN"
+        variable : str
+            Name of the variable to read, e.g. "Ann", "JAN"
+        version : str, default: CURRENT_VERSION
+            Which version of the HADEX3 data to read.
 
         Returns
         -------
@@ -136,9 +137,10 @@ class HadEx3_cls:
             Variable name (e.g. 'TXx')
         climatology : "61-90" | "81-10"
             Climatology of the HadEx files
-        vaiable : str
-            Name of the variable to read, e.g. "ANN",
-            "JAN"
+        variable : str
+            Name of the variable to read, e.g. "Ann", "JAN"
+        version : str, default: CURRENT_VERSION
+            Which version of the HADEX3 data to read.
 
         Returns
         -------
@@ -158,13 +160,14 @@ class HadEx3_cls:
 
         Parameters
         ----------
-        varn : str
+        varns : str
             Variable name (e.g. 'TXx')
         climatology : "61-90" | "81-10"
             Climatology of the HadEx files
-        vaiable : str
-            Name of the variable to read, e.g. "Ann",
-            "Jan"
+        variable : str
+            Name of the variable to read, e.g. "Ann", "JAN"
+        version : str, default: CURRENT_VERSION
+            Which version of the HADEX3 data to read.
 
         Returns
         -------
