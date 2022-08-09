@@ -18,7 +18,6 @@ class _cmip_conf:
     """common configuration for cmip5 and cmip6
 
     This class abstracts differences between cmip5 and cmip6 away
-
     """
 
     def __init__(self):
@@ -70,36 +69,40 @@ class _cmip_conf:
         return self._warming_levels_folder
 
     @staticmethod
-    def _period_int(period):
-        """convert slice with str start and stop to one with int elements"""
+    def _period_slice_str2int(period):
+        """convert slice with string start and stop to one with integer elements"""
         start = int(period.start)
         stop = int(period.stop)
         return slice(start, stop)
 
     @property
     def hist_period(self):
+        """slice for the historical period -> as strings"""
         return self._hist_period
 
     @property
     def hist_period_int(self):
-        return self._period_int(self._hist_period)
+        """slice for the historical period -> as integers"""
+        return self._period_slice_str2int(self._hist_period)
 
     @property
     def proj_period(self):
+        """slice for the future period -> as strings"""
         return self._proj_period
 
     @property
     def proj_period_int(self):
-        return self._period_int(self._proj_period)
+        """slice for the future period -> as integers"""
+        return self._period_slice_str2int(self._proj_period)
 
     @property
     def scenarios(self):
-        """list of core scenarios"""
+        """list of core scenarios, exclusive historical"""
         return self._scenarios
 
     @property
     def scenarios_all(self):
-        """list of all scenarios"""
+        """list of all scenarios, exclusive historical"""
         return self._scenarios_all
 
     @property
@@ -114,10 +117,12 @@ class _cmip_conf:
 
     @property
     def ANOMALY_YR_START(self):
+        """first year of the refernce period"""
         return self._ANOMALY_YR_START
 
     @property
     def ANOMALY_YR_END(self):
+        """last year of the refernce period"""
         return self._ANOMALY_YR_END
 
     def figure_filename(self, name, *subfolders, add_prefix=True):
@@ -131,7 +136,7 @@ class _cmip_conf:
         subfolders : list of str
             Folders of the figure.
         add_prefix : bool, default True
-            If True adds 'cmip6_' in front of the filename.
+            If True adds f'{self.cmip}_' in front of the filename.
         """
 
         prefix = f"{self.cmip}_" if add_prefix else ""
@@ -148,7 +153,7 @@ class _cmip_conf:
         check_time, bool, default: True
             If true checks the loaded data for errors in the time axis (missing time
             steps etc.). If false the check is bypassed.
-        metadata : kwargs
+        meta : kwargs
             Keys to select the models simulation to be loaded. Includes 'varn', 'model',
             'ens', etc.
 
@@ -174,7 +179,7 @@ class _cmip_conf:
         # read, concatenate and fix files
         ds = xru.open_mfdataset(
             fNs_in,
-            metadata=meta,
+            meta=meta,
             fixes=self.fixes_data,
             fixes_preprocess=self.fixes_preprocess,
             check_time=check_time,
@@ -193,7 +198,7 @@ class _cmip_conf:
         varn : str
             Variable name to load.
         meta : dict of metadata
-            Metadata of the model to load the fx files for. Note incompatible metadata
+            Metadata of the model to load the fx files for. Note: incompatible metadata
             (e.g. "varn") will be automatically removed from meta.
         table : str, default "*"
             Which 'table' to look for the fx files. Note that cmip6 has the tables 'fx'
@@ -227,7 +232,7 @@ class _cmip_conf:
         varn : str
             Variable name to load.
         meta : dict of metadata
-            Metadata of the model to load the fx files for. Note incompatible metadata
+            Metadata of the model to load the fx files for. Note: incompatible metadata
             (e.g. "varn") will be automatically removed from meta.
         da : xr.DataArray, optional
             DataArray to align the mask with. Used to check if the grid of da and the
@@ -247,7 +252,6 @@ class _cmip_conf:
 
         mask = self._load_mask_or_weights(varn, meta, da=da)
 
-        # we want all gridpoints
         if mask is not None:
             mask = mask != 0
 
@@ -261,7 +265,7 @@ class _cmip_conf:
         varn : str
             Variable name to load.
         meta : dict of metadata
-            Metadata of the model to load the fx files for. Note incompatible metadata
+            Metadata of the model to load the fx files for. Note: incompatible metadata
             (e.g. "varn") will be automatically removed from meta.
         da : xr.DataArray, optional
             DataArray to align the weights with. Used to check if the grid of da and the
@@ -312,7 +316,7 @@ class _cmip_conf:
             **meta,
         )
 
-    def load_post(self, **metadata):
+    def load_post(self, **meta):
         """load postprocessed data for a single simulation
 
         Parameters
@@ -327,7 +331,7 @@ class _cmip_conf:
             Dataset of the specified, postprocessed cmip data.
         """
 
-        fN = self.files_post.create_full_name(**metadata)
+        fN = self.files_post.create_full_name(**meta)
 
         if not _file_exists(fN):
             return []
@@ -335,7 +339,7 @@ class _cmip_conf:
         ds = xr.open_dataset(fN, decode_cf=False)
 
         # get rid of the "days" units, else CDD will have dtype = timedelta
-        varn = metadata["varn"]
+        varn = meta["varn"]
         if varn in ds.data_vars:
             units = ds[varn].attrs.get("units", None)
             if units in ["seconds", "days"]:
@@ -343,14 +347,14 @@ class _cmip_conf:
 
         return xr.decode_cf(ds, use_cftime=True)
 
-    def load_post_concat(self, **metadata):
+    def load_post_concat(self, **meta):
         """
         load postprocessed data for a single simulation, combines historical simulation
         and projection
 
         Parameters
         ----------
-        metadata : metadata
+        meta : dict
             Metadata idenrtifiying the simulation to load.
 
         Notes
@@ -359,24 +363,24 @@ class _cmip_conf:
         data use ``load_post(..., exp="historical")`` instead.
         """
 
-        exp = metadata.pop("exp")
+        exp = meta.pop("exp")
 
         if exp == "historical":
             raise ValueError("Use 'load_post' to load historical exp")
 
         # load historical
-        hist = self.load_post(exp="historical", **metadata)
+        hist = self.load_post(exp="historical", **meta)
         if not len(hist):
-            self._print_meta(exp="historical", **metadata)
+            self._print_meta(exp="historical", **meta)
             return []
 
         # cut to the historical period
         hist = hist.sel(time=self.hist_period)
 
         # load projection
-        proj = self.load_post(exp=exp, **metadata)
+        proj = self.load_post(exp=exp, **meta)
         if not len(proj):
-            self._print_meta(exp=exp, **metadata)
+            self._print_meta(exp=exp, **meta)
             return []
 
         # cut to the projection period
@@ -386,9 +390,9 @@ class _cmip_conf:
             ds = xr.combine_by_coords(
                 [hist, proj], join="exact", combine_attrs="override"
             )
-        except (TypeError, ValueError) as e:
-            print(metadata)
-            raise e
+        except (TypeError, ValueError) as err:
+            print(meta)
+            raise err
 
         return ds
 
@@ -401,7 +405,7 @@ class _cmip_conf:
         at_least_until=None,
         year_mean=True,
         ensnumber=0,
-        **metadata,
+        **meta,
     ):
         """
         load postprocessed data for all models for a given scenario, without concatenation
@@ -426,7 +430,7 @@ class _cmip_conf:
             and if not the model simulation is discarded.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        metadata : kwargs, optional
+        meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
 
@@ -445,7 +449,7 @@ class _cmip_conf:
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=self.load_post,
-            **metadata,
+            **meta,
         )
 
     def load_post_all_concat(
@@ -457,7 +461,7 @@ class _cmip_conf:
         at_least_until=2099,
         year_mean=True,
         ensnumber=0,
-        **metadata,
+        **meta,
     ):
         """
         load postprocessed data for all models and concatenate the data for historical
@@ -483,7 +487,7 @@ class _cmip_conf:
             and if not the model simulation is discarded.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        metadata : kwargs, optional
+        meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
 
@@ -505,7 +509,7 @@ class _cmip_conf:
             year_mean=year_mean,
             ensnumber=ensnumber,
             func=func,
-            **metadata,
+            **meta,
         )
 
     _filefinder_find_all_files_orig_ = None
@@ -523,7 +527,7 @@ class _cmip_conf:
         varn,
         exp=None,
         ensnumber=0,
-        **metadata,
+        **meta,
     ):
         """
         find all simulations of the original (raw) cmip data from the ETH archive on
@@ -539,7 +543,7 @@ class _cmip_conf:
             simulation.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        metadata : kwargs, optional
+        meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
         """
@@ -554,7 +558,7 @@ class _cmip_conf:
             varn=varn,
             exp=exp,
             ensnumber=ensnumber,
-            **metadata,
+            **meta,
         )
 
     def find_all_files_post(
@@ -563,7 +567,7 @@ class _cmip_conf:
         postprocess,
         exp=None,
         ensnumber=0,
-        **metadata,
+        **meta,
     ):
         """find all simulations of postprocessed data for given conditions
 
@@ -578,7 +582,7 @@ class _cmip_conf:
             core scenarios exclusive the historical simulation.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        metadata : kwargs, optional
+        meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
         """
@@ -594,7 +598,7 @@ class _cmip_conf:
             exp=exp,
             ensnumber=ensnumber,
             postprocess=postprocess,
-            **metadata,
+            **meta,
         )
 
     def _find_all_files(
@@ -604,16 +608,17 @@ class _cmip_conf:
         varn,
         exp=None,
         ensnumber=0,
-        **metadata,
+        **meta,
     ):
 
         if exp is None:
             exp = scenarios
 
-        files = filefinder(varn=varn, exp=exp, **metadata)
+        files = filefinder(varn=varn, exp=exp, **meta)
 
         if self._cmip != "cmip6_ng":
             files = ff.cmip.ensure_unique_grid(files)
+
         files = ff.cmip.parse_ens(files)
 
         keys = None if self._cmip != "cmip6_ng" else ["exp", "varn", "model"]
@@ -632,7 +637,7 @@ class _cmip_conf:
         year_mean=True,
         ensnumber=0,
         func=None,
-        **metadata,
+        **meta,
     ):
 
         files = self.find_all_files_post(
@@ -640,20 +645,19 @@ class _cmip_conf:
             postprocess=postprocess,
             exp=exp,
             ensnumber=ensnumber,
-            **metadata,
+            **meta,
         )
 
         output = list()
 
-        for fN, metadata in files:
-            ds = func(**metadata)
-            # print(metadata)
+        for fN, meta in files:
+            ds = func(**meta)
             if ds and anomaly:
                 ds = computation.calc_anomaly(
                     ds,
                     start=self.ANOMALY_YR_START,
                     end=self.ANOMALY_YR_END,
-                    metadata=metadata,
+                    meta=meta,
                     how=anomaly,
                 )
 
@@ -663,7 +667,7 @@ class _cmip_conf:
                     ds,
                     start=at_least_until,
                     end=at_least_until,
-                    metadata=metadata,
+                    meta=meta,
                     how="no_anom",
                 )
 
@@ -671,32 +675,32 @@ class _cmip_conf:
                 ds = ds.groupby("time.year").mean("time")
 
             if ds:
-                output.append((ds, metadata))
+                output.append((ds, meta))
 
         return output
 
     @staticmethod
-    def _print_meta(**metadata):
+    def _print_meta(**meta):
         """print metadata"""
 
-        metadata = metadata.copy()
+        meta = meta.copy()
 
         # get rid of the ens labels
-        metadata.pop("r", None)
-        metadata.pop("i", None)
-        metadata.pop("p", None)
-        metadata.pop("f", None)
+        meta.pop("r", None)
+        meta.pop("i", None)
+        meta.pop("p", None)
+        meta.pop("f", None)
 
-        msg = "-- no data found for: {}".format(metadata)
+        msg = "-- no data found for: {}".format(meta)
         print(msg)
 
     def _create_folder_for_output(self, files, postprocess_name):
         """create a folder for saving postprocessed data"""
 
-        metadata = files[0][1].copy()
-        metadata.pop("postprocess", None)
+        meta = files[0][1].copy()
+        meta.pop("postprocess", None)
         folder_out = self.files_post.create_path_name(
-            **metadata, postprocess=postprocess_name
+            **meta, postprocess=postprocess_name
         )
         mkdir(folder_out)
 
