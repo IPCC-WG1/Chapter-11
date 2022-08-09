@@ -318,7 +318,7 @@ def check_range(
     min_smaller : float, default None
         A ValueError is raised if the smallest value in da is larger than
         ``min_smaller``. If None no check is performed.
-    max_lerger : float, default None
+    max_larger : float, default None
         A ValueError is raised if the largest value in da is smaller than
         ``max_larger``. If None no check is performed.
     maybe_fix : bool, default: True

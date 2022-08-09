@@ -92,17 +92,17 @@ class HadEx3_cls:
         """read one file and return with metadata
 
         Parameters
-        ==========
+        ----------
         varn : str
             Variable name (e.g. 'TXx')
-        climatology: "61-90" | "81-10"
+        climatology : "61-90" | "81-10"
             Climatology of the HadEx files
         vaiable : str
             Name of the variable to read, e.g. "Ann",
             "JAN"
 
         Returns
-        =======
+        -------
         da : xr.DataArray
         meta : dict of meta data
         """
@@ -131,17 +131,17 @@ class HadEx3_cls:
         """read one file and return without metadata
 
         Parameters
-        ==========
+        ----------
         varn : str
             Variable name (e.g. 'TXx')
-        climatology: "61-90" | "81-10"
+        climatology : "61-90" | "81-10"
             Climatology of the HadEx files
         vaiable : str
             Name of the variable to read, e.g. "ANN",
             "JAN"
 
         Returns
-        =======
+        -------
         da : xr.DataArray
         """
 
@@ -157,17 +157,17 @@ class HadEx3_cls:
         """read several files
 
         Parameters
-        ==========
+        ----------
         varn : str
             Variable name (e.g. 'TXx')
-        climatology: "61-90" | "81-10"
+        climatology : "61-90" | "81-10"
             Climatology of the HadEx files
         vaiable : str
             Name of the variable to read, e.g. "Ann",
             "Jan"
 
         Returns
-        =======
+        -------
         filelist : list with da/ meta data structure
         """
         if isinstance(varns, str):

@@ -24,7 +24,7 @@ def figure_filename(name, *subfolders):
     ----------
     name : str
         File name of the figure
-    subfolders : list of str
+    *subfolders : list of str
         Folders of the figure.
 
     """

@@ -125,7 +125,6 @@ class SMDryDaysClimZhangFromOrig(ProcessorFromOrig):
         ----------
         https://doi.org/10.1175/JCLI3366.1
 
-
         """
         self.quantile = quantile
         self.beg = beg

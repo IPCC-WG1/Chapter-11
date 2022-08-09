@@ -28,7 +28,7 @@ def _time_in_range(start, end, yr_min, yr_max, meta, quiet=False):
     ----------
     start : int
         Start year.
-    ens : int
+    end : int
         End year.
     yr_min : int
         First year on time vector.
@@ -176,7 +176,7 @@ def time_average(
     """compute time average of index
 
     Parameters
-    ==========
+    ----------
     datalist : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     beg : int
@@ -190,9 +190,9 @@ def time_average(
         years are returned.
     skipna : bool, default: None
         If True, skip missing values (as marked by NaN).
-    as_datalist, bool, default: False
+    as_datalist : bool, default: False
         If True returns data as DataList else as xr.DataArray.
-    kwargs : dict
+    **kwargs : dict
         Additional keyword arguments passed on to the average function.
 
     Returns

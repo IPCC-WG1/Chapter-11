@@ -136,7 +136,7 @@ class SaveFiguredata:
         ----------
         da : xr.DataArray
             DataArray used for the plot.
-        panel : str
+        panels : str
             If not None indicate which panel of the figure the data represents.
 
         Returns

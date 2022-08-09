@@ -70,7 +70,7 @@ def at_warming_level(
     """compute value of index at one warming level
 
     Parameters
-    ==========
+    ----------
     tas_list : DataList
         List of (ds, metadata) pairs containing annual mean global mean temperature data
     index_list : DataList
@@ -86,12 +86,12 @@ def at_warming_level(
         Conditions to align tas_list and index_list.
     skipna : bool, default: None
         If True, skip missing values (as marked by NaN).
-    as_datalist, bool, default: False
+    as_datalist : bool, default: False
         If True returns data as DataList else as xr.DataArray.
     n_years : int, default: 20
         Length of period over which global warming level must be reached. Currently
         restricted to even number of years.
-    kwargs : dict
+    **kwargs : dict
         Additional keyword arguments passed on to the average function.
 
     Returns
@@ -162,15 +162,13 @@ def at_warming_levels_list(
     """compute value of index at several warming levels, returned in a list
 
     Parameters
-    ==========
+    ----------
     tas_list : DataList
         List of (ds, metadata) pairs containing annual mean global mean temperature data
     index_list : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     warming_levels : iterable of float
         warming levels at which to assess the index
-    add_meta : bool: default: True
-        If metadata should be added when returning a xr.DataArray.
     reduce : str or None, default: "mean"
         How to compute the average over the warming level period. If None the individual
         years are returned.
@@ -180,7 +178,7 @@ def at_warming_levels_list(
         If givem multiplies the data in index_list with this factor.
     skipna : bool, default: None
         If True, skip missing values (as marked by NaN).
-    as_datalist, bool, default: False
+    as_datalist, bool, default : False
         If True returns data as DataList else as xr.DataArray.
     n_years : int, default: 20
         Length of period over which global warming level must be reached. Currently
@@ -231,7 +229,7 @@ def at_warming_levels_dict(
     """compute value of index at several warming levels, returned in a dict
 
     Parameters
-    ==========
+    ----------
     tas_list : DataList
         List of (ds, metadata) pairs containing annual mean global mean temperature data
     index_list : DataList
@@ -249,12 +247,12 @@ def at_warming_levels_dict(
         If givem multiplies the data in index_list with this factor.
     skipna : bool, default: None
         If True, skip missing values (as marked by NaN).
-    as_datalist, bool, default: False
+    as_datalist : bool, default: False
         If True returns data as DataList else as xr.DataArray.
     n_years : int, default: 20
         Length of period over which global warming level must be reached. Currently
         restricted to even number of years.
-    kwargs : dict
+    **kwargs : dict
         Additional keyword arguments passed on to the average function.
 
     Returns

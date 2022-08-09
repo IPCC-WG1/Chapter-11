@@ -9,7 +9,7 @@ def theil_ufunc(da, dim="time", alpha=0.1):
     Wraps sp.stats.theilslopes in xr.apply_ufunc
 
     Parameters
-    ==========
+    ----------
     da : xr.DataArray
         DataArray to calculate the theil sen slope over
     dim : list of str, optional
@@ -18,7 +18,7 @@ def theil_ufunc(da, dim="time", alpha=0.1):
         Significance level in [0, 0.5].
 
     Returns
-    =======
+    -------
     slope : xr.DataArray
         Median slope of the array
     significance : xr.DataArray

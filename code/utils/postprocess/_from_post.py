@@ -135,7 +135,7 @@ class ResampleSeasonal(ProcessorFromPost):
 
         Parameters
         ----------
-        period : int
+        how : int
             Number of years to average over before calculating the IAV, default: 20
         invalidate_beg_end : bool
             Whether to set the first and last timestep to NA (as it's an incomplete

@@ -23,8 +23,8 @@ def atoi(text):
 def natural_keys(text):
     """key for natural sorting order
 
-    Example
-    -------
+    Examples
+    --------
     > l = ['a10', 'a1']
     > l.sort(key=natural_keys)
     > l
@@ -40,9 +40,8 @@ def natural_keys(text):
 def product_dict(**kwargs):
     """generate list of dictionaries with all possible combinations
 
-
-    Example
-    -------
+    Examples
+    --------
     list(product_dict({"a": [1, 2], "b": [3, 4], "c": [5]}))
 
     >>> [{'a': 1, 'b': 3, 'c': 5},

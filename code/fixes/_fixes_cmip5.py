@@ -574,11 +574,11 @@ def cmip5_preprocess(meta, fNs_in):
 
     Parameters
     ----------
-    ds : xr.Dataset
-        Loaded dataset to (potentially) fix.
     meta : dict
         Dictionary containing the metadata of the dataset (variable name, model name
         etc.).
+    fNs_in : xr.Dataset
+        Loaded dataset to (potentially) fix.
 
     """
 

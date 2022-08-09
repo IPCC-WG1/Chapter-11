@@ -24,8 +24,8 @@ class SM_dry_days_clim_Zhang(TransformWithXarray):
         ----------
         https://doi.org/10.1175/JCLI3366.1
 
-        Note
-        ----
+        Notes
+        -----
         Only little of the code is specific to calculate the SMdd threshold - most could
         be re-used for other Zhang-like threshold estimates. However, it is super slow
         for daily data...
@@ -109,8 +109,8 @@ class _SM_dry_days_Zhang_(TransformWithXarray):
         https://doi.org/10.1175/JCLI3366.1
         https://link.springer.com/article/10.1007/s00382-007-0340-z
 
-        Note
-        ----
+        Notes
+        -----
         Only little of the code is specific to calculate the SMdd threshold - most could
         be re-used for other Zhang-like threshold estimates. However, it is super slow
         for daily data...

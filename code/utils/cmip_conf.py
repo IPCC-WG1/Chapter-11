@@ -133,7 +133,7 @@ class _cmip_conf:
         ----------
         name : str
             File name of the figure
-        subfolders : list of str
+        *subfolders : list of str
             Folders of the figure.
         add_prefix : bool, default True
             If True adds f'{self.cmip}_' in front of the filename.
@@ -150,10 +150,10 @@ class _cmip_conf:
 
         Parameters
         ----------
-        check_time, bool, default: True
+        check_time : bool, default: True
             If true checks the loaded data for errors in the time axis (missing time
             steps etc.). If false the check is bypassed.
-        meta : kwargs
+        **meta : kwargs
             Keys to select the models simulation to be loaded. Includes 'varn', 'model',
             'ens', etc.
 
@@ -295,7 +295,7 @@ class _cmip_conf:
         ----------
         iav : str, default: "IAV20"
             Which interannual variability variant to load.
-        meta : kwargs
+        **meta : kwargs
             Keys to select the models simulation to be loaded. Includes 'varn', 'model',
             'ens', etc.
 
@@ -321,7 +321,7 @@ class _cmip_conf:
 
         Parameters
         ----------
-        meta : kwargs
+        **meta : kwargs
             Keys to select the models simulation to be loaded. Includes 'varn', 'model',
             'ens', etc.
 
@@ -354,11 +354,11 @@ class _cmip_conf:
 
         Parameters
         ----------
-        meta : dict
+        **meta : dict
             Metadata idenrtifiying the simulation to load.
 
         Notes
-        ------
+        -----
         This function concatenates historical data and projections. To load historical
         data use ``load_post(..., exp="historical")`` instead.
         """
@@ -430,7 +430,7 @@ class _cmip_conf:
             and if not the model simulation is discarded.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        meta : kwargs, optional
+        **meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
 
@@ -487,7 +487,7 @@ class _cmip_conf:
             and if not the model simulation is discarded.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        meta : kwargs, optional
+        **meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
 
@@ -543,7 +543,7 @@ class _cmip_conf:
             simulation.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        meta : kwargs, optional
+        **meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
         """
@@ -582,7 +582,7 @@ class _cmip_conf:
             core scenarios exclusive the historical simulation.
         ensnumber : int or None, default 0
             Which ensemble numbers to load. None loads all available members.
-        meta : kwargs, optional
+        **meta : kwargs, optional
             Keys to more specifically select the models simulation to be loaded.
             Includes 'model', 'ens', etc.
         """

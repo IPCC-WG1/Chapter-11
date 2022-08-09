@@ -93,7 +93,7 @@ def _get_same_sign(da, thresh_samesign, dim="mod_ens"):
 
     Parameters
     ----------
-    ds : xr.Dataset
+    da : xr.Dataset
         data to check sign
     thresh_samesign : float
         threshold for the fraction of models that need to have the same sign
@@ -132,7 +132,7 @@ def _get_signif_indiv(da, iav, n_sigma, thresh_signif, dim="mod_ens"):
 
     Parameters
     ----------
-    ds : xr.Dataset
+    da : xr.Dataset
         data to check significance
     iav : xr.Dataset
         Inter-annual variability
@@ -149,8 +149,8 @@ def _get_signif_indiv(da, iav, n_sigma, thresh_signif, dim="mod_ens"):
     enough_signif : xr.DataArray
         boolean array whether this gridpoint is significant
 
-    Note
-    ----
+    Notes
+    -----
     ds and iav must be aligned
     """
 

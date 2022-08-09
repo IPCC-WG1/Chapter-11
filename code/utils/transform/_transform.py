@@ -89,7 +89,7 @@ class _Resample(TransformWithXarray):
             Which reduction to apply, e.g. "mean", "std".
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
+        **kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
         """
 
         self.indexer = indexer
@@ -126,7 +126,7 @@ class ResampleAnnual(_Resample):
             Which reduction to apply, e.g. "mean", "std".
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
+        **kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
         """
 
         self.indexer = {"time": "A"}
@@ -150,7 +150,7 @@ class ResampleMonthly(_Resample):
             Which reduction to apply, e.g. "mean", "std".
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
+        **kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
         """
 
         self.indexer = {"time": "M"}
@@ -177,7 +177,7 @@ class ResampleSeasonal(_Resample):
         invalidate_beg_end : bool
             If True sets the first and last timestep to NaN (because DJF is not
             complete). If False the two timesteps are kept as is.
-        kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
+        **kwargs : Additional arguments passed to the reduction method (e.g. ``skipna``).
         """
 
         self.indexer = {"time": "Q-FEB"}
@@ -222,7 +222,7 @@ class RollingResampleAnnual(_Resample):
             If True, skip missing values (as marked by NaN) of the rolling operation.
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        kwargs : Additional arguments passed to the reduction method of the annual resample
+        **kwargs : Additional arguments passed to the reduction method of the annual resample
             operation (e.g. ``skipna``).
 
         """
@@ -262,7 +262,7 @@ class SelectGridpoint(TransformWithXarray):
             Name of the variable to extract.
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        coords : dict
+        **coords : dict
             Keyword arguments of keys matching dimensions and values given by scalars.
         """
 
@@ -291,7 +291,7 @@ class SelectRegion(TransformWithXarray):
             Name of the variable to extract.
         mask : xr.DataArray, optional
             If given sets values in da to NaN where mask is False.
-        coords : dict
+        **coords : dict
             Keyword arguments of keys matching dimensions and values given by slices.
         """
 

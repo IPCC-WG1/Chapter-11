@@ -9,7 +9,7 @@ def _remove_matching_fN(fNs, *files_to_remove):
     ----------
     fNs : list of str
         list of filenames
-    files_to_remove : str
+    *files_to_remove : str
         file names to remove in the list
 
     Returns
@@ -32,7 +32,7 @@ def _remove_non_matching_fN(fNs, *files_to_keep):
     ----------
     fNs : list of str
         list of filenames
-    files_to_keep : str
+    *files_to_keep : str
         file names to keep in the list
 
     Returns
@@ -51,7 +51,7 @@ def _corresponds_to(meta, **conditions) -> bool:
     ----------
     meta : dict
         Dictionary of metadata, e.g. {"model": "a", "exp": "b", ...}.
-    conditions : Mapping from the keys to the conditions.
+    **conditions : Mapping from the keys to the conditions.
 
     Notes
     -----

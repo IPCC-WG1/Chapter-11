@@ -16,7 +16,7 @@ class TransformWithXarray(ABC):
         ----------
         ds : xr.Dataset
             Dataset to transform
-        kwargs : keyword arguments
+        **kwargs : keyword arguments
             Additional keyword arguments passed to the transformation function.
 
         """

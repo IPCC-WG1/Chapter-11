@@ -234,7 +234,7 @@ def map_subplots(
     """Create a figure and a set of subplots with cartopy axes
 
     Parameters
-    -----------
+    ----------
     nrows, ncols : int, default: 1
         Number of rows/columns of the subplot grid.
     projection : cartopy projection, default: ccrs.Robinson()
@@ -244,7 +244,6 @@ def map_subplots(
     Returns
     -------
     fig : `~.figure.Figure`
-
     ax : `.axes.Axes` or array of Axes
     """
 
@@ -296,13 +295,13 @@ def one_map_flat(
     ocean_kws : dict, default: None
         Arguments passed to ``ax.add_feature(OCEAN)``.
     add_coastlines : bool, default: None
-            If None or true plots coastlines. See coastline_kws.
+        If None or true plots coastlines. See coastline_kws.
     coastline_kws : dict, default: None
-            Arguments passed to ``ax.coastlines()``.
+        Arguments passed to ``ax.coastlines()``.
     add_land : bool, default: False
-            If true adds the land feature. See land_kws.
+        If true adds the land feature. See land_kws.
     land_kws : dict, default: None
-            Arguments passed to ``ax.add_feature(LAND)``.
+        Arguments passed to ``ax.add_feature(LAND)``.
     plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
         Which plot function to use
     **kwargs : keyword arguments
@@ -377,7 +376,7 @@ def mask_ocean(ax, facecolor="w", zorder=1.1, lw=0, **kwargs):
         artist.
     lw : float, default: 0
         With of the edge. Set to 0 to avoid overlaps with the land and coastlines.
-    kwargs : keyword arguments
+    **kwargs : keyword arguments
         Additional keyword arguments to be passed to ax.add_feature.
 
     """
@@ -407,7 +406,7 @@ def coastlines(ax, color="0.1", lw=1, zorder=1.2, **kwargs):
         With of the edge. Set to 0 to avoid overlaps with the land and coastlines.
     zorder : float, default: 1.2
         Zorder of the ocean mask - slightly more than the ocean.
-    kwargs : keyword arguments
+    **kwargs : keyword arguments
         Additional keyword arguments to be passed to ax.add_feature.
     """
     ax.coastlines(color=color, lw=lw, zorder=zorder, *kwargs)
@@ -451,16 +450,16 @@ def one_map(
         If True, skip missing values (as marked by NaN). By default, only
         skips missing values for float dtypes
     add_coastlines : bool, default: None
-            If None or true plots coastlines. See coastline_kws.
+        If None or true plots coastlines. See coastline_kws.
     coastline_kws : dict, default: None
-            Arguments passed to ``ax.coastlines()``.
+        Arguments passed to ``ax.coastlines()``.
     hatch_simple : float, default: None
         If not None determines hatching on the fraction of models with the same sign.
         hatch_simple must be in 0..1.
     add_land : bool, default: False
-            If true adds the land feature. See land_kws.
+        If true adds the land feature. See land_kws.
     land_kws : dict, default: None
-            Arguments passed to ``ax.add_feature(LAND)``.
+        Arguments passed to ``ax.add_feature(LAND)``.
     plotfunc : {"pcolormesh", "contourf"}, default: "pcolormesh"
         Which plot function to use
     add_n_models : bool, default: True

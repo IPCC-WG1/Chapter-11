@@ -373,7 +373,7 @@ def _merge_panels(*dfs):
 
     Parameters
     ----------
-    dfs : pd.DataFrame
+    *dfs : pd.DataFrame
         DataFrame objects to merge
 
     Returns

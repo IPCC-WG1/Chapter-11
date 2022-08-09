@@ -8,7 +8,7 @@ def select_by_metadata(datalist, **attributes):
     ----------
     datalist : DataList
         List of (ds, metadata) pairs.
-    **attributes :
+    **attributes
         Keyword arguments specifying the required variable attributes and their values.
         Use '*' to select any variable that has the attribute.
 
@@ -36,7 +36,7 @@ def remove_by_metadata(datalist, **attributes):
     ----------
     datalist : DataList
         List of (ds, metadata) pairs
-    **attributes :
+    **attributes
         Keyword arguments specifying the required variable attributes and
         their values.
 
@@ -114,8 +114,8 @@ def concat_xarray_with_metadata(
 ):
     """create xr Dataset with 'ens' and 'model' as multiindex
 
-    Input
-    -----
+    Parameters
+    ----------
     datalist : DataList
         List of (ds, metadata) pairs.
     process : callable, default: None
@@ -131,7 +131,6 @@ def concat_xarray_with_metadata(
     -------
     out : xr.DataArray
         Concatenated DataArray
-
 
     Notes
     -----
