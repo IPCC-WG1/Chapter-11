@@ -34,7 +34,7 @@ def open_mfdataset(
     """
 
     # inatialize fixes_preprocess
-    fixes_preprocess = fixes_preprocess(meta, fNs_in)
+    fixes_preprocess = fixes_preprocess(fNs_in, meta)
 
     ds = xr.open_mfdataset(
         fNs_in,

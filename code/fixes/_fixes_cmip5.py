@@ -569,7 +569,7 @@ def cmip5_data(ds, meta):
     return ds, check_time
 
 
-def cmip5_preprocess(meta, fNs_in):
+def cmip5_preprocess(fNs_in, meta):
     """fix cmip5 simulations in the preprocess step
 
     Parameters

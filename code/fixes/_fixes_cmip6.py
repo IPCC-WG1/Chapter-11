@@ -556,16 +556,16 @@ def cmip6_data(ds, meta):
     return ds, time_check
 
 
-def cmip6_preprocess(meta, fNs_in):
+def cmip6_preprocess(fNs_in, meta):
     """fix cmip6 simulations in the preprocess step
 
     Parameters
     ----------
+    fNs_in : xr.Dataset
+        Loaded dataset to (potentially) fix.
     meta : dict
         Dictionary containing the metadata of the dataset (variable name, model name
         etc.).
-    fNs_in : xr.Dataset
-        Loaded dataset to (potentially) fix.
 
     """
 
