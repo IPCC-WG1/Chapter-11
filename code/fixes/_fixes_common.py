@@ -9,7 +9,7 @@ def _remove_matching_fN(fNs, *files_to_remove):
     ----------
     fNs : list of str
         list of filenames
-    files_to_keep : str
+    files_to_remove : str
         file names to remove in the list
 
     Returns
@@ -20,7 +20,7 @@ def _remove_matching_fN(fNs, *files_to_remove):
     """
 
     for file_to_remove in files_to_remove:
-        fNs = [i for i in fNs if file_to_remove not in i]
+        fNs = [fN for fN in fNs if file_to_remove not in fN]
 
     return fNs
 
@@ -44,12 +44,12 @@ def _remove_non_matching_fN(fNs, *files_to_keep):
     return [fN for fN in fNs if any([f_keep in fN for f_keep in files_to_keep])]
 
 
-def _corresponds_to(metadata, **conditions) -> bool:
+def _corresponds_to(meta, **conditions) -> bool:
     """check if metadata correspods to all the conditions
 
     Parameters
     ----------
-    metadata : dict
+    meta : dict
         Dictionary of metadata, e.g. {"model": "a", "exp": "b", ...}.
     conditions : Mapping from the keys to the conditions.
 
@@ -58,7 +58,7 @@ def _corresponds_to(metadata, **conditions) -> bool:
     - individual conditions are combined with "and", i.e. `conditions = {"model": "a",
       "exp": "b"}` requires the model to be "a" and the experiment to be "b".
     - listed conditions for a key are combined with "or", i.e. `conditions = {"model":
-      ["a", "b"]}` matches for
+      ["a", "b"]}` matches for both.
     """
 
     # make sure conditions is always a list
@@ -66,7 +66,7 @@ def _corresponds_to(metadata, **conditions) -> bool:
         if isinstance(value, str):
             conditions[key] = [value]
 
-    return all(metadata[key] in cond for key, cond in conditions.items())
+    return all(meta[key] in cond for key, cond in conditions.items())
 
 
 def _maybe_rename(ds, name, target, candidates):

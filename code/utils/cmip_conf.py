@@ -140,7 +140,7 @@ class _cmip_conf:
 
         return path.join(*folders, prefix + name)
 
-    def load_orig(self, check_time=True, **metadata):
+    def load_orig(self, check_time=True, **meta):
         """load original (raw) cmip data from the ETH archive on /net/atmos/data/
 
         Parameters
@@ -158,13 +158,13 @@ class _cmip_conf:
             Dataset of the specified cmip data.
         """
 
-        folder_in = self.files_orig.create_path_name(**metadata)
+        folder_in = self.files_orig.create_path_name(**meta)
 
         if "*" in folder_in:
-            raise ValueError("'metadata' cannot contain wildcards")
+            raise ValueError("'meta' cannot contain wildcards")
 
         # maybe fix filename and glob files
-        fNs_in = self.fixes_files(folder_in + "*")(metadata)
+        fNs_in = self.fixes_files(folder_in + "*", meta)
 
         # exit if the model is removed by the fixes
         if fNs_in is None:
@@ -174,7 +174,7 @@ class _cmip_conf:
         # read, concatenate and fix files
         ds = xru.open_mfdataset(
             fNs_in,
-            metadata=metadata,
+            metadata=meta,
             fixes=self.fixes_data,
             fixes_preprocess=self.fixes_preprocess,
             check_time=check_time,
