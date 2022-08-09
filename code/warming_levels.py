@@ -11,7 +11,7 @@ def warming_level_to_str(warming_level):
     return str(warming_level).replace(".", "")
 
 
-def _fmt_str_yml(beg, end, warming_level, add_grid_info, **metadata):
+def _fmt_str_yml(beg, end, warming_level, add_grid_info, **meta):
     fmt = " {{model: {model}, ensemble: {ens}, exp: {exp}"
 
     if add_grid_info:
@@ -19,15 +19,15 @@ def _fmt_str_yml(beg, end, warming_level, add_grid_info, **metadata):
 
     if beg:
         fmt = "-" + fmt + ", start_year: {beg}, end_year: {end}}}\n"
-        out = fmt.format(beg=beg, end=end, **metadata)
+        out = fmt.format(beg=beg, end=end, **meta)
     else:
         fmt = "#" + fmt + "}} -- did not reach {warming_level}°C\n"
-        out = fmt.format(warming_level=warming_level, **metadata)
+        out = fmt.format(warming_level=warming_level, **meta)
 
     return out
 
 
-def _fmt_str_csv(beg, end, warming_level, add_grid_info, **metadata):
+def _fmt_str_csv(beg, end, warming_level, add_grid_info, **meta):
     fmt = "{model}, {ens}, {exp}"
 
     if add_grid_info:
@@ -35,7 +35,7 @@ def _fmt_str_csv(beg, end, warming_level, add_grid_info, **metadata):
 
     if beg:
         fmt = fmt + ", {warming_level}, {beg}, {end}\n"
-        out = fmt.format(beg=beg, end=end, warming_level=warming_level, **metadata)
+        out = fmt.format(beg=beg, end=end, warming_level=warming_level, **meta)
     else:
         out = ""
 
@@ -64,10 +64,10 @@ def warming_level_years(
     if print_warming_level:
         out_yml += "warming_level_{}:\n".format(warming_level_to_str(warming_level))
 
-    for ds, metadata in tas_list:
+    for ds, meta in tas_list:
 
         anomaly = computation.calc_anomaly(
-            ds.tas, start=start_clim, end=end_clim, metadata=metadata, how=how
+            ds.tas, start=start_clim, end=end_clim, meta=meta, how=how
         )
 
         # skip if too short
@@ -76,8 +76,8 @@ def warming_level_years(
 
         beg, end, mid = computation.calc_year_of_warming_level(anomaly, warming_level)
 
-        out_yml += _fmt_str_yml(beg, end, warming_level, add_grid_info, **metadata)
-        out_csv += _fmt_str_csv(beg, end, warming_level, add_grid_info, **metadata)
+        out_yml += _fmt_str_yml(beg, end, warming_level, add_grid_info, **meta)
+        out_csv += _fmt_str_csv(beg, end, warming_level, add_grid_info, **meta)
 
     out_yml += "\n"
 
@@ -157,10 +157,10 @@ def write_start_years_no_boundscheck(
     txt += "model, ensemble, exp, start, end_year\n"
 
     models = list()
-    for ds, metadata in tas_list:
+    for ds, meta in tas_list:
 
         anomaly = computation.calc_anomaly(
-            ds.tas, start=start_clim, end=end_clim, metadata=metadata, how="absolute"
+            ds.tas, start=start_clim, end=end_clim, meta=meta, how="absolute"
         )
 
         fmt = "{model}, {ens}, {exp}, {start}, {end_clim}\n"
@@ -169,7 +169,7 @@ def write_start_years_no_boundscheck(
         if not len(anomaly):
             start = ds.year[0].item()
 
-            models.append(fmt.format(start=start, end_clim=end_clim, **metadata))
+            models.append(fmt.format(start=start, end_clim=end_clim, **meta))
 
     # sort the by model
     txt += "".join(sorted(models))

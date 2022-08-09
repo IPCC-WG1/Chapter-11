@@ -2,6 +2,10 @@ import warnings
 
 import xarray as xr
 
+# === NOTE ===
+# restructured the content of this file after the analysis. Import all the functions
+# here so the code still works.
+
 from .datalist import (  # noqa: F401
     concat_xarray_with_metadata,
     match_data_list,
@@ -16,12 +20,8 @@ from .warming_level import (  # noqa: F401
     calc_year_of_warming_level,
 )
 
-# === NOTE ===
-# restructured the content of this file after the analysis. Import all the functions
-# here so the code still works.
 
-
-def _time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
+def _time_in_range(start, end, yr_min, yr_max, meta, quiet=False):
     """determine if start--end is in time vector
 
     Parameters
@@ -34,8 +34,8 @@ def _time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
         First year on time vector.
     yr_max : int
         Last year on time vector.
-    metadata : dict
-        MetaData of the model.
+    meta : dict
+        metadata of the model.
     quiet : bool, default: False
         If a warning should be printed.
 
@@ -48,17 +48,17 @@ def _time_in_range(start, end, yr_min, yr_max, metadata, quiet=False):
     if (start < yr_min) or (end > yr_max):
         msg = f"no data for {start} - {end} ({yr_min.values}..{yr_max.values})"
 
-        if metadata is not None:
+        if meta is not None:
 
-            metadata = metadata.copy()
+            meta = meta.copy()
 
             # get rid of the ens labels
-            metadata.pop("r", None)
-            metadata.pop("i", None)
-            metadata.pop("p", None)
-            metadata.pop("f", None)
+            meta.pop("r", None)
+            meta.pop("i", None)
+            meta.pop("p", None)
+            meta.pop("f", None)
 
-            msg = f" -- {metadata}: " + msg
+            msg = f" -- {meta}: " + msg
 
         if not quiet:
             print(msg)
@@ -74,7 +74,7 @@ def calc_anomaly(
     end,
     how="absolute",
     skipna=None,
-    metadata=None,
+    meta=None,
     at_least_until=None,
     quiet=False,
 ):
@@ -93,7 +93,7 @@ def calc_anomaly(
         avoid the time bounds check.
     skipna : bool, default: None
         If invalid values should be skipped.
-    metadata : MetaData, optional
+    meta : metadata, optional
         Used to display a message if the models fails the bounds check
     at_least_until : int, default: None
         If not None ensure ds runs at least to this year.
@@ -134,7 +134,7 @@ def calc_anomaly(
     yr_min, yr_max = years.min(), years.max()
 
     if check_time_bounds and not _time_in_range(
-        int(start), int(end), yr_min, yr_max, metadata=metadata, quiet=quiet
+        int(start), int(end), yr_min, yr_max, meta=meta, quiet=quiet
     ):
         return []
 
@@ -143,7 +143,7 @@ def calc_anomaly(
         int(at_least_until),
         yr_min,
         yr_max,
-        metadata=metadata,
+        meta=meta,
         quiet=quiet,
     ):
         return []
@@ -171,13 +171,13 @@ def calc_anomaly(
 
 
 def time_average(
-    index_list, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs
+    datalist, beg, end, reduce="mean", skipna=None, as_datalist=False, **kwargs
 ):
     """compute time average of index
 
     Parameters
     ==========
-    index_list : DataList
+    datalist : DataList
         List of (ds, metadata) pairs containing annual data of the index.
     beg : int
         Start year to calculate the average over.
@@ -213,9 +213,9 @@ def time_average(
 
         return da
 
-    index_list = process_datalist(
+    datalist = process_datalist(
         _inner,
-        index_list,
+        datalist,
         pass_meta=True,
         beg=beg,
         end=end,
@@ -224,10 +224,10 @@ def time_average(
     )
 
     if as_datalist:
-        return index_list
+        return datalist
 
     return concat_xarray_with_metadata(
-        index_list,
+        datalist,
         set_index=False,
     )
 

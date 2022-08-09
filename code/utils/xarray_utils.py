@@ -6,7 +6,7 @@ import xarray as xr
 
 def open_mfdataset(
     fNs_in,
-    metadata,
+    meta,
     fixes=None,
     fixes_preprocess=None,
     check_time=True,
@@ -17,7 +17,7 @@ def open_mfdataset(
     ----------
     fNs_in : list of str
         Filenames to read and concatenate.
-    metadata : dict
+    meta : dict
         Metadata dictionary containing information on the files to read.
     fixes : Callable
         Function to fix data after concatenation. See also the fixes folder (../fixes).
@@ -34,7 +34,7 @@ def open_mfdataset(
     """
 
     # inatialize fixes_preprocess
-    fixes_preprocess = fixes_preprocess(metadata, fNs_in)
+    fixes_preprocess = fixes_preprocess(meta, fNs_in)
 
     ds = xr.open_mfdataset(
         fNs_in,
@@ -50,7 +50,7 @@ def open_mfdataset(
     ).load()
 
     # get rid of the "days" units, else CDD will have dtype = timedelta
-    varn = metadata["varn"]
+    varn = meta["varn"]
     units = ds[varn].attrs.get("units")
     if units in ["seconds", "days"]:
         ds[varn].attrs.pop("units")
@@ -60,7 +60,7 @@ def open_mfdataset(
     ds = remove_duplicated_timesteps(ds, dim="time")
 
     if fixes is not None:
-        ds, time_check = fixes(ds, metadata)
+        ds, time_check = fixes(ds, meta)
 
     if time_check and check_time and "time" in ds.coords:
         if not all_years(ds, errors="warn"):

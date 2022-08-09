@@ -19,13 +19,13 @@ def select_by_metadata(datalist, **attributes):
     """
 
     selection = []
-    for data, metadata in datalist:
+    for data, meta in datalist:
 
         if all(
-            a in metadata and (metadata[a] == attributes[a] or attributes[a] == "*")
+            a in meta and (meta[a] == attributes[a] or attributes[a] == "*")
             for a in attributes
         ):
-            selection.append((data, metadata))
+            selection.append((data, meta))
     return selection
 
 
@@ -47,15 +47,15 @@ def remove_by_metadata(datalist, **attributes):
     """
 
     selection = []
-    for data, metadata in datalist:
+    for data, meta in datalist:
 
         if all(
-            a in metadata and (metadata[a] == attributes[a] or attributes[a] == "*")
+            a in meta and (meta[a] == attributes[a] or attributes[a] == "*")
             for a in attributes
         ):
             pass
         else:
-            selection.append((data, metadata))
+            selection.append((data, meta))
     return selection
 
 
@@ -85,9 +85,9 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
     out_a = list()
     out_b = list()
 
-    for ds_a, metadata in list_a:
+    for ds_a, meta in list_a:
 
-        attributes = {key: metadata[key] for key in select_by}
+        attributes = {key: meta[key] for key in select_by}
 
         # try to find the in list_b
         match = select_by_metadata(list_b, **attributes)
@@ -95,11 +95,11 @@ def match_data_list(list_a, list_b, select_by=("model", "exp", "ens"), check=Tru
         # make sure only one dataset is found in index_list
         if check and len(match) > 1:
             print(match)
-            raise ValueError(metadata)
+            raise ValueError(meta)
 
         # an index was found for this dataset
         if match:
-            out_a += [[ds_a, metadata]]
+            out_a += [[ds_a, meta]]
             out_b += match
 
     return out_a, out_b
@@ -145,7 +145,7 @@ def concat_xarray_with_metadata(
     retain += ("ensi",)
     retain_dict = {r: ("mod_ens", list()) for r in retain}
 
-    for i, (ds, metadata) in enumerate(datalist):
+    for i, (ds, meta) in enumerate(datalist):
 
         if process is not None:
             ds = process(ds)
@@ -154,7 +154,7 @@ def concat_xarray_with_metadata(
 
         retain_dict["ensi"][1].append(i)
         for r in retain[:-1]:
-            retain_dict[r][1].append(metadata.get(r, None))
+            retain_dict[r][1].append(meta.get(r, None))
 
     # concate all data
     out = xr.concat(all_ds, "mod_ens", compat="override", coords="minimal")

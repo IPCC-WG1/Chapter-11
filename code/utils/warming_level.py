@@ -103,16 +103,16 @@ def at_warming_level(
     out = list()
 
     # loop through all global mean temperatures
-    for tas, metadata in tas_list:
+    for tas, meta in tas_list:
 
-        attributes = {key: metadata[key] for key in select_by}
+        attributes = {key: meta[key] for key in select_by}
 
         # try to find the index
         index = select_by_metadata(index_list, **attributes)
 
         # make sure only one dataset is found in index_list
         if len(index) > 1:
-            raise ValueError("Found more than one dataset:\n", metadata)
+            raise ValueError("Found more than one dataset:\n", meta)
 
         # an index was found for this tas dataset
         if index:
@@ -124,10 +124,10 @@ def at_warming_level(
 
             if beg:
                 ds_idx = index[0][0]
-                metadata_idx = index[0][1]
+                meta_idx = index[0][1]
 
                 # get the Dataarray
-                da_idx = ds_idx[metadata_idx["varn"]]
+                da_idx = ds_idx[meta_idx["varn"]]
                 idx = da_idx.sel(year=slice(beg, end))
 
                 if reduce is not None:
@@ -137,7 +137,7 @@ def at_warming_level(
                     # drop year to enable concatenating
                     idx = idx.drop_vars("year")
 
-                out.append([idx, metadata_idx])
+                out.append([idx, meta_idx])
 
     if not out:
         return []
