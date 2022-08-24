@@ -1,8 +1,6 @@
 *.ipynb
 !clean_notebooks/*.ipynb
 
-data/*
-
 # dask
 dask-worker-space
 
