@@ -11,30 +11,30 @@ The following table shows which figures/ panels in the _SPM_, _Chapter 11_ and _
 
 | Figure    | Panel  | A<sup>*</sup> | V<sup>&dagger;</sup> | Notebook | Data Source |
 | --------- | ------ |:--------:|:-------------:| -------- | ----------- |
-| **Figure SPM.5**       | d   | x | x | [Figure_SPM.5_SM_map.ipynb](code/Figure_SPM.5_SM_map.ipynb) | CMIP6 |
-| **Figure SPM.6**       | c   | x |   | [SMDroughtIndex.ipynb](code/SMDroughtIndex.ipynb) | CMIP6 |
-| **Figure 11.2**        | -   | x | x | [Figure_11.2_obs_ts_plots.ipynb](code/Figure_11.2_obs_ts_plots.ipynb) | Dunn et al. (2020), Section 2.3.1.1.3 |
-| **Figure 11.3**        | all | x | x | [Figure_11.3_TXx_scaling.ipynb](code/Figure_11.3_TXx_scaling.ipynb) | CMIP6 |
-| **Figure 11.9**        | all | x | x | [Figure_11.9_HadEX3_maps.ipynb](code/Figure_11.9_HadEX3_maps.ipynb) | Dunn et al. (2020) |
-| **Figure 11.10**       | all |   | x | [Figure_11.10_Wehner_temperature_bias.ipynb](code/Figure_11.10_Wehner_temperature_bias.ipynb) | Wehner et al. (2020) |
-| **Figure 11.11**       | a-c | x | x | [Figure_11.11_TXx_map.ipynb](code/Figure_11.11_TXx_map.ipynb) | CMIP6 |
-| **Figure 11.11**       | d-f | x | x | [Figure_11.11_TNn_map.ipynb](code/Figure_11.11_TNn_map.ipynb) | CMIP6 |
-| **Figure 11.12**       | -   |   | x | [Figure_11.12_TXx_intensity_Li_et_al.ipynb](code/Figure_11.12_TXx_intensity_Li_et_al.ipynb) | Li et al. (2020) |
-| **Figure 11.13**       | b-c |   | x | [Figure_11.13_Rx1day_trend_maps_Sun.ipynb](code/Figure_11.13_Rx1day_trend_maps_Sun.ipynb) | Sun et al. (2020) |
-| **Figure 11.14**       | all |   | x | [Figure_11.14_Wehner_precipitation_bias.ipynb](code/Figure_11.14_Wehner_precipitation_bias.ipynb) | Wehner et al. (2020) |
-| **Figure 11.15**       | -   |   | x | [Figure_11.15_Rx1day_intensity_Li_et_al.ipynb](code/Figure_11.15_Rx1day_intensity_Li_et_al.ipynb) | Li et al. (2020) |
-| **Figure 11.16**       | all | x | x | [Figure_11.16_Rx1day_map.ipynb](code/Figure_11.16_Rx1day_map.ipynb) | CMIP6 |
-| **Figure 11.17**       | all |   | x | [Figure_11.17_CDD_SPI_SPEI.ipynb](code/Figure_11.17_CDD_SPI_SPEI.ipynb) | Spinoni et al. (2019) |
-| **Figure 11.18**       | all | x | x | [SMDroughtIndex.ipynb](code/SMDroughtIndex.ipynb) | CMIP6 |
-| **Figure 11.19**       | a-c | x | x | [Figure_11.19_CDD_map.ipynb](code/Figure_11.19_CDD_map.ipynb) | CMIP6 |
-| **Figure 11.19**       | d-f | x | x | [Figure_11.19_SM_map.ipynb](code/Figure_11.19_SM_map.ipynb) | CMIP6 |
-| **Figure 11.19**       | g-l | x | x | [SMDroughtIndex.ipynb](code/SMDroughtIndex.ipynb) | CMIP6 |
-| **Box 11.1, Figure 1** | all |   | x | [Box_11.1_Figure_1_Pfahl_2017.ipynb](code/Box_11.1_Figure_1_Pfahl_2017.ipynb) | Pfahl et al. (2017) |
-| **Box 11.4, Figure 1** | -   |   | x | [Box_11.4_Figure_1_Sippel_2015.ipynb](code/Box_11.4_Figure_1_Sippel_2015.ipynb) | Sippel et al. (2015) |
-| **Box 11.4, Figure 2** | -   | x | x | [Box_11.4_Figure_2_2018.ipynb](code/Box_11.4_Figure_2_2018.ipynb) | Hersbach et al. (2020) |
-| **FAQ 11.1, Figure 1** | all | x | x | [FAQ_11.1_Figure_1_mean_vs_extreme.ipynb](code/FAQ_11.1_Figure_1_mean_vs_extreme.ipynb) | CMIP6 |
-| **Figure 11.SM.1**     | all | x | x | [Figure_11.SM.1_TNn_scaling.ipynb](code/Figure_11.SM.1_TNn_scaling.ipynb) | CMIP6 |
-| **Figure 12.4**        | j-l | x |   | [Figure_12.4_S12.4_SM_DataTable_Jerome.ipynb](code/Figure_12.4_S12.4_SM_DataTable_Jerome.ipynb) | CMIP6 |
+| **Figure SPM.5**       | d   | x | x | [Figure_SPM.5_SM_map](code/Figure_SPM.5_SM_map.ipynb) | CMIP6 |
+| **Figure SPM.6**       | c   | x |   | [SMDroughtIndex](code/SMDroughtIndex.ipynb) | CMIP6 |
+| **Figure 11.2**        | -   | x | x | [Figure_11.2_obs_ts_plots](code/Figure_11.2_obs_ts_plots.ipynb) | Dunn et al. (2020), Section 2.3.1.1.3 |
+| **Figure 11.3**        | all | x | x | [Figure_11.3_TXx_scaling](code/Figure_11.3_TXx_scaling.ipynb) | CMIP6 |
+| **Figure 11.9**        | all | x | x | [Figure_11.9_HadEX3_maps](code/Figure_11.9_HadEX3_maps.ipynb) | Dunn et al. (2020) |
+| **Figure 11.10**       | all |   | x | [Figure_11.10_Wehner_temperature_bias](code/Figure_11.10_Wehner_temperature_bias.ipynb) | Wehner et al. (2020) |
+| **Figure 11.11**       | a-c | x | x | [Figure_11.11_TXx_map](code/Figure_11.11_TXx_map.ipynb) | CMIP6 |
+| **Figure 11.11**       | d-f | x | x | [Figure_11.11_TNn_map](code/Figure_11.11_TNn_map.ipynb) | CMIP6 |
+| **Figure 11.12**       | -   |   | x | [Figure_11.12_TXx_intensity_Li_et_al](code/Figure_11.12_TXx_intensity_Li_et_al.ipynb) | Li et al. (2020) |
+| **Figure 11.13**       | b-c |   | x | [Figure_11.13_Rx1day_trend_maps_Sun](code/Figure_11.13_Rx1day_trend_maps_Sun.ipynb) | Sun et al. (2020) |
+| **Figure 11.14**       | all |   | x | [Figure_11.14_Wehner_precipitation_bias](code/Figure_11.14_Wehner_precipitation_bias.ipynb) | Wehner et al. (2020) |
+| **Figure 11.15**       | -   |   | x | [Figure_11.15_Rx1day_intensity_Li_et_al](code/Figure_11.15_Rx1day_intensity_Li_et_al.ipynb) | Li et al. (2020) |
+| **Figure 11.16**       | all | x | x | [Figure_11.16_Rx1day_map](code/Figure_11.16_Rx1day_map.ipynb) | CMIP6 |
+| **Figure 11.17**       | all |   | x | [Figure_11.17_CDD_SPI_SPEI](code/Figure_11.17_CDD_SPI_SPEI.ipynb) | Spinoni et al. (2019) |
+| **Figure 11.18**       | all | x | x | [SMDroughtIndex](code/SMDroughtIndex.ipynb) | CMIP6 |
+| **Figure 11.19**       | a-c | x | x | [Figure_11.19_CDD_map](code/Figure_11.19_CDD_map.ipynb) | CMIP6 |
+| **Figure 11.19**       | d-f | x | x | [Figure_11.19_SM_map](code/Figure_11.19_SM_map.ipynb) | CMIP6 |
+| **Figure 11.19**       | g-l | x | x | [SMDroughtIndex](code/SMDroughtIndex.ipynb) | CMIP6 |
+| **Box 11.1, Figure 1** | all |   | x | [Box_11.1_Figure_1_Pfahl_2017](code/Box_11.1_Figure_1_Pfahl_2017.ipynb) | Pfahl et al. (2017) |
+| **Box 11.4, Figure 1** | -   |   | x | [Box_11.4_Figure_1_Sippel_2015](code/Box_11.4_Figure_1_Sippel_2015.ipynb) | Sippel et al. (2015) |
+| **Box 11.4, Figure 2** | -   | x | x | [Box_11.4_Figure_2_2018](code/Box_11.4_Figure_2_2018.ipynb) | Hersbach et al. (2020) |
+| **FAQ 11.1, Figure 1** | all | x | x | [FAQ_11.1_Figure_1_mean_vs_extreme](code/FAQ_11.1_Figure_1_mean_vs_extreme.ipynb) | CMIP6 |
+| **Figure 11.SM.1**     | all | x | x | [Figure_11.SM.1_TNn_scaling](code/Figure_11.SM.1_TNn_scaling.ipynb) | CMIP6 |
+| **Figure 12.4**        | j-l | x |   | [Figure_12.4_S12.4_SM_DataTable](code/Figure_12.4_S12.4_SM_DataTable.ipynb) | CMIP6 |
 
 <sup>*</sup>Analysis
 <sup>&dagger;</sup> Visualisation
@@ -45,8 +45,8 @@ The following shows which tables in Chapter 11 were created from this repository
 
 | Table    | Notebook | Data Source |
 | -------- | -------- | ----------- |
-| Table 11.SM.1   | [Table_11.SM.1_GSAT_anom.ipynb](code/Table_11.SM.1_GSAT_anom.ipynb) | CMIP5 & CMIP6 |
-| Table 11.SM.2-8 | [Table_11.SM_cmip_indices_regional.ipynb](code/Table_11.SM_cmip_indices_regional.ipynb) | CMIP6 |
+| Table 11.SM.1   | [Table_11.SM.1_GSAT_anom](code/Table_11.SM.1_GSAT_anom.ipynb) | CMIP5 & CMIP6 |
+| Table 11.SM.2-8 | [Table_11.SM_cmip_indices_regional](code/Table_11.SM_cmip_indices_regional.ipynb) | CMIP6 |
 
 
 ## Associated data repositories
@@ -67,7 +67,7 @@ The [cmip_indices_regional](https://github.com/mathause/cmip_indices_regional) r
 
 ## Regional Factsheets
 
-The map insets for IPCC AR6 WGI [regional fact sheets](https://www.ipcc.ch/report/ar6/wg1/resources/factsheets/) were created in the [RegionalFactSheetsMaps.ipynb](code/RegionalFactSheetsMaps.ipynb) notebook. These maps were used for the following fact sheets: Introduction, Africa, Asia, Australasia, Central and South America, Europe, North and Central America, and Ocean.
+The map insets for IPCC AR6 WGI [regional fact sheets](https://www.ipcc.ch/report/ar6/wg1/resources/factsheets/) were created in the [RegionalFactSheetsMaps](code/RegionalFactSheetsMaps.ipynb) notebook. These maps were used for the following fact sheets: Introduction, Africa, Asia, Australasia, Central and South America, Europe, North and Central America, and Ocean.
 
 ## Data
 
