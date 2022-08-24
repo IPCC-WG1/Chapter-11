@@ -6,7 +6,7 @@ from datetime import datetime
 import conf
 from utils import computation
 
-FOLDER_WARMING_LEVELS = "../warming_levels/"
+FOLDER_WARMING_LEVELS = "../../cmip_warming_levels/warming_levels/"
 
 
 def warming_level_to_str(warming_level):
@@ -137,7 +137,7 @@ def write_start_years_no_boundscheck(
 ):
 
     fN = _get_filename(
-        conf_cmip.cmip,
+        conf_cmip.cmip_version,
         start_clim,
         end_clim,
         all_ens,
@@ -197,11 +197,18 @@ def write_warming_level_to_file(
         start_clim, end_clim = clim
 
     fN_yml = _get_filename(
-        conf_cmip.cmip, start_clim, end_clim, all_ens, check_years, add_grid_info, "yml"
+        conf_cmip.cmip_version,
+        start_clim,
+        end_clim,
+        all_ens,
+        check_years,
+        add_grid_info,
+        "yml",
     )
+
     file_ending = subfolder = "csv"
     fN_csv = _get_filename(
-        conf_cmip.cmip,
+        conf_cmip.cmip_version,
         start_clim,
         end_clim,
         all_ens,
@@ -253,7 +260,6 @@ def write_cmip5(warming_levels1, warming_levels2):
         postprocess="global_mean",
         anomaly="no_check_no_anom",
         ensnumber=None,
-        #         ensnumber=0,
     )
 
     # ======================
@@ -325,8 +331,7 @@ if __name__ == "__main__":
     # for Chapter 4
     warming_levels2 = [0.94, 3.43]
 
-    # cmip5 is not changing
-    #     write_cmip5(warming_levels1, warming_levels2)
+    write_cmip5(warming_levels1, warming_levels2)
 
     write_cmip6(warming_levels1, warming_levels2)
 
