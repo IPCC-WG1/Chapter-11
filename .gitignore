@@ -1,7 +1,6 @@
 
 *.ipynb
 !clean_notebooks/*.ipynb
-figures/*
 code/archive/*
 archive/*
 deprecated/*
