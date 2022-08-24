@@ -64,10 +64,6 @@ class _cmip_conf:
     def figure_folder(self):
         return self._figure_folder
 
-    @property
-    def warming_levels_folder(self):
-        return self._warming_levels_folder
-
     @staticmethod
     def _period_slice_str2int(period):
         """convert slice with string start and stop to one with integer elements"""

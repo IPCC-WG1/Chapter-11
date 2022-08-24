@@ -6,6 +6,8 @@ from datetime import datetime
 import conf
 from utils import computation
 
+FOLDER_WARMING_LEVELS = "../warming_levels/"
+
 
 def warming_level_to_str(warming_level):
     return str(warming_level).replace(".", "")
@@ -96,7 +98,7 @@ def write_info(fid, start_clim, end_clim, check_years):
 
 
 def _get_filename(
-    conf_cmip,
+    cmip_version,
     start_clim,
     end_clim,
     all_ens,
@@ -118,15 +120,13 @@ def _get_filename(
     if not check_years:
         check_years_ = "_no_bounds_check"
 
-    folder = conf_cmip.warming_levels_folder
+    folder = os.path.join(FOLDER_WARMING_LEVELS, cmip_version)
     grid = "_grid" if add_grid_info else ""
-
-    cmip = conf_cmip.cmip
 
     fN = os.path.join(
         folder + folder_one_or_all,
         subfolder,
-        f"{cmip}_{what}_{one_or_all}_{start_clim}_{end_clim}{check_years_}{grid}.{file_ending}",
+        f"{cmip_version}_{what}_{one_or_all}_{start_clim}_{end_clim}{check_years_}{grid}.{file_ending}",
     )
 
     return fN
@@ -137,7 +137,7 @@ def write_start_years_no_boundscheck(
 ):
 
     fN = _get_filename(
-        conf_cmip,
+        conf_cmip.cmip,
         start_clim,
         end_clim,
         all_ens,
@@ -197,11 +197,11 @@ def write_warming_level_to_file(
         start_clim, end_clim = clim
 
     fN_yml = _get_filename(
-        conf_cmip, start_clim, end_clim, all_ens, check_years, add_grid_info, "yml"
+        conf_cmip.cmip, start_clim, end_clim, all_ens, check_years, add_grid_info, "yml"
     )
     file_ending = subfolder = "csv"
     fN_csv = _get_filename(
-        conf_cmip,
+        conf_cmip.cmip,
         start_clim,
         end_clim,
         all_ens,

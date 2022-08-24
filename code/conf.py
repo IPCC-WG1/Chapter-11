@@ -14,7 +14,6 @@ from utils.cmip_conf import _cmip_conf
 
 root_folder_postprocessed_data = "../data/"
 root_folder_figures = "../figures/"
-root_folder_warming_levels = "../warming_levels/"
 
 
 def figure_filename(name, *subfolders):
@@ -90,7 +89,6 @@ class _cmip5_conf(_cmip_conf):
         self._fixes_preprocess = fixes.cmip5_preprocess
 
         self._figure_folder = root_folder_figures + "cmip5/cmip5_"
-        self._warming_levels_folder = root_folder_warming_levels + "cmip5"
         self.root_folder_figures = root_folder_figures
 
         self._hist_period = slice("1850", "2005")
@@ -140,7 +138,6 @@ class _cmip6_conf(_cmip_conf):
     _cmip = "cmip6"
 
     _figure_folder = root_folder_figures + "cmip6/cmip6_"
-    _warming_levels_folder = root_folder_warming_levels + "cmip6"
     root_folder_figures = root_folder_figures
 
     _hist_period = slice("1850", "2014")
@@ -196,7 +193,6 @@ class _cmip6_ng_conf(_cmip_conf):
         self._fixes_preprocess = fixes.cmip6_preprocess
 
         self._figure_folder = root_folder_figures + "cmip6/cmip6_"
-        self._warming_levels_folder = root_folder_warming_levels + "cmip6"
         self.root_folder_figures = root_folder_figures
 
         self._hist_period = slice("1850", "2014")
