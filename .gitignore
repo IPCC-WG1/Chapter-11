@@ -1,5 +1,5 @@
-*.ipynb
-!clean_notebooks/*.ipynb
+code/SYR_Figure*
+code/WGII_data*
 
 # dask
 dask-worker-space
