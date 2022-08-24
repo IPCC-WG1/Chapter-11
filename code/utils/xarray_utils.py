@@ -38,7 +38,6 @@ def open_mfdataset(
 
     ds = xr.open_mfdataset(
         fNs_in,
-        concat_dim="time",
         combine="by_coords",
         coords="minimal",
         data_vars="minimal",
