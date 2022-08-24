@@ -34,7 +34,7 @@ The following table shows which figures/ panels in the _SPM_, _Chapter 11_ and _
 | **Box 11.4, Figure 2** | -   | x | x | [Box_11.4_Figure_2_2018](code/Box_11.4_Figure_2_2018.ipynb) | Hersbach et al. (2020) |
 | **FAQ 11.1, Figure 1** | all | x | x | [FAQ_11.1_Figure_1_mean_vs_extreme](code/FAQ_11.1_Figure_1_mean_vs_extreme.ipynb) | CMIP6 |
 | **Figure 11.SM.1**     | all | x | x | [Figure_11.SM.1_TNn_scaling](code/Figure_11.SM.1_TNn_scaling.ipynb) | CMIP6 |
-| **Figure 12.4**        | j-l | x |   | [Figure_12.4_S12.4_SM_DataTable](code/Figure_12.4_S12.4_SM_DataTable.ipynb) | CMIP6 |
+| **Figure 12.4**        | j-l | x |   | [Figure_12.4_S12.4_SM_data_tables](code/Figure_12.4_S12.4_SM_data_tables.ipynb) | CMIP6 |
 
 <sup>*</sup>Analysis
 <sup>&dagger;</sup> Visualisation
