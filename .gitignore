@@ -1,20 +1,10 @@
-
 *.ipynb
 !clean_notebooks/*.ipynb
-code/archive/*
-archive/*
-deprecated/*
-tests/*
-tglobscaling/*
-warming_levels/*
-cmip_indices_regional/*
-cmip_temperatures/*
-diagram_EA_method
-for_isort.py
-
-dask-worker-space
 
 data/*
+
+# dask
+dask-worker-space
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
