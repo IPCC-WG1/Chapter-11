@@ -221,7 +221,7 @@ def find_cmip6_info_post(meta):
 
     ds, meta = _load_post(meta, conf.cmip6)
 
-    mip_era = conf.cmip6.cmip.upper()
+    mip_era = conf.cmip6.cmip_version.upper()
     parent_activity_id = ds.attrs["parent_activity_id"].replace(" ", "")
     institution_id = ds.attrs["institution_id"]
     model = meta["model"]
@@ -275,7 +275,7 @@ def find_cmip5_info_post(meta):
 
     ds, meta = _load_post(meta, conf.cmip5)
 
-    mip_era = conf.cmip5.cmip.upper()
+    mip_era = conf.cmip5.cmip_version.upper()
     product = ds.attrs["product"]
     institute_id = ds.attrs["institute_id"]
     model = meta["model"]

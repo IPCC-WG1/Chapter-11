@@ -67,7 +67,7 @@ class _cmip5_conf(_cmip_conf):
 
     def __init__(self):
 
-        self._cmip = "cmip5"
+        self._cmip_version = "cmip5"
 
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip5/{exp}/{table}/{varn}/{model}/{ens}/",
@@ -113,6 +113,8 @@ class _cmip6_conf(_cmip_conf):
 
     def __init__(self):
 
+        self._cmip_version = "cmip6"
+
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip6/{exp}/{table}/{varn}/{model}/{ens}/{grid}/",
             file_pattern="{varn}_{table}_{model}_{exp}_{ens}_{grid}_{time}.nc",
@@ -134,8 +136,6 @@ class _cmip6_conf(_cmip_conf):
 
     # define some variables on class level so they don't need to be duplicated for
     # cmip6-ng
-
-    _cmip = "cmip6"
 
     _figure_folder = root_folder_figures + "cmip6/cmip6_"
     root_folder_figures = root_folder_figures
@@ -168,7 +168,7 @@ class _cmip6_ng_conf(_cmip_conf):
 
     def __init__(self):
 
-        self._cmip = "cmip6_ng"
+        self._cmip_version = "cmip6_ng"
 
         self._files_orig = FileFinder(
             path_pattern="/net/atmos/data/cmip6-ng/{varn}/{timeres}/{grid}/",

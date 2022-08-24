@@ -26,9 +26,9 @@ class _cmip_conf:
     # properties are defined in conf.py
 
     @property
-    def cmip(self):
+    def cmip_version(self):
         """cmip version"""
-        return self._cmip
+        return self._cmip_version
 
     @property
     def files_orig(self):
@@ -135,9 +135,9 @@ class _cmip_conf:
             If True adds f'{self.cmip}_' in front of the filename.
         """
 
-        prefix = f"{self.cmip}_" if add_prefix else ""
+        prefix = f"{self.cmip_version}_" if add_prefix else ""
 
-        folders = (self.root_folder_figures, self.cmip) + subfolders
+        folders = (self.root_folder_figures, self.cmip_version) + subfolders
 
         return path.join(*folders, prefix + name)
 
@@ -618,12 +618,12 @@ class _cmip_conf:
 
         files = filefinder(varn=varn, exp=exp, **meta)
 
-        if self._cmip != "cmip6_ng":
+        if self.cmip_version != "cmip6_ng":
             files = ff.cmip.ensure_unique_grid(files)
 
         files = ff.cmip.parse_ens(files)
 
-        keys = None if self._cmip != "cmip6_ng" else ["exp", "varn", "model"]
+        keys = None if self.cmip_version != "cmip6_ng" else ["exp", "varn", "model"]
         files = ff.cmip.create_ensnumber(files, keys=keys)
         files = files.search(ensnumber=ensnumber)
 

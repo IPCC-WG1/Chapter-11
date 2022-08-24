@@ -36,7 +36,7 @@ class TosGlobmeanMaskIceAnyFromOrig(ProcessorFromOrig):
         [meta_ice.pop(x) for x in ["varn", "table", "exp"]]
 
         # TODO: better solution for different names in cmip5/ cmip6
-        if self.conf_cmip.cmip == "cmip5":
+        if self.conf_cmip.cmip_version == "cmip5":
             varn = "sic"
             table = "OImon"
         else:
