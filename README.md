@@ -45,18 +45,29 @@ The following shows which tables in Chapter 11 were created from this repository
 
 | Table    | Notebook | Data Source |
 | -------- | -------- | ----------- |
-| Table 11.SM.1   | [Table_11.SM.1_GWL.ipynb](code/Table_11.SM.1_GWL.ipynb) | CMIP5 & CMIP6 |
+| Table 11.SM.1   | [Table_11.SM.1_GSAT_anom.ipynb](code/Table_11.SM.1_GSAT_anom.ipynb) | CMIP5 & CMIP6 |
 | Table 11.SM.2-8 | [Table_11.SM_cmip_indices_regional.ipynb](code/Table_11.SM_cmip_indices_regional.ipynb) | CMIP6 |
 
 
 ## Associated data repositories
 
-There are three associated external data repositories which provide the data from Table 11.SM.1 through Table 11.SM.8 in a computer-accessible form:
+There are three external data repositories associated with Chapter 11, which provide additional data and data used in the chapter in a computer accessible form.
 
-* [mathause/cmip_temperatures](https://github.com/mathause/cmip_temperatures) documents the raw (unassessed) mean temperature anomalies for different time periods in CMIP5 and CMIP6 data & contains the same info as Table 11.SM.1
-* [mathause/cmip_indices_regional](https://github.com/mathause/cmip_indices_regional) documents multi-model-median regional means at warming levels for selected indices (CMIP6) & contains the same info as Table 11.SM.2 through Table 11.SM.8.
-* [mathause/cmip_warming_levels](https://github.com/mathause/cmip_warming_levels) documents the year when a certain global warming level was reached in cmip5 and cmip6 data. There is no associated table in the IPCC report.
+### Global mean temperature anomalies for CMIP5 and CMIP6
 
+The [cmip_temperatures](https://github.com/mathause/cmip_temperatures) repository provides mean temperature anomalies for different time periods for CMIP5 and CMIP6. It contains the same info as Table 11.SM.1. Note that these temperature anomalies are unassessed.
+
+### Global warming levels for CMIP5 and CMIP6
+
+The [cmip_warming_levels](https://github.com/mathause/cmip_warming_levels) repository documents the year when a certain global warming level was reached in CMIP5 and CMIP6 data. There is no associated table in the IPCC report.
+
+### Multi-model-median regional means at warming levels for selected indices (CMIP6)
+
+The [cmip_indices_regional](https://github.com/mathause/cmip_indices_regional) repository documents multi-model-median regional means at warming levels for selected indices (CMIP6) & contains the same info as Table 11.SM.2 through Table 11.SM.8.
+
+## Regional Factsheets
+
+The map insets for IPCC AR6 WGI [regional fact sheets](https://www.ipcc.ch/report/ar6/wg1/resources/factsheets/) were created in the [RegionalFactSheetsMaps.ipynb](code/RegionalFactSheetsMaps.ipynb) notebook. These maps were used for the following fact sheets: Introduction, Africa, Asia, Australasia, Central and South America, Europe, North and Central America, and Ocean.
 
 ## Data
 
@@ -86,7 +97,7 @@ not, see https://www.gnu.org/licenses/.
 
 ## Acknowledgment
 
-We acknowledge the World Climate Research Programme (WCRP)'s Working Group on Coupled Modelling, which is responsible for CMIP and coordinated CMIP5 and CMIP6. We particularly thank the climate modeling groups for producing and making available their model output. We thank Urs Beyerle for downloading and archiving the CMIP5 and CMIP6 data at ETH Zurich.
+We acknowledge the World Climate Research Programme (WCRP)'s Working Group on Coupled Modelling, which is responsible for CMIP and coordinated CMIP5 and CMIP6. We particularly thank the climate modeling groups for producing and making available their model output. We thank Urs Beyerle for downloading, archiving, and curating the CMIP5 and CMIP6 data at ETH Zurich.
 
 ## References
 
