@@ -1,5 +1,6 @@
 import copy
 import logging
+import pathlib
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -9,6 +10,17 @@ import matplotlib.pyplot as plt
 import mplotutils as mpu
 import numpy as np
 from matplotlib.path import Path
+
+
+def create_figure_folders(figure_folder, cmip_conf):
+    """create folders to save figures"""
+
+    p = pathlib.Path(cmip_conf.figure_filename("", figure_folder, add_prefix=False))
+
+    p.mkdir(exist_ok=True)
+
+    (p / "data_tables").mkdir(exist_ok=True)
+    (p / "figure_data").mkdir(exist_ok=True)
 
 
 class SmallXHatch(mpl.hatch.Shapes):
