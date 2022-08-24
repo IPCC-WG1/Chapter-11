@@ -6,7 +6,7 @@ import seaborn as sns
 # used for Figure_11.12 andFigure_11.15
 
 fN = (
-    "../data/Li_etal/"
+    "../data/li_2021/"
     "frequency_intensity_changes_TXx_Rx1day_events_1851_vs_1850_orig_from_chao.xlsx"
 )
 
