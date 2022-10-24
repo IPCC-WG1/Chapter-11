@@ -132,7 +132,7 @@ class _cmip_conf:
         *subfolders : list of str
             Folders of the figure.
         add_prefix : bool, default True
-            If True adds f'{self.cmip}_' in front of the filename.
+            If True adds f'{self.cmip_version}_' in front of the filename.
         """
 
         prefix = f"{self.cmip_version}_" if add_prefix else ""

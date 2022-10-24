@@ -156,7 +156,7 @@ class Processor(MasksMixin, WeightsMixin):
 
         klass = self.__class__.__name__
         ppn = "" if self._postprocess_name is None else f" ({self._postprocess_name})"
-        cmip = self.conf_cmip.cmip.upper()
+        cmip = self.conf_cmip.cmip_version.upper()
 
         return f"{cmip}: <{klass}>{ppn}"
 
