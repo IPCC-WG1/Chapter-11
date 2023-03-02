@@ -1,5 +1,7 @@
 # IPCC-WG AR6 - Chapter 11 Figures
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7692016.svg)](https://doi.org/10.5281/zenodo.7692016)
+
 This repository contains data analysis scripts and visualization of many figures of
 Chapter 11 of the Sixth Assessment Report (AR6) of the Intergovernmental Panel on
 Climate Change (IPCC). It also includes parts of two figures in the Summary for Policymakers
