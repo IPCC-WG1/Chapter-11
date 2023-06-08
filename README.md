@@ -1,15 +1,18 @@
-# IPCC-WG AR6 - Chapter 11 Figures
+# IPCC AR6 WGI - Chapter 11 Figures
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7692016.svg)](https://doi.org/10.5281/zenodo.7692016)
 
 This repository contains data analysis scripts and visualization of many figures of
-Chapter 11 of the Sixth Assessment Report (AR6) of the Intergovernmental Panel on
+Chapter 11 of the Sixth Assessment Report (AR6) of Working Group 1 (WGI) of the Intergovernmental Panel on
 Climate Change (IPCC). It also includes parts of two figures in the Summary for Policymakers
-(SPM).
+(SPM), data preparation for one figure of Chapter 12, and of Figure SPM.2 of AR6 Synthesis Report (SYR).
 
 ## Figures
 
-The following table shows which figures/ panels in the _SPM_, _Chapter 11_ and _Chapter 12_ in the IPCC AR6 report were created from this repository. It also shows which part (data analysis and visualization) is actually done in the repository.
+The following table shows which figures/ panels for the WGI _SPM_, _Chapter 11_ and _Chapter 12_ in the IPCC AR6 report were created from this repository. It also shows which part (data analysis and visualization) is actually done in the repository.
+
+### Working Group 1: The Physical Science Basis
+
 
 | Figure    | Panel  | A<sup>*</sup> | V<sup>&dagger;</sup> | Notebook | Data Source |
 | --------- | ------ |:--------:|:-------------:| -------- | ----------- |
@@ -37,6 +40,17 @@ The following table shows which figures/ panels in the _SPM_, _Chapter 11_ and _
 | **FAQ 11.1, Figure 1** | all | x | x | [FAQ_11.1_Figure_1_mean_vs_extreme](code/FAQ_11.1_Figure_1_mean_vs_extreme.ipynb) | CMIP6 |
 | **Figure 11.SM.1**     | all | x | x | [Figure_11.SM.1_TNn_scaling](code/Figure_11.SM.1_TNn_scaling.ipynb) | CMIP6 |
 | **Figure 12.4**        | j-l | x |   | [Figure_12.4_S12.4_SM_data_tables](code/Figure_12.4_S12.4_SM_data_tables.ipynb) | CMIP6 |
+
+<sup>*</sup>Analysis
+<sup>&dagger;</sup> Visualisation
+
+### Synthesis Report
+
+| Figure    | Panel  | A<sup>*</sup> | V<sup>&dagger;</sup> | Notebook | Data Source |
+| --------- | ------ |:--------:|:-------------:| -------- | ----------- |
+| **SYR Figure SPM.2**       | a   | x | x | [SYR_Figure_SPM.2a_TXx_map](code/SYR_Figure_SPM.2a_TXx_map.ipynb) | CMIP6 |
+| **SYR Figure SPM.2**       | b   | x | x | [SYR_Figure_SPM.2b_SM_tot_map](code/SYR_Figure_SPM.2b_SM_tot_map.ipynb) | CMIP6 |
+| **SYR Figure SPM.2**       | c   | x | x | [SYR_Figure_SPM.2c_Rx1day_map](code/SYR_Figure_SPM.2c_Rx1day_map.ipynb) | CMIP6 |
 
 <sup>*</sup>Analysis
 <sup>&dagger;</sup> Visualisation
